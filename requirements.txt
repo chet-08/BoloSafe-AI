@@ -1,0 +1,41 @@
+# Base & Numerical Processing
+numpy>=2.1.0,<2.5.0
+scipy>=1.14.0
+pandas==3.0.5
+tqdm==4.70.0
+
+# Digital Signal Processing (DSP) & Audio Ingestion
+librosa==0.10.1
+soundfile==0.12.1
+sounddevice==0.4.6
+webrtcvad==2.0.10
+audioread==3.1.0
+soxr==1.1.0
+
+# Machine Learning & Speaker Verification
+xgboost>=2.0.0
+scikit-learn==1.9.1
+joblib==1.6.0
+shap>=0.44.0
+speechbrain>=1.0.0
+torch>=2.1.0
+transformers>=4.36.0
+
+# API, WebSockets & Server Integration
+fastapi
+uvicorn[standard]
+websockets
+httpx
+python-multipart>=0.0.6
+
+# Visualization & Reporting
+matplotlib>=3.8.0
+
+# Development, Utilities & Testing
+pytest==9.1.1
+requests==2.34.2
+pydantic==2.13.5
+pydantic_core==2.46.5
+typing_extensions==4.16.0
+setuptools<82.0.0
+faster-whisper>=1.2.1

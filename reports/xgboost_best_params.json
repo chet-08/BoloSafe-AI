@@ -1,0 +1,10 @@
+{
+  "best_params": {
+    "colsample_bytree": 0.9,
+    "learning_rate": 0.2,
+    "max_depth": 6,
+    "n_estimators": 500,
+    "subsample": 1.0
+  },
+  "cv_roc_auc": 0.9041409000002536
+}

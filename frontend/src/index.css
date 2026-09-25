@@ -1,0 +1,14 @@
+@import "tailwindcss";
+
+@theme {
+  --color-bolosafe-darkest: #050505;    /* Deepened near-black for base backgrounds */
+  --color-bolosafe-dark: #141414;        /* Slightly adjusted charcoal for cards/sidebars to maintain contrast */
+  /* ... rest of your colors ... */
+
+  --color-bolosafe-surface: #1a1a1a;     /* Surface layer elements */
+  --color-bolosafe-cardHover: #2d2d2d;   /* Hover states */
+  --color-bolosafe-border: #333333;      /* Subtle border tone */
+  --color-bolosafe-pink: #FF206E;        /* Neon Pink - Main accent / highlights[cite: 3] */
+  --color-bolosafe-yellow: #FBFF12;      /* Neon Yellow - Badges / warnings / active states[cite: 3] */
+  --color-bolosafe-cyan: #41EAD4;        /* Bright Cyan - Secondary highlights / active elements[cite: 3] */
+}

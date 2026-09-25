@@ -1,0 +1,52 @@
+.venv/
+env/
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.dylib
+
+# Audio and array artifacts (do not push to GitHub)
+data/raw/
+data/processed/
+*.npy
+*.wav
+*.mp3
+*.flac
+*.ogg
+models/*.json
+!data/WhatsApp*.ogg
+venv/
+
+# Sprint 2a local artifacts
+data/processed_v1/
+reports_training*.log
+reports_baseline_test.log
+processed_v2.zip
+raw_audio.zip
+data_processed_v2_check/
+
+.env
+.env.*
+!.env.example
+pretrained_models/
+data_raw.zip
+
+
+
+# Local Python environment
+.venv-mac/
+
+# Local backup copies
+src/websocket/server.py.bak-prosody
+src/websocket/server.py.before_audio_end
+src/websocket/server.py.before_language_free_prosody
+src/websocket/server.py.before_yin_restore
+
+.env
+.env.*
+!.env.example
+
+data/*.ogg
+data/*.mp3
+data/*.wav
