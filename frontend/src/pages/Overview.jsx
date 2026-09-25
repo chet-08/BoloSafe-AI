@@ -199,6 +199,9 @@ export default function Overview({
   handleFileUpload,
   acknowledgeAlert,
   setActiveStreamId,
+  selectedSector,
+  setSelectedSector,
+  sectorOptions,
   transactionAmountInr,
   setTransactionAmountInr,
   selectedScenario,
@@ -855,14 +858,12 @@ export default function Overview({
         <div className="mt-6 grid gap-5 md:grid-cols-2">
           <div>
             <label className="mb-2 block text-xs font-bold font-mono uppercase tracking-widest text-slate-500">
-              Security Scenario
+              Security Sector
             </label>
 
             <select
-              value={selectedScenario}
-              onChange={(e) =>
-                setSelectedScenario(e.target.value)
-              }
+              value={selectedSector}
+              onChange={(e) => setSelectedSector(e.target.value)}
               disabled={
                 contextConfigured ||
                 isLiveMonitoring ||
@@ -870,47 +871,66 @@ export default function Overview({
               }
               className="w-full rounded-xl border border-cyan-300/15 bg-[#030712]/70 px-4 py-3 text-sm font-mono text-white outline-none disabled:opacity-50"
             >
-              <option value="high_value_transaction">
-                High-Value Transaction
-              </option>
-              <option value="privileged_access">
-                Privileged Access
-              </option>
-              <option value="routine_support">
-                Routine Support
-              </option>
+              {Object.entries(sectorOptions).map(([value, config]) => (
+                <option key={value} value={value}>
+                  {config.label}
+                </option>
+              ))}
             </select>
           </div>
 
           <div>
             <label className="mb-2 block text-xs font-bold font-mono uppercase tracking-widest text-slate-500">
-              Transaction Amount · INR
+              Security Scenario
             </label>
 
-            <div className="flex items-center rounded-xl border border-cyan-300/15 bg-[#030712]/70 px-4 focus-within:border-cyan-300/50">
-              <span className="mr-3 text-base font-black font-mono text-cyan-200">
-                ₹
-              </span>
-
-              <input
-                type="number"
-                min="0"
-                step="1000"
-                value={transactionAmountInr}
-                onChange={(e) =>
-                  setTransactionAmountInr(e.target.value)
-                }
-                disabled={
-                  selectedScenario !== 'high_value_transaction' ||
-                  contextConfigured ||
-                  isLiveMonitoring ||
-                  securityTerminated
-                }
-                placeholder="e.g. 525000"
-                className="w-full bg-transparent py-3 text-sm font-mono text-white outline-none placeholder:text-slate-600 disabled:opacity-50"
-              />
-            </div>
+            <select
+              value={selectedScenario}
+              onChange={(e) => setSelectedScenario(e.target.value)}
+              disabled={
+                contextConfigured ||
+                isLiveMonitoring ||
+                securityTerminated
+              }
+              className="w-full rounded-xl border border-cyan-300/15 bg-[#030712]/70 px-4 py-3 text-sm font-mono text-white outline-none disabled:opacity-50"
+            >
+              {sectorOptions[selectedSector].scenarios.map((scenario) => (
+                <option key={scenario.value} value={scenario.value}>
+                  {scenario.label}
+                </option>
+              ))}
+            </select>
           </div>
+
+          {selectedSector === 'finance' && (
+            <div className="md:col-span-2">
+              <label className="mb-2 block text-xs font-bold font-mono uppercase tracking-widest text-slate-500">
+                Transaction Amount · INR
+              </label>
+
+              <div className="flex items-center rounded-xl border border-cyan-300/15 bg-[#030712]/70 px-4 focus-within:border-cyan-300/50">
+                <span className="mr-3 text-base font-black font-mono text-cyan-200">
+                  ₹
+                </span>
+
+                <input
+                  type="number"
+                  min="0"
+                  step="1000"
+                  value={transactionAmountInr}
+                  onChange={(e) => setTransactionAmountInr(e.target.value)}
+                  disabled={
+                    selectedScenario !== 'high_value_transfer' ||
+                    contextConfigured ||
+                    isLiveMonitoring ||
+                    securityTerminated
+                  }
+                  placeholder="e.g. 525000"
+                  className="w-full bg-transparent py-3 text-sm font-mono text-white outline-none placeholder:text-slate-600 disabled:opacity-50"
+                />
+              </div>
+            </div>
+          )}
         </div>
       </section>
 

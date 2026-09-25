@@ -9,6 +9,7 @@ import {
   CircleHelp,
   ShieldCheck,
   UserCheck,
+  PhoneCall,
   ChevronRight,
   LogOut
 } from 'lucide-react'
@@ -22,6 +23,7 @@ import AdversarialRobustness from './components/AdversarialRobustness'
 import SecurityReport from './pages/SecurityReport'
 import Hero from "./pages/Hero";
 import Admin from "./pages/Admin";
+import RetailSecurity from './pages/sectors/RetailSecurity';
 
 // Utilities
 import { initialHistories, getAnalyticsData } from './utils/helpers'
@@ -55,12 +57,50 @@ function MainApp() {
   const [isLiveMonitoring, setIsLiveMonitoring] = useState(false)
   const [isFilePlaying, setIsFilePlaying] = useState(false)
   const [fileName, setFileName] = useState('')
+  const [selectedSector, setSelectedSector] = useState('finance')
   const [transactionAmountInr, setTransactionAmountInr] = useState('525000')
-  const [selectedScenario, setSelectedScenario] = useState('high_value_transaction')
+  const [selectedScenario, setSelectedScenario] = useState('high_value_transfer')
   const [contextConfigured, setContextConfigured] = useState(false)
   
   // NEW: State to hold the incident data being sent to the Admin board
   const [escalatedIncident, setEscalatedIncident] = useState(null)
+
+  const sectorOptions = {
+    finance: {
+      label: 'Financial Services',
+      scenarios: [
+        { value: 'high_value_transfer', label: 'High-Value Transfer' },
+        { value: 'account_recovery', label: 'Account Recovery' },
+        { value: 'customer_verification', label: 'Customer Verification' },
+      ],
+    },
+    retail: {
+      label: 'Retail',
+      scenarios: [
+        { value: 'customer_care', label: 'Customer Care' },
+        { value: 'order_modification', label: 'Order Modification' },
+        { value: 'account_assistance', label: 'Account Assistance' },
+      ],
+    },
+    hospitality: {
+      label: 'Hospitality',
+      scenarios: [
+        { value: 'reservation_change', label: 'Reservation Change' },
+        { value: 'guest_verification', label: 'Guest Verification' },
+        { value: 'vip_booking', label: 'VIP Booking' },
+      ],
+    },
+    entertainment: {
+      label: 'Entertainment',
+      scenarios: [
+        { value: 'voice_authenticity', label: 'Voice Authenticity' },
+        { value: 'speaker_comparison', label: 'Speaker Comparison' },
+        { value: 'dubbing_verification', label: 'Dubbing Verification' },
+      ],
+    },
+  }
+
+  const activeSectorConfig = sectorOptions[selectedSector]
 
   // Refs for WebSockets and Audio
   const monitorGainRef = useRef(null)
@@ -77,7 +117,7 @@ function MainApp() {
   const filePlaybackRef = useRef(null)
   const securityTerminatedRef = useRef(false)
   const transactionAmountRef = useRef('525000')
-  const selectedScenarioRef = useRef('high_value_transaction')
+  const selectedScenarioRef = useRef('high_value_transfer')
 
   const selected = activeStreamId ? (streams[activeStreamId] || {}) : {}
   const analytics = getAnalyticsData(selected)
@@ -355,11 +395,17 @@ function MainApp() {
       return false
     }
 
-    const rawAmount = String(transactionAmountRef.current).trim()
-    const parsedAmount = rawAmount === '' ? null : Number(rawAmount)
+    const sector = selectedSector
     const scenario = selectedScenarioRef.current
 
+    const rawAmount = String(transactionAmountRef.current).trim()
+    const parsedAmount =
+      sector === 'finance' && rawAmount !== ''
+        ? Number(rawAmount)
+        : null
+
     if (
+      sector === 'finance' &&
       parsedAmount !== null &&
       (!Number.isFinite(parsedAmount) || parsedAmount < 0)
     ) {
@@ -368,7 +414,8 @@ function MainApp() {
     }
 
     if (
-      scenario === 'high_value_transaction' &&
+      sector === 'finance' &&
+      scenario === 'high_value_transfer' &&
       parsedAmount === null
     ) {
       setMicStatus('Transaction Amount Required')
@@ -377,18 +424,19 @@ function MainApp() {
 
     const payload = {
       type: 'session_context',
-      scenario:
-        scenario === 'high_value_transaction' ? null : scenario,
-      transaction_amount_inr: parsedAmount 
+      sector,
+      scenario,
+      transaction_amount_inr: parsedAmount,
     }
 
     ws.send(JSON.stringify(payload))
 
     console.log('Security context sent:', payload)
-    setMicStatus('Configuring Security Context...')
+    setMicStatus(`Configuring ${activeSectorConfig.label} Context...`)
 
     return true
   }
+
 
   const startMicrophoneStream = async () => {
     if (!contextConfigured) {
@@ -876,6 +924,11 @@ function MainApp() {
               icon: LayoutDashboard
             },
             {
+              id: 'retail',
+              label: 'Retail Security',
+              icon: PhoneCall
+            },
+            {
               id: 'adversarial',
               label: 'Adversarial',
               icon: ShieldAlert
@@ -1065,6 +1118,21 @@ function MainApp() {
               handleFileUpload={handleFileUpload}
               acknowledgeAlert={acknowledgeAlert}
               setActiveStreamId={setActiveStreamId}
+              selectedSector={selectedSector}
+              setSelectedSector={(value) => {
+                setSelectedSector(value)
+
+                const nextScenario =
+                  sectorOptions[value]?.scenarios?.[0]?.value ||
+                  'high_value_transfer'
+
+                setSelectedScenario(nextScenario)
+                selectedScenarioRef.current = nextScenario
+
+                setContextConfigured(false)
+                setMicStatus('Select Security Context')
+              }}
+              sectorOptions={sectorOptions}
               transactionAmountInr={transactionAmountInr}
               setTransactionAmountInr={(value) => {
                 setTransactionAmountInr(value)
@@ -1082,6 +1150,13 @@ function MainApp() {
               fileName={fileName}
               transcript={transcript}
               transcriptLanguage={transcriptLanguage}
+            />
+          )}
+
+          {activePage === 'retail' && (
+            <RetailSecurity
+              selected={selected}
+              isConnected={isConnected}
             />
           )}
 

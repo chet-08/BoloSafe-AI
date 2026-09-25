@@ -14,12 +14,14 @@ class StreamManager:
         self._scenarios: dict[str, str] = {}
         self._scenario_sources: dict[str, str] = {}
         self._transaction_amounts: dict[str, float | None] = {}
+        self._sectors: dict[str, str] = {}
 
     def configure_stream(
         self,
         stream_id: str,
         scenario: str = "routine_support",
         transaction_amount_inr: float | None = None,
+        sector: str = "finance",
     ) -> ScenarioResolution:
         """Create the stream RiskEngine using its resolved scenario policy."""
 
@@ -35,6 +37,16 @@ class StreamManager:
             existing_amount = self._transaction_amounts[
                 stream_id
             ]
+            existing_sector = self._sectors.get(
+                stream_id,
+                "finance",
+            )
+
+            if existing_sector != sector:
+                raise ValueError(
+                    f"stream {stream_id!r} is already configured "
+                    f"for sector {existing_sector!r}"
+                )
 
             if existing_scenario != selected.value:
                 raise ValueError(
@@ -66,6 +78,7 @@ class StreamManager:
         self._transaction_amounts[
             stream_id
         ] = resolution.transaction_amount_inr
+        self._sectors[stream_id] = sector
 
         return resolution
 
@@ -93,6 +106,10 @@ class StreamManager:
             ),
             "transaction_amount_inr": self._transaction_amounts.get(
                 stream_id
+            ),
+            "sector": self._sectors.get(
+                stream_id,
+                "finance",
             ),
         }
 
