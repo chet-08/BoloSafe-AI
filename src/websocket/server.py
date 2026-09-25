@@ -60,6 +60,7 @@ from src.speaker_registry import (
     parse_speaker_id_from_query,
 )
 from src.transcription import StreamingTranscriber
+from src.sectors.common.governance import evaluate_sector_result
 
 
 app = FastAPI()
@@ -1151,6 +1152,11 @@ async def audio_websocket_endpoint(
                     requested_scenario,
                 )
 
+                requested_sector = context.get(
+                    "sector",
+                    "finance",
+                )
+
                 raw_amount = context.get(
                     "transaction_amount_inr"
                 )
@@ -1172,6 +1178,7 @@ async def audio_websocket_endpoint(
                             stream_id,
                             requested_for_context,
                             amount,
+                            requested_sector,
                         )
                     )
 
@@ -1199,6 +1206,7 @@ async def audio_websocket_endpoint(
                         ),
                         "scenario": scenario,
                         "scenario_source": scenario_source,
+                        "sector": requested_sector,
                     }
                 )
 
@@ -2081,6 +2089,38 @@ async def audio_websocket_endpoint(
                             "privacy_mode": (
                                 notification.privacy_mode
                             ),
+                        }
+                    )
+
+                    # --------------------------------------------------------
+                    # Sector Governance
+                    # --------------------------------------------------------
+                    # Consume the already-computed BoloSafe-AI result.
+                    # No duplicate ML inference happens here.
+                    sector_context = stream_manager.get_context(
+                        stream_id
+                    )
+
+                    sector = sector_context.get(
+                        "sector",
+                        "finance",
+                    )
+
+                    governance_decision = evaluate_sector_result(
+                        result.model_dump(),
+                        sector=sector,
+                        scenario=sector_context.get(
+                            "scenario",
+                            scenario,
+                        ),
+                        transaction_amount_inr=sector_context.get(
+                            "transaction_amount_inr"
+                        ),
+                    )
+
+                    result = result.model_copy(
+                        update={
+                            "governance_decision": governance_decision
                         }
                     )
 

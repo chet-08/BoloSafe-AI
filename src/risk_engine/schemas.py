@@ -70,6 +70,14 @@ class RiskResult(BaseModel):
     scenario_source: str = "default"
     response_workflow_status: str = "INACTIVE"
 
+    # --- Retail Security Policy Layer ---
+    # Populated only when the Retail sector workflow is active.
+    retail_decision: dict | None = None
+
+    # --- Unified Sector Governance ---
+    # Populated when a sector-specific security policy is active.
+    governance_decision: dict | None = None
+
     model_version: str
 
     # --- Added by Person A (Sprint 1B: Features 1, 2, 3, 4) ---
