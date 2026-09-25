@@ -4,6 +4,8 @@ from typing import Any
 
 from src.sectors.finance.router import evaluate_financial_result
 from src.sectors.retail.router import evaluate_retail_result
+from src.sectors.hospitality.router import evaluate_hospitality_result
+from src.sectors.entertainment.router import evaluate_entertainment_result
 
 
 def evaluate_sector_result(
@@ -29,6 +31,18 @@ def evaluate_sector_result(
 
     elif sector == "retail":
         decision = evaluate_retail_result(
+            result,
+            scenario=scenario,
+        )
+
+    elif sector == "hospitality":
+        decision = evaluate_hospitality_result(
+            result,
+            scenario=scenario,
+        )
+
+    elif sector == "entertainment":
+        decision = evaluate_entertainment_result(
             result,
             scenario=scenario,
         )

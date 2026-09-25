@@ -11,7 +11,11 @@ import {
   UserCheck,
   PhoneCall,
   ChevronRight,
-  LogOut
+  LogOut,
+  ShoppingBag,
+  Hotel,
+  Film,
+  Landmark
 } from 'lucide-react'
 
 // Sub-components
@@ -24,6 +28,9 @@ import SecurityReport from './pages/SecurityReport'
 import Hero from "./pages/Hero";
 import Admin from "./pages/Admin";
 import RetailSecurity from './pages/sectors/RetailSecurity';
+import HospitalitySecurity from './pages/sectors/HospitalitySecurity';
+import EntertainmentSecurity from './pages/sectors/EntertainmentSecurity';
+import FinanceSecurity from './pages/sectors/FinanceSecurity';
 
 // Utilities
 import { initialHistories, getAnalyticsData } from './utils/helpers'
@@ -774,6 +781,107 @@ function MainApp() {
     }
   }
 
+  const streamAudioFromUrl = async (url, sector, scenario, transactionAmount = null) => {
+    const ws = wsRef.current
+    if (!ws || ws.readyState !== WebSocket.OPEN) {
+      alert('WebSocket is not connected to the backend. Please wait for connection.')
+      return
+    }
+
+    try {
+      stopMicrophoneStream()
+
+      if (filePlaybackRef.current) {
+        filePlaybackRef.current.pause()
+        filePlaybackRef.current.currentTime = 0
+        filePlaybackRef.current = null
+      }
+
+      // 1. Send sector session context to backend
+      const contextPayload = {
+        type: 'session_context',
+        sector: sector,
+        scenario: scenario,
+        transaction_amount_inr: transactionAmount ? Number(transactionAmount) : null
+      }
+      ws.send(JSON.stringify(contextPayload))
+      setSelectedSector(sector)
+      setSelectedScenario(scenario)
+      selectedScenarioRef.current = scenario
+
+      const fileDisplayName = url.split('/').pop()
+      setFileName(fileDisplayName)
+      setInputMode('file')
+      setMicStatus(`Streaming ${sector.toUpperCase()}: ${fileDisplayName}`)
+
+      const playbackAudio = new Audio(url)
+      playbackAudio.onplay = () => setIsFilePlaying(true)
+      playbackAudio.onpause = () => setIsFilePlaying(false)
+      playbackAudio.onended = () => {
+        setIsFilePlaying(false)
+      }
+      filePlaybackRef.current = playbackAudio
+
+      const response = await fetch(url)
+      const arrayBuffer = await response.arrayBuffer()
+
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext
+      const audioCtx = new AudioContextClass()
+
+      const decodedAudio = await audioCtx.decodeAudioData(arrayBuffer)
+      const channelData = decodedAudio.getChannelData(0)
+      const sampleRate = decodedAudio.sampleRate
+      const resampled = resampleTo16k(channelData, sampleRate)
+      const pcm16 = float32ToPCM16(resampled)
+
+      try {
+        await playbackAudio.play()
+      } catch (playbackError) {
+        console.warn('Audio playback error:', playbackError)
+      }
+
+      const chunkSize = 8000
+      let offset = 0
+      fileStreamActiveRef.current = true
+
+      fileIntervalRef.current = setInterval(() => {
+        if (!fileStreamActiveRef.current) {
+          clearInterval(fileIntervalRef.current)
+          fileIntervalRef.current = null
+          return
+        }
+
+        if (offset >= pcm16.length) {
+          fileStreamActiveRef.current = false
+          clearInterval(fileIntervalRef.current)
+          fileIntervalRef.current = null
+
+          if (ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify({ type: 'audio_end' }))
+          }
+
+          setMicLevel(0)
+          setMicStatus('Stream Complete')
+          audioCtx.close()
+          return
+        }
+
+        const chunk = pcm16.subarray(offset, offset + chunkSize)
+        ws.send(chunk)
+
+        const chunkRms = calculateRMS(
+          resampled.subarray(offset, Math.min(offset + chunkSize, resampled.length))
+        )
+        setMicLevel(Math.min(Math.round(chunkRms * 200), 100))
+        offset += chunkSize
+      }, 500)
+
+    } catch (error) {
+      console.error('Failed to stream audio URL:', error)
+      setMicStatus('Audio Stream Error')
+    }
+  }
+
   const acknowledgeAlert = () => {
     if (fileIntervalRef.current) {
       console.warn(
@@ -924,9 +1032,24 @@ function MainApp() {
               icon: LayoutDashboard
             },
             {
+              id: 'finance',
+              label: 'Financial Services',
+              icon: Landmark
+            },
+            {
               id: 'retail',
               label: 'Retail Security',
-              icon: PhoneCall
+              icon: ShoppingBag
+            },
+            {
+              id: 'hospitality',
+              label: 'Hospitality',
+              icon: Hotel
+            },
+            {
+              id: 'entertainment',
+              label: 'Entertainment',
+              icon: Film
             },
             {
               id: 'adversarial',
@@ -1153,10 +1276,59 @@ function MainApp() {
             />
           )}
 
+          {activePage === 'finance' && (
+            <FinanceSecurity
+              selected={selected}
+              isConnected={isConnected}
+              streamAudioFromUrl={streamAudioFromUrl}
+              startMicrophoneStream={startMicrophoneStream}
+              stopMicrophoneStream={stopMicrophoneStream}
+              handleFileUpload={handleFileUpload}
+              micStatus={micStatus}
+              micLevel={micLevel}
+              isStreaming={fileStreamActiveRef.current || isFilePlaying}
+            />
+          )}
+
           {activePage === 'retail' && (
             <RetailSecurity
               selected={selected}
               isConnected={isConnected}
+              streamAudioFromUrl={streamAudioFromUrl}
+              startMicrophoneStream={startMicrophoneStream}
+              stopMicrophoneStream={stopMicrophoneStream}
+              handleFileUpload={handleFileUpload}
+              micStatus={micStatus}
+              micLevel={micLevel}
+              isStreaming={fileStreamActiveRef.current || isFilePlaying}
+            />
+          )}
+
+          {activePage === 'hospitality' && (
+            <HospitalitySecurity
+              selected={selected}
+              isConnected={isConnected}
+              streamAudioFromUrl={streamAudioFromUrl}
+              startMicrophoneStream={startMicrophoneStream}
+              stopMicrophoneStream={stopMicrophoneStream}
+              handleFileUpload={handleFileUpload}
+              micStatus={micStatus}
+              micLevel={micLevel}
+              isStreaming={fileStreamActiveRef.current || isFilePlaying}
+            />
+          )}
+
+          {activePage === 'entertainment' && (
+            <EntertainmentSecurity
+              selected={selected}
+              isConnected={isConnected}
+              streamAudioFromUrl={streamAudioFromUrl}
+              startMicrophoneStream={startMicrophoneStream}
+              stopMicrophoneStream={stopMicrophoneStream}
+              handleFileUpload={handleFileUpload}
+              micStatus={micStatus}
+              micLevel={micLevel}
+              isStreaming={fileStreamActiveRef.current || isFilePlaying}
             />
           )}
 
