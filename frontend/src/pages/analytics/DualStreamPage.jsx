@@ -44,7 +44,7 @@ export default function DualStreamPage({ analytics = {}, selected = {} }) {
   }
 
   return (
-    <div className="space-y-6 max-w-5xl mx-auto">
+    <div className="w-full space-y-6">
       {/* Header */}
       <div>
         <p className="text-xs font-bold uppercase tracking-widest text-cyan-400 font-mono">Module 05</p>
@@ -70,7 +70,7 @@ export default function DualStreamPage({ analytics = {}, selected = {} }) {
       </div>
 
       {/* Primary Metrics Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
         {/* Live Probability */}
         <div className="rounded-xl border border-slate-800 bg-[#0c1017] p-5">
           <p className="text-[10px] uppercase font-mono text-slate-500">Dual-Stream AI Probability</p>

@@ -1,216 +1,1010 @@
 'use client'
 
 import React from 'react'
-import { 
-  ShieldAlert, 
-  CheckCircle2, 
-  AlertTriangle, 
-  X, 
-  Lock, 
-  UserX, 
-  Activity, 
-  Server, 
-  ShieldCheck, 
-  Radio, 
+import {
+  ShieldAlert,
+  ShieldCheck,
+  AlertTriangle,
+  X,
+  Lock,
+  UserX,
+  Activity,
+  Server,
+  Radio,
   FileText,
-  Zap
+  Zap,
+  Database,
+  Gauge,
+  Network,
+  ScanSearch,
+  Clock3,
+  BrainCircuit,
+  AudioWaveform,
+  CheckCircle2,
+  ArrowRight,
+  Landmark,
+  ShoppingBag,
+  Hotel,
+  Film,
+  UserCheck,
+  ClipboardCheck,
+  BadgeCheck,
 } from 'lucide-react'
 import { useSecurity } from '../context/SecurityContext'
 
-export default function Admin({ selected, activeStreamId }) {
-  const { escalatedIncident, setEscalatedIncident } = useSecurity()
+const COLORS = {
+  indigo: '#5863D6',
+  indigoSoft: '#7079E0',
+  green: '#70B88A',
+  amber: '#D5AE52',
+  red: '#D96A78',
+  text: '#F4F5FA',
+  muted: '#858BA3',
+  border: '#292E46',
+}
 
-  // Safely check if an AI voice / High Risk state is active from props or context
-  const isAiVoiceDetected = 
-    escalatedIncident !== null || 
-    selected?.risk_level === 'HIGH' || 
+const SECTORS = {
+  finance: {
+    label: 'Financial Services',
+    short: 'Finance',
+    icon: Landmark,
+    tone: 'red',
+    description: 'Protect high-value transfers, account recovery, and sensitive banking actions.',
+    threatTitle: 'Synthetic Voice Impersonation Detected',
+    workflowLabel: 'High-value transaction protection',
+    actions: [
+      {
+        title: 'Halt Wire',
+        description: 'Stop the active transfer before funds can leave the account.',
+        icon: Lock,
+        tone: 'red',
+        tag: 'Priority',
+        key: 'HALT_WIRE',
+      },
+      {
+        title: 'Video-KYC',
+        description: 'Trigger step-up identity verification for the customer.',
+        icon: UserCheck,
+        tone: 'indigo',
+        tag: 'Verify',
+        key: 'VIDEO_KYC',
+      },
+      {
+        title: 'Escalate',
+        description: 'Route the incident to the relationship manager or fraud queue.',
+        icon: AlertTriangle,
+        tone: 'amber',
+        tag: 'Escalation',
+        key: 'ESCALATE_FINANCE',
+      },
+      {
+        title: 'Quarantine Evidence',
+        description: 'Preserve the voice sample for controlled forensic review.',
+        icon: Database,
+        tone: 'green',
+        tag: 'Forensics',
+        key: 'QUARANTINE_AUDIO',
+      },
+    ],
+  },
+
+  retail: {
+    label: 'Retail Security',
+    short: 'Retail',
+    icon: ShoppingBag,
+    tone: 'amber',
+    description: 'Protect customer accounts, orders, refunds, and sensitive workflow changes.',
+    threatTitle: 'Synthetic Voice Impersonation Detected',
+    workflowLabel: 'Customer / order protection',
+    actions: [
+      {
+        title: 'Hold Order',
+        description: 'Freeze the order workflow until customer verification completes.',
+        icon: Lock,
+        tone: 'red',
+        tag: 'Priority',
+        key: 'HOLD_ORDER',
+      },
+      {
+        title: 'Send OTP',
+        description: 'Require step-up customer verification before continuing.',
+        icon: UserCheck,
+        tone: 'indigo',
+        tag: 'Verify',
+        key: 'SEND_OTP',
+      },
+      {
+        title: 'Escalate',
+        description: 'Route the event to the retail security or supervisor queue.',
+        icon: AlertTriangle,
+        tone: 'amber',
+        tag: 'Escalation',
+        key: 'ESCALATE_RETAIL',
+      },
+      {
+        title: 'Inspect OMS',
+        description: 'Inspect the affected order state and downstream actions.',
+        icon: ClipboardCheck,
+        tone: 'green',
+        tag: 'Operations',
+        key: 'INSPECT_OMS',
+      },
+    ],
+  },
+
+  hospitality: {
+    label: 'Hospitality Security',
+    short: 'Hospitality',
+    icon: Hotel,
+    tone: 'green',
+    description: 'Protect reservations, guest identity, VIP workflows, and booking changes.',
+    threatTitle: 'Synthetic Voice Impersonation Detected',
+    workflowLabel: 'Guest & reservation protection',
+    actions: [
+      {
+        title: 'Hold Reservation',
+        description: 'Prevent booking changes until guest verification completes.',
+        icon: Lock,
+        tone: 'red',
+        tag: 'Priority',
+        key: 'HOLD_RESERVATION',
+      },
+      {
+        title: 'Verify Guest',
+        description: 'Require identity verification before a sensitive action proceeds.',
+        icon: UserCheck,
+        tone: 'indigo',
+        tag: 'Verify',
+        key: 'VERIFY_GUEST',
+      },
+      {
+        title: 'Escalate',
+        description: 'Route the event to guest security or duty management.',
+        icon: AlertTriangle,
+        tone: 'amber',
+        tag: 'Escalation',
+        key: 'ESCALATE_HOSPITALITY',
+      },
+      {
+        title: 'Quarantine Evidence',
+        description: 'Preserve the interaction for controlled forensic analysis.',
+        icon: Database,
+        tone: 'green',
+        tag: 'Forensics',
+        key: 'QUARANTINE_AUDIO',
+      },
+    ],
+  },
+
+  entertainment: {
+    label: 'Entertainment Security',
+    short: 'Entertainment',
+    icon: Film,
+    tone: 'indigo',
+    description: 'Protect artist identity, voice authenticity, content provenance, and licensing workflows.',
+    threatTitle: 'Synthetic Voice / Content Authenticity Alert',
+    workflowLabel: 'Artist & provenance protection',
+    actions: [
+      {
+        title: 'Flag Provenance',
+        description: 'Mark the media or voice event for provenance review.',
+        icon: ScanSearch,
+        tone: 'red',
+        tag: 'Priority',
+        key: 'FLAG_PROVENANCE',
+      },
+      {
+        title: 'Verify Artist',
+        description: 'Run speaker or artist identity verification.',
+        icon: BadgeCheck,
+        tone: 'indigo',
+        tag: 'Verify',
+        key: 'VERIFY_ARTIST',
+      },
+      {
+        title: 'Escalate',
+        description: 'Route the event to the content authenticity team.',
+        icon: AlertTriangle,
+        tone: 'amber',
+        tag: 'Escalation',
+        key: 'ESCALATE_CONTENT',
+      },
+      {
+        title: 'Quarantine Evidence',
+        description: 'Preserve the affected voice sample or asset for review.',
+        icon: Database,
+        tone: 'green',
+        tag: 'Forensics',
+        key: 'QUARANTINE_AUDIO',
+      },
+    ],
+  },
+}
+
+function Badge({ children, tone = 'indigo' }) {
+  const color =
+    tone === 'red'
+      ? COLORS.red
+      : tone === 'amber'
+        ? COLORS.amber
+        : tone === 'green'
+          ? COLORS.green
+          : COLORS.indigoSoft
+
+  return (
+    <span
+      className="inline-flex items-center gap-2 rounded-full border px-2.5 py-1 text-[9px] font-bold uppercase tracking-[0.11em]"
+      style={{
+        color,
+        borderColor: `${color}44`,
+        background: `${color}10`,
+      }}
+    >
+      <span
+        className="h-1.5 w-1.5 rounded-full"
+        style={{ backgroundColor: color }}
+      />
+      {children}
+    </span>
+  )
+}
+
+function MetricCard({ label, value, helper, icon: Icon, tone = 'indigo' }) {
+  const color =
+    tone === 'red'
+      ? COLORS.red
+      : tone === 'amber'
+        ? COLORS.amber
+        : tone === 'green'
+          ? COLORS.green
+          : COLORS.indigoSoft
+
+  return (
+    <div className="relative overflow-hidden rounded-xl border border-[var(--border-default)] bg-[var(--bg-card)] p-4">
+      <div
+        className="absolute inset-x-0 top-0 h-[3px]"
+        style={{ backgroundColor: color }}
+      />
+
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="text-[9px] font-bold uppercase tracking-[0.13em] text-[var(--text-muted)]">
+            {label}
+          </p>
+
+          <p
+            className="mt-2 text-2xl font-bold tracking-tight"
+            style={{ color: tone === 'indigo' ? COLORS.text : color }}
+          >
+            {value}
+          </p>
+
+          <p className="mt-1 text-[10px] leading-4 text-[var(--text-muted)]">
+            {helper}
+          </p>
+        </div>
+
+        <div
+          className="flex h-9 w-9 items-center justify-center rounded-lg border"
+          style={{
+            color,
+            borderColor: `${color}44`,
+            background: `${color}10`,
+          }}
+        >
+          <Icon size={16} />
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function ActionCard({
+  title,
+  description,
+  icon: Icon,
+  tone = 'indigo',
+  tag,
+  onClick,
+}) {
+  const color =
+    tone === 'red'
+      ? COLORS.red
+      : tone === 'amber'
+        ? COLORS.amber
+        : tone === 'green'
+          ? COLORS.green
+          : COLORS.indigoSoft
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="group relative overflow-hidden rounded-xl border border-[var(--border-default)] bg-[var(--bg-card)] p-4 text-left transition-all duration-200 hover:-translate-y-0.5 hover:bg-[var(--bg-surface)]"
+    >
+      <div
+        className="absolute inset-y-0 left-0 w-[3px]"
+        style={{ backgroundColor: color }}
+      />
+
+      <div className="flex items-start justify-between gap-3">
+        <div
+          className="flex h-9 w-9 items-center justify-center rounded-lg border"
+          style={{
+            color,
+            borderColor: `${color}44`,
+            background: `${color}10`,
+          }}
+        >
+          <Icon size={16} />
+        </div>
+
+        <span
+          className="rounded-md border px-2 py-1 text-[8px] font-bold uppercase tracking-[0.1em]"
+          style={{
+            color,
+            borderColor: `${color}44`,
+            background: `${color}10`,
+          }}
+        >
+          {tag}
+        </span>
+      </div>
+
+      <h3 className="mt-3 text-sm font-bold text-[var(--text-primary)]">
+        {title}
+      </h3>
+
+      <p className="mt-1 text-[10px] leading-5 text-[var(--text-muted)]">
+        {description}
+      </p>
+
+      <div
+        className="mt-3 flex items-center gap-2 text-[9px] font-bold"
+        style={{ color }}
+      >
+        Open response control
+        <ArrowRight
+          size={12}
+          className="transition-transform group-hover:translate-x-1"
+        />
+      </div>
+    </button>
+  )
+}
+
+function Panel({ title, subtitle, icon: Icon, children, tone = 'indigo' }) {
+  const color =
+    tone === 'red'
+      ? COLORS.red
+      : tone === 'amber'
+        ? COLORS.amber
+        : tone === 'green'
+          ? COLORS.green
+          : COLORS.indigoSoft
+
+  return (
+    <section className="overflow-hidden rounded-2xl border border-[var(--border-default)] bg-[var(--bg-card)]">
+      <div className="border-b border-[var(--border-default)] px-5 py-4">
+        <div className="flex items-center gap-3">
+          <div
+            className="flex h-8 w-8 items-center justify-center rounded-lg border"
+            style={{
+              color,
+              borderColor: `${color}44`,
+              background: `${color}10`,
+            }}
+          >
+            <Icon size={15} />
+          </div>
+
+          <div>
+            <h2 className="text-sm font-bold text-[var(--text-primary)]">
+              {title}
+            </h2>
+            <p className="mt-0.5 text-[10px] text-[var(--text-muted)]">
+              {subtitle}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div className="p-5">{children}</div>
+    </section>
+  )
+}
+
+function ContextRow({ label, value }) {
+  if (value === undefined || value === null || value === '') return null
+
+  return (
+    <div className="flex items-center justify-between gap-4 border-b border-[var(--border-default)] py-2.5 last:border-0">
+      <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--text-muted)]">
+        {label}
+      </span>
+
+      <span className="max-w-[65%] truncate text-right text-xs font-semibold text-[var(--text-primary)]">
+        {String(value)}
+      </span>
+    </div>
+  )
+}
+
+export default function Admin({
+  selected,
+  activeStreamId,
+  escalatedIncident: propIncident,
+  onResolveIncident,
+}) {
+  const {
+    escalatedIncident: contextIncident,
+    setEscalatedIncident,
+  } = useSecurity()
+
+  const incident = propIncident ?? contextIncident
+
+  const sector =
+    String(
+      selected?.governance_decision?.sector ||
+      selected?.sector ||
+      incident?.sector ||
+      'finance'
+    ).toLowerCase()
+
+  const config = SECTORS[sector] || SECTORS.finance
+  const SectorIcon = config.icon
+
+  const scenario =
+    selected?.governance_decision?.scenario ||
+    selected?.scenario ||
+    incident?.scenario ||
+    null
+
+  const isAiVoiceDetected =
+    incident !== null ||
+    selected?.risk_level === 'HIGH' ||
     selected?.alert_triggered === true ||
-    (selected?.ai_probability && selected.ai_probability > 0.7)
+    Number(selected?.ai_probability || 0) > 0.7
+
+  const aiProbability = Number(
+    selected?.ai_probability ??
+      incident?.ai_probability ??
+      0
+  )
+
+  const rollingScore = Number(selected?.rolling_score || 0)
+
+  const riskLevel =
+    String(
+      selected?.risk_level ||
+      (isAiVoiceDetected ? 'HIGH' : 'LOW')
+    ).toUpperCase()
+
+  const windowId =
+    selected?.window_id ??
+    incident?.window_id ??
+    '--'
+
+  const streamId =
+    incident?.streamId ||
+    activeStreamId ||
+    selected?.id ||
+    'ACTIVE_STREAM'
+
+  const tone =
+    riskLevel === 'HIGH'
+      ? 'red'
+      : riskLevel === 'MEDIUM'
+        ? 'amber'
+        : 'green'
+
+  const context =
+    selected?.sector_context ||
+    selected?.context ||
+    selected?.governance_decision?.context ||
+    {}
+
+  const contextRows =
+    sector === 'finance'
+      ? [
+          ['Account', context.account || selected?.account],
+          ['Customer', context.customer || selected?.customer],
+          ['Transfer', context.transfer_amount || selected?.transfer_amount || selected?.transaction_amount_inr],
+          ['Channel', context.channel || selected?.channel],
+          ['Beneficiary', context.beneficiary || selected?.beneficiary],
+        ]
+      : sector === 'retail'
+        ? [
+            ['Customer', context.customer_id || selected?.customer_id],
+            ['Order', context.order_id || selected?.order_id],
+            ['Request', context.request || selected?.request],
+            ['Shipment value', context.shipment_value || selected?.shipment_value],
+          ]
+        : sector === 'hospitality'
+          ? [
+              ['Guest', context.guest || selected?.guest],
+              ['Reservation', context.reservation_id || selected?.reservation_id],
+              ['Action', context.action || selected?.action],
+              ['Property', context.property || selected?.property],
+            ]
+          : [
+              ['Artist', context.artist || selected?.artist],
+              ['Asset', context.asset || selected?.asset],
+              ['Content type', context.content_type || selected?.content_type],
+              ['Provenance', context.provenance || selected?.provenance],
+            ]
 
   const handleAction = (actionType) => {
-    alert(`Security Action Executed: ${actionType}`)
-    if (escalatedIncident) {
-      setEscalatedIncident(null) // Clears escalated state after action
+    if (typeof onResolveIncident === 'function') {
+      onResolveIncident(actionType)
+    }
+
+    if (typeof setEscalatedIncident === 'function') {
+      setEscalatedIncident(null)
     }
   }
 
   return (
-    <div className="relative space-y-8 p-6 lg:p-10 text-white">
-      {/* Page Header */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between border-b border-white/10 pb-6">
-        <div>
-          <h1 className="text-2xl font-black font-mono tracking-tight">Security Incident Command</h1>
-          <p className="mt-1 text-sm text-slate-400">
-            Real-time oversight, threat mitigation, and deepfake telemetry control center.
-          </p>
-        </div>
-        <div className="mt-4 md:mt-0 flex items-center gap-3">
-          <span className="flex items-center gap-2 rounded-full border border-cyan-300/30 bg-cyan-400/10 px-3 py-1 text-xs font-bold font-mono text-cyan-200">
-            <span className="size-2 rounded-full bg-cyan-400 animate-ping" />
-            SEC-OPS ACTIVE
-          </span>
-        </div>
-      </div>
-
-      {/* CONDITIONAL AI THREAT BOX: Only appears when AI voice is detected */}
-      {isAiVoiceDetected && (
-        <section className="relative overflow-hidden rounded-2xl border border-red-400/50 bg-gradient-to-br from-red-500/[0.18] via-red-500/[0.08] to-transparent p-6 shadow-[0_0_60px_rgba(239,68,68,0.2)]">
-          <div className="absolute inset-y-0 left-0 w-2 bg-gradient-to-b from-red-300 via-red-500 to-orange-400" />
-          
-          <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+    <section className="w-full space-y-6 pb-10">
+      {/* TOP HEADER */}
+      <section className="overflow-hidden rounded-2xl border border-[var(--border-default)] bg-[var(--bg-surface)]">
+        <div
+          className="border-l-[3px] px-6 py-6 md:px-7"
+          style={{ borderColor: config.tone === 'red' ? COLORS.red : COLORS.indigo }}
+        >
+          <div className="flex flex-col gap-5 xl:flex-row xl:items-center xl:justify-between">
             <div className="flex items-start gap-4">
-              <div className="flex size-14 shrink-0 items-center justify-center rounded-xl border border-red-300/40 bg-red-500/20 shadow-[0_0_20px_rgba(239,68,68,0.3)]">
-                <ShieldAlert size={30} className="animate-pulse text-red-200" />
+              <div
+                className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border"
+                style={{
+                  color:
+                    config.tone === 'red'
+                      ? COLORS.red
+                      : config.tone === 'amber'
+                        ? COLORS.amber
+                        : config.tone === 'green'
+                          ? COLORS.green
+                          : COLORS.indigoSoft,
+                  borderColor:
+                    `${tone === 'red' ? COLORS.red : COLORS.indigoSoft}44`,
+                  background:
+                    `${tone === 'red' ? COLORS.red : COLORS.indigoSoft}10`,
+                }}
+              >
+                <SectorIcon size={22} />
               </div>
+
               <div>
-                <span className="rounded-md border border-red-300/30 bg-red-400/10 px-2.5 py-0.5 text-xs font-black font-mono uppercase tracking-widest text-red-200">
-                  Critical Threat Flagged · Stream: {escalatedIncident?.streamId || activeStreamId || selected?.id || 'ACTIVE_STREAM'}
-                </span>
-                <h2 className="mt-2 text-xl font-bold text-white">Synthetic Voice Impersonation Detected</h2>
-                <p className="mt-1 text-sm text-slate-200 font-mono">
-                  AI Probability Breached: <span className="text-red-300 font-bold">{Math.round((selected?.ai_probability || escalatedIncident?.ai_probability || 0.89) * 100)}%</span> across recent analysis windows. Immediate action required.
+                <div className="flex flex-wrap items-center gap-2">
+                  <Badge tone={config.tone}>{config.short}</Badge>
+                  <Badge tone={isAiVoiceDetected ? 'red' : 'green'}>
+                    {isAiVoiceDetected ? 'Threat response active' : 'Sec-ops active'}
+                  </Badge>
+                  <Badge tone="indigo">Live telemetry</Badge>
+                </div>
+
+                <h1 className="mt-3 text-2xl font-bold tracking-tight text-[var(--text-primary)] md:text-3xl">
+                  {config.label} Command Center
+                </h1>
+
+                <p className="mt-2 max-w-3xl text-sm leading-6 text-[var(--text-muted)]">
+                  {config.description}
                 </p>
               </div>
             </div>
 
-            <button 
-              onClick={() => setEscalatedIncident(null)}
-              className="text-slate-400 hover:text-white transition"
-              title="Dismiss Warning"
-            >
-              <X size={20} />
-            </button>
+            <div className="rounded-xl border border-[var(--border-default)] bg-[var(--bg-card)] px-4 py-3">
+              <p className="text-[9px] font-bold uppercase tracking-[0.12em] text-[var(--text-muted)]">
+                Active channel
+              </p>
+              <p className="mt-1 text-sm font-bold text-[var(--text-primary)]">
+                Live Stream-01
+              </p>
+              <p className="mt-1 text-[9px] text-[var(--text-muted)]">
+                {streamId}
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* INCIDENT */}
+      {isAiVoiceDetected && (
+        <section
+          className="overflow-hidden rounded-2xl border"
+          style={{
+            borderColor: `${COLORS.red}50`,
+            background: `${COLORS.red}07`,
+          }}
+        >
+          <div className="grid xl:grid-cols-[1fr_auto]">
+            <div className="p-5 md:p-6">
+              <div className="flex flex-wrap items-center gap-2">
+                <Badge tone="red">Critical incident</Badge>
+                <Badge tone={config.tone}>{config.short}</Badge>
+                <Badge tone="amber">
+                  {scenario ? String(scenario).replaceAll('_', ' ') : config.workflowLabel}
+                </Badge>
+                <Badge tone="red">Latched</Badge>
+              </div>
+
+              <h2 className="mt-4 text-2xl font-bold text-[var(--text-primary)]">
+                {config.threatTitle}
+              </h2>
+
+              <p className="mt-2 max-w-4xl text-sm leading-6 text-[var(--text-muted)]">
+                {config.workflowLabel} has entered a high-risk security state.
+                Review the sector-specific response path below.
+              </p>
+
+              <div className="mt-5 grid grid-cols-2 gap-3 lg:grid-cols-4">
+                <MetricCard
+                  label="AI probability"
+                  value={`${Math.round(aiProbability * 100)}%`}
+                  helper="Primary model signal"
+                  icon={BrainCircuit}
+                  tone="red"
+                />
+
+                <MetricCard
+                  label="Risk level"
+                  value={riskLevel}
+                  helper="Current security state"
+                  icon={ShieldAlert}
+                  tone={tone}
+                />
+
+                <MetricCard
+                  label="Rolling score"
+                  value={rollingScore.toFixed(3)}
+                  helper="Windowed risk state"
+                  icon={Activity}
+                  tone="amber"
+                />
+
+                <MetricCard
+                  label="Window"
+                  value={windowId}
+                  helper="Latest processing window"
+                  icon={Gauge}
+                  tone="indigo"
+                />
+              </div>
+            </div>
+
+            <div className="flex min-h-[230px] items-center justify-center border-t border-[#D96A78]/15 px-7 xl:min-w-[270px] xl:border-l xl:border-t-0">
+              <div className="flex flex-col items-center">
+                <div className="relative flex h-40 w-40 items-center justify-center">
+                  <svg
+                    viewBox="0 0 160 160"
+                    className="h-full w-full -rotate-90"
+                  >
+                    <circle
+                      cx="80"
+                      cy="80"
+                      r="57"
+                      fill="none"
+                      stroke={COLORS.border}
+                      strokeWidth="11"
+                    />
+                    <circle
+                      cx="80"
+                      cy="80"
+                      r="57"
+                      fill="none"
+                      stroke={COLORS.red}
+                      strokeWidth="11"
+                      strokeLinecap="round"
+                      strokeDasharray={`${2 * Math.PI * 57 * aiProbability} ${2 * Math.PI * 57}`}
+                    />
+                  </svg>
+
+                  <div className="absolute inset-0 flex flex-col items-center justify-center">
+                    <span className="text-3xl font-bold text-[#D96A78]">
+                      {Math.round(aiProbability * 100)}%
+                    </span>
+                    <span className="mt-1 text-[9px] font-bold uppercase tracking-[0.12em] text-[var(--text-muted)]">
+                      synthetic risk
+                    </span>
+                  </div>
+                </div>
+
+                <div className="mt-2">
+                  <Badge tone="red">High confidence threat</Badge>
+                </div>
+              </div>
+            </div>
           </div>
 
-          {/* Small Action Focus Boxes for Admin */}
-          <div className="mt-6 border-t border-red-300/15 pt-5">
-            <p className="mb-3 text-xs font-bold font-mono uppercase tracking-widest text-slate-300">
-              Mandatory Admin Action Protocols
-            </p>
+          {/* Sector context */}
+          <div className="border-t border-[#D96A78]/15 p-5 md:p-6">
+            <div className="grid grid-cols-1 gap-4 xl:grid-cols-[0.9fr_1.1fr]">
+              <div className="rounded-2xl border border-[var(--border-default)] bg-[var(--bg-card)] p-5">
+                <div className="flex items-center gap-3">
+                  <div
+                    className="flex h-9 w-9 items-center justify-center rounded-lg border"
+                    style={{
+                      color:
+                        config.tone === 'red'
+                          ? COLORS.red
+                          : config.tone === 'amber'
+                            ? COLORS.amber
+                            : config.tone === 'green'
+                              ? COLORS.green
+                              : COLORS.indigoSoft,
+                      borderColor: `${COLORS.indigoSoft}33`,
+                      background: `${COLORS.indigoSoft}0A`,
+                    }}
+                  >
+                    <SectorIcon size={17} />
+                  </div>
 
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              <div 
-                onClick={() => handleAction('FREEZE_TRANSACTION')}
-                className="cursor-pointer group rounded-xl border border-red-300/30 bg-[#030712]/60 p-4 transition hover:border-red-300 hover:bg-red-500/10"
-              >
-                <div className="flex items-center justify-between text-red-200 mb-2">
-                  <Lock size={18} />
-                  <span className="text-[10px] font-mono uppercase bg-red-500/20 px-2 py-0.5 rounded">High Priority</span>
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--text-muted)]">
+                      Sector context
+                    </p>
+                    <p className="mt-1 text-sm font-bold text-[var(--text-primary)]">
+                      {config.workflowLabel}
+                    </p>
+                  </div>
                 </div>
-                <h3 className="font-bold text-sm text-white">Freeze Transaction</h3>
-                <p className="text-xs text-slate-400 mt-1">Immediately halt any outgoing funds or automated transfers.</p>
+
+                <div className="mt-4 rounded-xl border border-[var(--border-default)] bg-[var(--bg-surface)] p-4">
+                  {contextRows.some(([, value]) => value !== undefined && value !== null && value !== '') ? (
+                    contextRows.map(([label, value]) => (
+                      <ContextRow key={label} label={label} value={value} />
+                    ))
+                  ) : (
+                    <p className="text-xs leading-5 text-[var(--text-muted)]">
+                      Sector context will populate from the active governance
+                      result when available.
+                    </p>
+                  )}
+                </div>
               </div>
 
-              <div 
-                onClick={() => handleAction('REVOKE_SESSION')}
-                className="cursor-pointer group rounded-xl border border-amber-300/30 bg-[#030712]/60 p-4 transition hover:border-amber-300 hover:bg-amber-500/10"
-              >
-                <div className="flex items-center justify-between text-amber-200 mb-2">
-                  <UserX size={18} />
-                  <span className="text-[10px] font-mono uppercase bg-amber-500/20 px-2 py-0.5 rounded">Access Control</span>
+              <div>
+                <div className="mb-3">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#D96A78]">
+                    Sector response playbook
+                  </p>
+                  <p className="mt-1 text-xs text-[var(--text-muted)]">
+                    Controls aligned to the active sector workflow.
+                  </p>
                 </div>
-                <h3 className="font-bold text-sm text-white">Revoke Session</h3>
-                <p className="text-xs text-slate-400 mt-1">Terminate current WebSocket session and auth tokens.</p>
+
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  {config.actions.map((action) => (
+                    <ActionCard
+                      key={action.key}
+                      {...action}
+                      onClick={() => handleAction(action.key)}
+                    />
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-5 flex items-center justify-between border-t border-[var(--border-default)] pt-4">
+              <div className="flex flex-wrap gap-2">
+                <Badge tone="green">Detection complete</Badge>
+                <Badge tone="amber">Governance required</Badge>
+                <Badge tone="red">Protection active</Badge>
               </div>
 
-              <div 
-                onClick={() => handleAction('QUARANTINE_AUDIO')}
-                className="cursor-pointer group rounded-xl border border-violet-300/30 bg-[#030712]/60 p-4 transition hover:border-violet-300 hover:bg-violet-500/10"
+              <button
+                type="button"
+                onClick={() => setEscalatedIncident(null)}
+                className="flex h-9 w-9 items-center justify-center rounded-lg border border-[var(--border-default)] text-[var(--text-muted)] hover:bg-[var(--bg-surface)] hover:text-[var(--text-primary)]"
+                title="Dismiss incident"
               >
-                <div className="flex items-center justify-between text-violet-200 mb-2">
-                  <Server size={18} />
-                  <span className="text-[10px] font-mono uppercase bg-violet-500/20 px-2 py-0.5 rounded">Forensics</span>
-                </div>
-                <h3 className="font-bold text-sm text-white">Quarantine Audio</h3>
-                <p className="text-xs text-slate-400 mt-1">Save sample buffer to secure storage for acoustic forensics.</p>
-              </div>
-
-              <div 
-                onClick={() => handleAction('BLACKLIST_PROFILE')}
-                className="cursor-pointer group rounded-xl border border-cyan-300/30 bg-[#030712]/60 p-4 transition hover:border-cyan-300 hover:bg-cyan-500/10"
-              >
-                <div className="flex items-center justify-between text-cyan-200 mb-2">
-                  <Zap size={18} />
-                  <span className="text-[10px] font-mono uppercase bg-cyan-500/20 px-2 py-0.5 rounded">Model Guard</span>
-                </div>
-                <h3 className="font-bold text-sm text-white">Blacklist Profile</h3>
-                <p className="text-xs text-slate-400 mt-1">Add voice embedding vector signature to global blocklist.</p>
-              </div>
+                <X size={16} />
+              </button>
             </div>
           </div>
         </section>
       )}
 
-      {/* ALWAYS PRESENT ADMIN PAGE COMPONENTS (System Overview & Telemetry) */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        
-        {/* System Health Status */}
-        <div className="rounded-2xl border border-white/10 bg-[#07111f]/75 p-6 backdrop-blur-xl">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-bold uppercase tracking-wider text-slate-300">System Infrastructure</h3>
-            <Activity size={18} className="text-cyan-300" />
-          </div>
-          <div className="space-y-3 font-mono text-xs">
-            <div className="flex justify-between items-center py-2 border-b border-white/5">
-              <span className="text-slate-400">XGBoost Engine (58-D):</span>
-              <span className="text-emerald-300 font-bold">ONLINE</span>
-            </div>
-            <div className="flex justify-between items-center py-2 border-b border-white/5">
-              <span className="text-slate-400">Dual MMS-300M Model:</span>
-              <span className="text-emerald-300 font-bold">ACTIVE</span>
-            </div>
-            <div className="flex justify-between items-center py-2">
-              <span className="text-slate-400">WebSocket Ingestion:</span>
-              <span className="text-emerald-300 font-bold">CONNECTED</span>
-            </div>
-          </div>
-        </div>
+      {/* SUMMARY */}
+      <div className="grid grid-cols-2 gap-4 xl:grid-cols-4">
+        <MetricCard
+          label="Detection"
+          value={
+            selected?.risk_level
+              ? String(selected.risk_level).toUpperCase()
+              : 'READY'
+          }
+          helper={`${config.short} model state`}
+          icon={BrainCircuit}
+          tone={tone}
+        />
 
-        {/* Global Security Posture */}
-        <div className="rounded-2xl border border-white/10 bg-[#07111f]/75 p-6 backdrop-blur-xl">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-bold uppercase tracking-wider text-slate-300">Detection Parameters</h3>
-            <ShieldCheck size={18} className="text-violet-300" />
-          </div>
-          <div className="space-y-3 font-mono text-xs">
-            <div className="flex justify-between items-center py-2 border-b border-white/5">
-              <span className="text-slate-400">Default Probability Threshold:</span>
-              <span className="text-white font-bold">70.0%</span>
-            </div>
-            <div className="flex justify-between items-center py-2 border-b border-white/5">
-              <span className="text-slate-400">Required Consecutive Windows:</span>
-              <span className="text-white font-bold">3 Frames</span>
-            </div>
-            <div className="flex justify-between items-center py-2">
-              <span className="text-slate-400">Modality Gate (Alpha):</span>
-              <span className="text-white font-bold">0.520</span>
-            </div>
-          </div>
-        </div>
+        <MetricCard
+          label="AI probability"
+          value={`${Math.round(aiProbability * 100)}%`}
+          helper="Synthetic-voice signal"
+          icon={AudioWaveform}
+          tone={
+            aiProbability >= 0.75
+              ? 'red'
+              : aiProbability >= 0.4
+                ? 'amber'
+                : 'green'
+          }
+        />
 
-        {/* Audit Log Summary */}
-        <div className="rounded-2xl border border-white/10 bg-[#07111f]/75 p-6 backdrop-blur-xl">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-bold uppercase tracking-wider text-slate-300">Compliance & Audit</h3>
-            <FileText size={18} className="text-emerald-300" />
-          </div>
-          <div className="space-y-3 font-mono text-xs">
-            <div className="flex justify-between items-center py-2 border-b border-white/5">
-              <span className="text-slate-400">Privacy Mode:</span>
-              <span className="text-cyan-200 font-bold">Feature-Only</span>
-            </div>
-            <div className="flex justify-between items-center py-2 border-b border-white/5">
-              <span className="text-slate-400">Data Retention:</span>
-              <span className="text-white font-bold">24 Hours</span>
-            </div>
-            <div className="flex justify-between items-center py-2">
-              <span className="text-slate-400">Encryption Standard:</span>
-              <span className="text-emerald-300 font-bold">TLS 1.3 / AES-256</span>
-            </div>
-          </div>
-        </div>
+        <MetricCard
+          label="Window"
+          value={windowId}
+          helper="Latest inference window"
+          icon={Gauge}
+          tone="indigo"
+        />
 
+        <MetricCard
+          label="Protection"
+          value={isAiVoiceDetected ? 'LATCHED' : 'ARMED'}
+          helper={isAiVoiceDetected ? 'Incident response active' : 'Ready'}
+          icon={ShieldCheck}
+          tone={isAiVoiceDetected ? 'red' : 'green'}
+        />
       </div>
-    </div>
+
+      {/* HEALTH + GOVERNANCE + AUDIT */}
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
+        <Panel
+          title="System Infrastructure"
+          subtitle="Core runtime health"
+          icon={Server}
+          tone="green"
+        >
+          <div className="space-y-3">
+            {[
+              ['XGBoost Engine (58-D)', 'ONLINE', COLORS.green, Server],
+              ['Dual MMS-300M Model', 'ACTIVE', COLORS.green, BrainCircuit],
+              ['WebSocket Ingestion', 'CONNECTED', COLORS.green, Radio],
+            ].map(([label, state, color, Icon]) => (
+              <div
+                key={label}
+                className="flex items-center justify-between border-b border-[var(--border-default)] pb-3 last:border-0 last:pb-0"
+              >
+                <div className="flex items-center gap-3">
+                  <Icon size={14} className="text-[var(--text-muted)]" />
+                  <span className="text-xs text-[var(--text-muted)]">
+                    {label}
+                  </span>
+                </div>
+
+                <span className="text-[10px] font-bold" style={{ color }}>
+                  {state}
+                </span>
+              </div>
+            ))}
+          </div>
+        </Panel>
+
+        <Panel
+          title={`${config.short} Governance`}
+          subtitle="Sector-specific policy layer"
+          icon={Network}
+          tone={config.tone}
+        >
+          <div className="space-y-3">
+            <div className="rounded-xl border border-[var(--border-default)] bg-[var(--bg-surface)] p-4">
+              <p className="text-[9px] font-bold uppercase tracking-[0.1em] text-[var(--text-muted)]">
+                Workflow
+              </p>
+              <p className="mt-1 text-sm font-bold text-[var(--text-primary)]">
+                {config.workflowLabel}
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2">
+              <div className="rounded-lg border border-[#70B88A]/20 bg-[#70B88A]/5 p-3">
+                <p className="text-[9px] uppercase tracking-[0.1em] text-[var(--text-muted)]">
+                  Low
+                </p>
+                <p className="mt-1 text-xs font-bold text-[#70B88A]">
+                  Allow / Proceed
+                </p>
+              </div>
+
+              <div className="rounded-lg border border-[#D5AE52]/20 bg-[#D5AE52]/5 p-3">
+                <p className="text-[9px] uppercase tracking-[0.1em] text-[var(--text-muted)]">
+                  Medium
+                </p>
+                <p className="mt-1 text-xs font-bold text-[#D5AE52]">
+                  Verify / Step-up
+                </p>
+              </div>
+
+              <div className="col-span-2 rounded-lg border border-[#D96A78]/20 bg-[#D96A78]/5 p-3">
+                <p className="text-[9px] uppercase tracking-[0.1em] text-[var(--text-muted)]">
+                  High
+                </p>
+                <p className="mt-1 text-xs font-bold text-[#D96A78]">
+                  Sector-specific containment + escalation
+                </p>
+              </div>
+            </div>
+          </div>
+        </Panel>
+
+        <Panel
+          title="Compliance & Audit"
+          subtitle="Current protection posture"
+          icon={FileText}
+          tone="green"
+        >
+          <div className="space-y-3">
+            {[
+              ['Privacy mode', 'Feature-Only', COLORS.indigoSoft],
+              ['Data retention', '24 Hours', COLORS.amber],
+              ['Encryption', 'TLS 1.3 / AES-256', COLORS.green],
+            ].map(([label, value, color]) => (
+              <div
+                key={label}
+                className="flex items-center justify-between rounded-xl border border-[var(--border-default)] bg-[var(--bg-surface)] p-3"
+              >
+                <span className="text-xs text-[var(--text-muted)]">
+                  {label}
+                </span>
+                <span className="text-xs font-bold" style={{ color }}>
+                  {value}
+                </span>
+              </div>
+            ))}
+          </div>
+        </Panel>
+      </div>
+
+      {/* OPERATIONAL READINESS */}
+      <section className="overflow-hidden rounded-2xl border border-[var(--border-default)] bg-[var(--bg-card)]">
+        <div className="border-b border-[var(--border-default)] px-5 py-4">
+          <div className="flex items-center gap-3">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-[#5863D6]/25 bg-[#5863D6]/10 text-[#7079E0]">
+              <Activity size={15} />
+            </div>
+
+            <div>
+              <h2 className="text-sm font-bold text-[var(--text-primary)]">
+                Operational Readiness
+              </h2>
+              <p className="mt-0.5 text-[10px] text-[var(--text-muted)]">
+                {config.short} security workflow status
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 gap-3 p-5 md:grid-cols-3">
+          {[
+            ['Detection', 'Continuous', 'Window-level inference', COLORS.indigoSoft, ScanSearch],
+            ['Governance', 'Policy-driven', config.workflowLabel, COLORS.amber, Network],
+            ['Protection', isAiVoiceDetected ? 'Latching' : 'Armed', 'Sector response controls', isAiVoiceDetected ? COLORS.red : COLORS.green, ShieldCheck],
+          ].map(([label, value, helper, color, Icon]) => (
+            <div
+              key={label}
+              className="rounded-xl border border-[var(--border-default)] bg-[var(--bg-surface)] p-4"
+            >
+              <div className="flex items-center gap-2" style={{ color }}>
+                <Icon size={14} />
+                <span className="text-[9px] font-bold uppercase tracking-[0.12em]">
+                  {label}
+                </span>
+              </div>
+
+              <p className="mt-2 text-sm font-bold text-[var(--text-primary)]">
+                {value}
+              </p>
+
+              <p className="mt-1 text-[10px] leading-5 text-[var(--text-muted)]">
+                {helper}
+              </p>
+            </div>
+          ))}
+        </div>
+      </section>
+    </section>
   )
 }

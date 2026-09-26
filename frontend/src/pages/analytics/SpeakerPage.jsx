@@ -1,43 +1,128 @@
-import { UserCheck } from 'lucide-react'
+import { UserCheck, ShieldCheck, Fingerprint, Activity } from 'lucide-react'
 import StatusPill from '../../components/StatusPill'
+import AnalyticsMetricCard from '../../components/analytics/AnalyticsMetricCard'
+import {
+  AnalyticsModuleShell,
+  AnalyticsSection,
+} from '../../components/analytics/AnalyticsModuleShell'
 import { formatProbability } from '../../utils/helpers'
 
 export default function SpeakerPage({ selected }) {
-  const speaker = selected.speaker_verification || {}
+  const speaker = selected?.speaker_verification || {}
+  const matchScore =
+    speaker.match_score != null ? Number(speaker.match_score) : null
+
+  const tone =
+    matchScore != null
+      ? matchScore < 0.5
+        ? 'red'
+        : matchScore < 0.75
+          ? 'amber'
+          : 'green'
+      : 'indigo'
 
   return (
-    <div className="space-y-6 max-w-5xl mx-auto">
-      <div>
-        <p className="text-xs font-bold uppercase tracking-widest text-indigo-400 font-mono">Module 02</p>
-        <h1 className="text-3xl font-black text-white mt-1">Speaker Verification & Identity</h1>
-        <p className="text-sm text-slate-400 mt-2">
-          Performs cross-session biometric matching to ensure the active speaker matches the pre-enrolled profile.
-        </p>
+    <AnalyticsModuleShell
+      module="02"
+      title="Speaker Verification & Identity"
+      description="Validates whether the active speaker matches the enrolled voice identity using biometric embedding comparison."
+      icon={UserCheck}
+      tone={tone}
+      status={speaker.status || (matchScore != null ? 'EVALUATED' : 'WAITING')}
+    >
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-4">
+        <AnalyticsMetricCard
+          label="Biometric Match"
+          value={formatProbability(matchScore)}
+          helper="Similarity between the observed voice and the enrolled speaker profile."
+          icon={Fingerprint}
+          tone={tone}
+          progress={matchScore != null ? matchScore * 100 : null}
+        />
+
+        <AnalyticsMetricCard
+          label="Verification State"
+          value={
+            speaker.status ||
+            (matchScore != null
+              ? matchScore > 0.75
+                ? 'VERIFIED'
+                : 'MISMATCH'
+              : 'WAITING')
+          }
+          helper="Current identity verification state."
+          icon={ShieldCheck}
+          tone={tone}
+        />
+
+        <AnalyticsMetricCard
+          label="Enrolled Profile"
+          value={speaker.enrolled_speaker || 'Secure Profile'}
+          helper="Reference identity used for cross-session biometric comparison."
+          icon={UserCheck}
+          tone="indigo"
+        />
+
+        <AnalyticsMetricCard
+          label="Detection Window"
+          value={selected?.window_id ?? '--'}
+          helper="Active inference window associated with this identity assessment."
+          icon={Activity}
+          tone="indigo"
+        />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="rounded-xl border border-slate-800 bg-[#0c1017] p-5">
-          <p className="text-[10px] uppercase font-mono text-slate-500">Enrolled Speaker Profile</p>
-          <p className="text-xl font-bold font-mono text-white mt-2">{speaker.enrolled_speaker ?? 'Default Secure Profile'}</p>
-        </div>
-        <div className="rounded-xl border border-slate-800 bg-[#0c1017] p-5">
-          <p className="text-[10px] uppercase font-mono text-slate-500">Biometric Match Score</p>
-          <p className="text-xl font-bold font-mono text-cyan-300 mt-2">{formatProbability(speaker.match_score)}</p>
-        </div>
-      </div>
+      <AnalyticsSection
+        title="Identity guard"
+        subtitle="How speaker verification contributes to the security decision."
+        icon={ShieldCheck}
+      >
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+          <div className="rounded-xl border border-[var(--border-default)] bg-[var(--bg-surface)] p-5 lg:col-span-2">
+            <div className="flex items-center gap-3">
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[var(--accent-primary)]/10 text-[var(--accent-primary-soft)]">
+                <Fingerprint size={17} />
+              </div>
+              <div>
+                <h4 className="text-sm font-semibold text-[var(--text-primary)]">
+                  Biometric matching
+                </h4>
+                <p className="mt-0.5 text-xs text-[var(--text-muted)]">
+                  ECAPA-TDNN speaker embedding comparison
+                </p>
+              </div>
+            </div>
 
-      <div className="rounded-2xl border border-slate-800 bg-[#0c1017] p-6 space-y-4">
-        <h3 className="text-sm font-bold text-white flex items-center gap-2">
-          <UserCheck size={16} className="text-indigo-400" /> Identity Guard Mechanics
-        </h3>
-        <p className="text-xs text-slate-300 leading-relaxed">
-          Using deep speaker embedding extractors (e.g., x-vectors/ECAPA-TDNN), BoloSafe-AI compares voiceprints against secure enrollment templates. A low match score combined with high AI probability indicates potential identity spoofing or voice cloning attacks.
-        </p>
-        <div className="border-t border-slate-800 pt-4 flex items-center justify-between text-xs font-mono">
-          <span className="text-slate-400">Verification State:</span>
-          <StatusPill status={speaker.status || (speaker.match_score > 0.75 ? 'VERIFIED' : 'MISMATCH')} />
+            <p className="mt-4 text-xs leading-6 text-[var(--text-muted)]">
+              BoloSafe-AI compares the active voiceprint against an enrolled
+              identity. A low biometric match combined with elevated synthetic
+              voice probability can indicate a potential impersonation attempt.
+            </p>
+          </div>
+
+          <div className="rounded-xl border border-[var(--border-default)] bg-[var(--bg-surface)] p-5">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--text-muted)]">
+              Current state
+            </p>
+            <div className="mt-3">
+              <StatusPill
+                status={
+                  speaker.status ||
+                  (matchScore != null
+                    ? matchScore > 0.75
+                      ? 'VERIFIED'
+                      : 'MISMATCH'
+                    : 'WAITING')
+                }
+              />
+            </div>
+            <p className="mt-3 text-xs leading-5 text-[var(--text-muted)]">
+              Identity evidence should be interpreted with the primary detector
+              and sector governance result.
+            </p>
+          </div>
         </div>
-      </div>
-    </div>
+      </AnalyticsSection>
+    </AnalyticsModuleShell>
   )
 }

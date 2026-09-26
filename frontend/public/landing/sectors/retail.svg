@@ -1,0 +1,32 @@
+<svg width="900" height="700" viewBox="0 0 900 700" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#292311"/>
+      <stop offset=".45" stop-color="#121625"/>
+      <stop offset="1" stop-color="#0B0F1D"/>
+    </linearGradient>
+    <radialGradient id="g" cx="75%" cy="25%" r="48%">
+      <stop offset="0" stop-color="#D5AE52" stop-opacity=".26"/>
+      <stop offset="1" stop-color="#D5AE52" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="900" height="700" fill="url(#bg)"/>
+  <rect width="900" height="700" fill="url(#g)"/>
+  <g opacity=".12" stroke="#D5AE52">
+    <path d="M0 140H900M0 280H900M0 420H900M0 560H900"/>
+    <path d="M150 0V700M300 0V700M450 0V700M600 0V700M750 0V700"/>
+  </g>
+  <g transform="translate(500 100)">
+    <rect width="300" height="360" rx="28" fill="#101523" stroke="#D5AE52" stroke-opacity=".32"/>
+    <rect x="35" y="35" width="230" height="160" rx="18" fill="#171B2B"/>
+    <rect x="55" y="55" width="70" height="95" rx="14" fill="#D5AE52" fill-opacity=".13" stroke="#D5AE52" stroke-opacity=".35"/>
+    <rect x="140" y="55" width="105" height="20" rx="10" fill="#D5AE52" fill-opacity=".11"/>
+    <rect x="140" y="89" width="80" height="15" rx="7" fill="#858BA3" fill-opacity=".15"/>
+    <rect x="140" y="115" width="95" height="15" rx="7" fill="#858BA3" fill-opacity=".15"/>
+    <rect x="35" y="220" width="110" height="90" rx="16" fill="#171B2B"/>
+    <rect x="155" y="220" width="110" height="90" rx="16" fill="#171B2B"/>
+  </g>
+  <path d="M20 570 C150 500 250 610 350 515 S570 420 890 300" fill="none" stroke="#D5AE52" stroke-width="3" opacity=".52"/>
+  <text x="55" y="80" fill="#D5AE52" font-family="Arial" font-size="24" font-weight="700" letter-spacing="3">RETAIL SECURITY</text>
+  <text x="55" y="115" fill="#F4F5FA" font-family="Arial" font-size="42" font-weight="700">ORDER TAKEOVER</text>
+</svg>

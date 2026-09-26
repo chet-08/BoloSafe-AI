@@ -1,0 +1,45 @@
+<svg width="900" height="700" viewBox="0 0 900 700" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#25151C"/>
+      <stop offset="0.45" stop-color="#111524"/>
+      <stop offset="1" stop-color="#0B0F1D"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="75%" cy="25%" r="50%">
+      <stop offset="0" stop-color="#D96A78" stop-opacity=".32"/>
+      <stop offset="1" stop-color="#D96A78" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="900" height="700" fill="url(#bg)"/>
+  <rect width="900" height="700" fill="url(#glow)"/>
+
+  <g opacity=".12" stroke="#D96A78">
+    <path d="M0 120H900M0 240H900M0 360H900M0 480H900M0 600H900"/>
+    <path d="M120 0V700M240 0V700M360 0V700M480 0V700M600 0V700M720 0V700M840 0V700"/>
+  </g>
+
+  <g transform="translate(535 105)">
+    <rect width="265" height="335" rx="28" fill="#101523" stroke="#D96A78" stroke-opacity=".38"/>
+    <rect x="24" y="25" width="217" height="105" rx="18" fill="#161B2B" stroke="#D96A78" stroke-opacity=".18"/>
+    <path d="M45 105 C75 63 103 78 128 53 S179 75 216 42" fill="none" stroke="#D96A78" stroke-width="7" stroke-linecap="round"/>
+    <circle cx="128" cy="82" r="28" fill="#D96A78" fill-opacity=".12" stroke="#D96A78" stroke-opacity=".35"/>
+    <path d="M119 70h18v23c0 8-6 14-9 16-3-2-9-8-9-16z" fill="#D96A78" fill-opacity=".22" stroke="#D96A78"/>
+    <rect x="24" y="155" width="217" height="55" rx="14" fill="#161B2B"/>
+    <rect x="24" y="225" width="105" height="85" rx="16" fill="#161B2B"/>
+    <rect x="137" y="225" width="104" height="85" rx="16" fill="#161B2B"/>
+  </g>
+
+  <g fill="#F4F5FA" opacity=".9">
+    <circle cx="170" cy="500" r="3"/>
+    <circle cx="250" cy="450" r="3"/>
+    <circle cx="310" cy="530" r="3"/>
+    <circle cx="395" cy="475" r="3"/>
+  </g>
+
+  <path d="M0 535 C150 400 260 590 390 470 S620 390 900 230" fill="none" stroke="#D96A78" stroke-width="3" opacity=".55"/>
+  <path d="M0 535 C150 400 260 590 390 470 S620 390 900 230" fill="none" stroke="#D96A78" stroke-width="1" opacity=".95"/>
+
+  <text x="55" y="80" fill="#D96A78" font-family="Arial" font-size="24" font-weight="700" letter-spacing="3">FINANCIAL SECURITY</text>
+  <text x="55" y="115" fill="#F4F5FA" font-family="Arial" font-size="42" font-weight="700">WIRE FRAUD</text>
+</svg>
