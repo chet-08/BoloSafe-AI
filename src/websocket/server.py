@@ -33,6 +33,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import ValidationError
 
 from src.adversarial.router import router as adversarial_router
+from src.sectors.api import router as sector_api_router
 from src.config import VAD_FRAME_SAMPLES, SAMPLE_RATE
 from src.features import extract_features
 from src.yin_analyzer import extract_yin_pitch_stats
@@ -78,6 +79,7 @@ app.add_middleware(
 )
 
 app.include_router(adversarial_router)
+app.include_router(sector_api_router, prefix="/api/v1/sectors")
 
 
 
@@ -1710,8 +1712,13 @@ async def audio_websocket_endpoint(
                                 audio_window,
                             )
 
+                            stream_sector = stream_manager.get_context(
+                                stream_id
+                            ).get("sector", "finance")
+
                             if speaker_registry.is_enrolled(
-                                speaker_id
+                                speaker_id,
+                                sector=stream_sector,
                             ):
 
                                 try:
@@ -1720,6 +1727,7 @@ async def audio_websocket_endpoint(
                                         speaker_registry.verify(
                                             speaker_id,
                                             live_embedding,
+                                            sector=stream_sector,
                                         )
                                     )
 
@@ -1727,6 +1735,7 @@ async def audio_websocket_endpoint(
                                         speaker_registry.is_match(
                                             speaker_id,
                                             live_embedding,
+                                            sector=stream_sector,
                                         )
                                     )
 
@@ -1735,11 +1744,11 @@ async def audio_websocket_endpoint(
 
                             else:
 
-                                # Sprint 1B stopgap:
-                                # auto-enroll first observed window.
+                                # Auto-enroll first observed window into stream's sector partition
                                 speaker_registry.enroll(
                                     speaker_id,
                                     live_embedding,
+                                    sector=stream_sector,
                                 )
 
                         except Exception as exc:
@@ -2116,6 +2125,7 @@ async def audio_websocket_endpoint(
                         transaction_amount_inr=sector_context.get(
                             "transaction_amount_inr"
                         ),
+                        caller_id=speaker_id,
                     )
 
                     result = result.model_copy(
