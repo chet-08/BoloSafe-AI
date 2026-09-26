@@ -84,7 +84,10 @@ class StreamManager:
 
     def _get_engine(self, stream_id: str) -> RiskEngine:
         if stream_id not in self._engines:
-            self.configure_stream(stream_id)
+            raise RuntimeError(
+                f"Stream {stream_id!r} has no security context. "
+                "Configure the stream before processing predictions."
+            )
 
         return self._engines[stream_id]
 
@@ -124,6 +127,7 @@ class StreamManager:
         self._scenarios.pop(stream_id, None)
         self._scenario_sources.pop(stream_id, None)
         self._transaction_amounts.pop(stream_id, None)
+        self._sectors.pop(stream_id, None)
 
     def active_streams(self) -> list[str]:
         """Return the IDs of currently tracked streams."""
