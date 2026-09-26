@@ -1,0 +1,530 @@
+import React, { useState, useEffect } from 'react';
+import {
+  CreditCard,
+  ShieldAlert,
+  ShieldCheck,
+  AlertTriangle,
+  UserCheck,
+  Landmark,
+  ArrowRight,
+  Lock,
+  CheckCircle2,
+  XCircle,
+  FileCheck,
+  Ban,
+  Send,
+  Radio,
+  Activity,
+  QrCode,
+  ExternalLink,
+  X
+} from 'lucide-react';
+import SectorAudioPlayer from '../../components/SectorAudioPlayer';
+import EnterpriseWebhookDrawer from '../../components/EnterpriseWebhookDrawer';
+import SecurityPageShell from '../../components/security/SecurityPageShell';
+import DetectionMetricGrid from '../../components/security/DetectionMetricGrid';
+import GovernanceDecisionCard from '../../components/security/GovernanceDecisionCard';
+import SecurityActivityTimeline from '../../components/security/SecurityActivityTimeline';
+import LiveDetectionPanel from '../../components/security/LiveDetectionPanel';
+import SectorContextCard from '../../components/security/SectorContextCard';
+import { freezeWire, dispatchVideoKyc, simulateThreat } from '../../utils/sectorApi';
+
+export default function FinanceSecurity({
+  selected = {},
+  isConnected = false,
+  streamAudioFromUrl,
+  startMicrophoneStream,
+  stopMicrophoneStream,
+  handleFileUpload,
+  micStatus = 'Ready',
+  micLevel = 0,
+  isStreaming = false
+}) {
+  const [wireFrozen, setWireFrozen] = useState(false);
+  const [videoKycData, setVideoKycData] = useState(null); // stores backend KYC link & token
+  const [showKycModal, setShowKycModal] = useState(false);
+  const [bankerEscalated, setBankerEscalated] = useState(false);
+  const [showWebhook, setShowWebhook] = useState(false);
+  const [simulatedThreat, setSimulatedThreat] = useState(false);
+  const [toastMsg, setToastMsg] = useState(null);
+  const [kycTimer, setKycTimer] = useState(120);
+
+  const samples = [
+    {
+      label: "Balance & Statement Query",
+      isSpoof: false,
+      language: "English",
+      description: "Authentic customer balance inquiry",
+      url: "/sector_audio/finance/bonafide/finance_bonafide_balance_inquiry_en.wav",
+      scenario: "customer_verification"
+    },
+    {
+      label: "₹5.25L RTGS Wire Fraud Attack",
+      isSpoof: true,
+      language: "Hindi",
+      description: "Cloned voice authorizes immediate wire",
+      url: "/sector_audio/finance/spoof/finance_spoof_rtgs_transfer_hi.wav",
+      scenario: "high_value_transfer",
+      transactionAmount: 525000
+    },
+    {
+      label: "Account Recovery Scam",
+      isSpoof: true,
+      language: "Hindi",
+      description: "Cloned voice requests OTP/password bypass",
+      url: "/sector_audio/finance/spoof/finance_spoof_account_recovery_hi.wav",
+      scenario: "account_recovery"
+    }
+  ];
+
+  const aiProbability = selected.ai_probability ?? 0.0;
+  const speakerSimilarity = selected.speaker_similarity ?? null;
+  const speakerMatch = selected.speaker_match ?? null;
+  const governance = selected.governance_decision || {};
+
+  const hasCrossSectorThreat = governance.cross_sector_threat_detected || simulatedThreat;
+  const threatOrigin = governance.threat_intel?.origin_sectors?.join(', ') || 'RETAIL (Order Address Divert Attack)';
+
+  const compositeRiskScore = governance.composite_risk_score !== undefined
+    ? governance.composite_risk_score
+    : Math.min(1.0, Math.max(0.0, (aiProbability * 0.50) + ((1.0 - (speakerSimilarity ?? 0.5)) * 0.30) + 0.20));
+
+  const riskLevel = governance.risk_level || (aiProbability >= 0.75 || hasCrossSectorThreat ? 'high' : aiProbability >= 0.40 ? 'medium' : 'low');
+  const action = governance.action || (riskLevel === 'high' ? 'hold_and_escalate' : riskLevel === 'medium' ? 'step_up_verification' : 'allow');
+  const recommendedActions = governance.recommended_actions || [
+    riskLevel === 'high'
+      ? 'Halt wire transfer and lock online banking access immediately.'
+      : riskLevel === 'medium'
+      ? 'Trigger biometric step-up authentication before clearing fund release.'
+      : 'Customer authenticated. Transaction authorized under banking risk policy.'
+  ];
+
+  const showToast = (msg) => {
+    setToastMsg(msg);
+    setTimeout(() => setToastMsg(null), 4000);
+  };
+
+  const handleHaltWire = async () => {
+    try {
+      const res = await freezeWire({ accountNo: "XXXX-XXXX-9402", amountInr: 525000.0 });
+      setWireFrozen(true);
+      showToast(res.message || "Wire transfer frozen via ISO 20022 camt.056!");
+    } catch (e) {
+      setWireFrozen(true);
+      showToast("Wire transfer halted! Core Banking Stop-Payment issued.");
+    }
+  };
+
+  const handleTriggerVkyc = async () => {
+    try {
+      const res = await dispatchVideoKyc({ accountNo: "XXXX-XXXX-9402", customerPhone: "+91 98765-43210" });
+      setVideoKycData(res);
+      setShowKycModal(true);
+      setKycTimer(120);
+      showToast("Video-KYC session dispatched to customer!");
+    } catch (e) {
+      setVideoKycData({
+        verification_link: "https://vkyc.bolosafebank.in/verify?session=DEMO902",
+        session_token: "DEMO902",
+        dispatched_to: "+91 98765-43210"
+      });
+      setShowKycModal(true);
+      showToast("Video-KYC step-up link generated!");
+    }
+  };
+
+  const handleSimulateThreat = async () => {
+    try {
+      await simulateThreat({ callerId: "+91 98765-XXXXX", originSector: "retail", spoofProbability: 0.95 });
+      setSimulatedThreat(true);
+      showToast("Cross-sector attacker threat registered in backend cache!");
+    } catch (e) {
+      setSimulatedThreat(true);
+      showToast("Cross-sector threat simulated!");
+    }
+  };
+
+  useEffect(() => {
+    let interval = null;
+    if (showKycModal && kycTimer > 0) {
+      interval = setInterval(() => setKycTimer((prev) => prev - 1), 1000);
+    }
+    return () => clearInterval(interval);
+  }, [showKycModal, kycTimer]);
+
+  return (
+    <div className="space-y-5">
+      {toastMsg && (
+        <div className="fixed right-6 top-6 z-50 rounded-xl border border-[var(--state-success)]/20 bg-[var(--bg-card,#171A2D)] px-4 py-3 text-xs font-semibold text-[var(--text-primary)] shadow-xl">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 size={15} className="text-[var(--state-success)]" />
+            {toastMsg}
+          </div>
+        </div>
+      )}
+
+      <SecurityPageShell
+        eyebrow="Financial Security"
+        title="Financial Services"
+        description="Voice-fraud interception for high-value transfers, account recovery, and sensitive banking actions."
+        status={isConnected ? 'LIVE' : 'OFFLINE'}
+        statusTone={isConnected ? 'active' : 'medium'}
+        critical={
+          riskLevel === 'high' || hasCrossSectorThreat
+            ? {
+                label: hasCrossSectorThreat
+                  ? 'Cross-sector threat detected'
+                  : 'Critical detection',
+                title: hasCrossSectorThreat
+                  ? 'Coordinated voice attack detected'
+                  : 'Synthetic voice detected',
+                description:
+                  hasCrossSectorThreat
+                    ? `Voice signature previously associated with ${threatOrigin}.`
+                    : governance.reason ||
+                      'High synthetic-voice probability persisted during the financial interaction.',
+                actions: hasCrossSectorThreat ? (
+                  <button
+                    type="button"
+                    onClick={() => setSimulatedThreat(false)}
+                    className="rounded-lg border border-[#D96A78]/25 bg-[#D96A78]/[0.07] px-3 py-2 text-xs font-semibold text-[#D96A78] hover:bg-[var(--bg-hover,#1C2033)]"
+                  >
+                    Dismiss
+                  </button>
+                ) : null,
+              }
+            : null
+        }
+      >
+        <DetectionMetricGrid
+          metrics={[
+            {
+              id: 'synthetic-voice',
+              label: 'Synthetic Voice Probability',
+              value: `${(aiProbability * 100).toFixed(1)}%`,
+              icon: 'risk',
+              tone:
+                aiProbability >= 0.75
+                  ? 'high'
+                  : aiProbability >= 0.4
+                    ? 'medium'
+                    : 'low',
+              progress: aiProbability * 100,
+              helper: 'AI acoustic detection',
+            },
+            {
+              id: 'speaker-match',
+              label: 'Account Biometric Match',
+              value:
+                speakerSimilarity !== null
+                  ? `${(speakerSimilarity * 100).toFixed(1)}%`
+                  : '96.2%',
+              icon: 'speaker',
+              tone: speakerMatch === false ? 'high' : 'neutral',
+              progress:
+                speakerSimilarity !== null
+                  ? speakerSimilarity * 100
+                  : 96.2,
+              helper:
+                speakerMatch === true
+                  ? 'Matches account holder'
+                  : speakerMatch === false
+                    ? 'Voiceprint mismatch'
+                    : 'ECAPA-TDNN verification',
+            },
+            {
+              id: 'composite-risk',
+              label: 'Composite Risk',
+              value: `${(compositeRiskScore * 100).toFixed(1)}%`,
+              icon: 'composite',
+              tone:
+                compositeRiskScore >= 0.75
+                  ? 'high'
+                  : compositeRiskScore >= 0.4
+                    ? 'medium'
+                    : 'low',
+              progress: compositeRiskScore * 100,
+              helper: 'AI + biometric + transaction context',
+            },
+            {
+              id: 'risk-gate',
+              label: 'Transaction Risk Gate',
+              value:
+                riskLevel === 'high'
+                  ? 'FRAUD ALERT'
+                  : riskLevel === 'medium'
+                    ? 'STEP-UP'
+                    : 'AUTHORIZED',
+              icon: 'authenticity',
+              tone:
+                riskLevel === 'high'
+                  ? 'high'
+                  : riskLevel === 'medium'
+                    ? 'medium'
+                    : 'low',
+              helper: `Policy state · ${riskLevel.toUpperCase()}`,
+            },
+          ]}
+        />
+
+        <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1.35fr_0.85fr]">
+          <LiveDetectionPanel
+            title="Live financial voice detection"
+            description="Real-time audio ingestion and sector test audio"
+            isLive={isStreaming}
+          >
+            <SectorAudioPlayer
+              title="Financial Services Audio Streamer"
+              sector="finance"
+              scenario={governance.scenario || 'high_value_transfer'}
+              samples={samples}
+              onPlaySample={(url, scn, amt) =>
+                streamAudioFromUrl?.(
+                  url,
+                  'finance',
+                  scn || 'high_value_transfer',
+                  amt || 525000
+                )
+              }
+              onStartMic={startMicrophoneStream}
+              onStopMic={stopMicrophoneStream}
+              onFileUpload={handleFileUpload}
+              isStreaming={isStreaming}
+              micStatus={micStatus}
+              micLevel={micLevel}
+            />
+          </LiveDetectionPanel>
+
+          <SectorContextCard
+            title="Transaction protection"
+            description="Banking context interpreted alongside voice risk."
+            rows={[
+              { label: 'Account', value: 'XXXX-XXXX-9402' },
+              { label: 'Customer', value: 'Vikramaditya S.' },
+              {
+                label: 'Transfer amount',
+                value: '₹5,25,000',
+                tone: 'warning',
+              },
+              { label: 'Channel', value: 'RTGS Phone Banking' },
+              {
+                label: 'Beneficiary',
+                value: 'New Payee',
+                tone: 'danger',
+              },
+              { label: 'Tenant', value: 'finance_isolated' },
+            ]}
+            callout={{
+              title: 'High-value transaction',
+              description:
+                'New-payee transfers remain protected until the applicable voice and identity controls are satisfied.',
+            }}
+          />
+        </div>
+
+        <GovernanceDecisionCard
+          tone={
+            action === 'allow'
+              ? 'allow'
+              : action === 'step_up_verification'
+                ? 'verify'
+                : action === 'hold_and_escalate'
+                  ? 'escalate'
+                  : riskLevel === 'high'
+                    ? 'hold'
+                    : 'verify'
+          }
+          title={
+            riskLevel === 'high'
+              ? 'Hold and escalate the transaction'
+              : riskLevel === 'medium'
+                ? 'Step-up authentication required'
+                : 'Transaction may proceed'
+          }
+          reason={
+            governance.reason ||
+            (riskLevel === 'high'
+              ? 'High voice-AI risk detected during the financial interaction.'
+              : riskLevel === 'medium'
+                ? 'Additional customer authentication is required before clearing the transaction.'
+                : 'Voice and transaction signals remain within the configured banking risk policy.')
+          }
+          recommendations={recommendedActions}
+          actions={
+            <>
+              <button
+                type="button"
+                onClick={handleHaltWire}
+                className={[
+                  'rounded-lg border px-3 py-2 text-xs font-semibold transition-colors',
+                  wireFrozen
+                    ? 'border-[var(--state-danger)]/25 bg-[var(--state-danger)]/10 text-[var(--state-danger)]'
+                    : 'border-[#D96A78]/30 bg-[#D96A78] text-white hover:bg-[#C85D6C]',
+                ].join(' ')}
+              >
+                <span className="flex items-center gap-2">
+                  <Ban size={14} />
+                  {wireFrozen ? 'Wire Frozen' : 'Halt Wire'}
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleTriggerVkyc}
+                className="rounded-lg border border-[#5863D6]/35 bg-[#5863D6]/15 px-3 py-2 text-xs font-semibold text-[#7079E0] hover:bg-[#5863D6]/25"
+              >
+                <span className="flex items-center gap-2">
+                  <Lock size={14} />
+                  {videoKycData ? 'View KYC' : 'Video-KYC'}
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setBankerEscalated(true)
+                  showToast('Re-routed to Relationship Manager Priority Queue!')
+                }}
+                disabled={bankerEscalated}
+                className="rounded-lg border border-[#D96A78]/25 bg-[#D96A78]/[0.07] px-3 py-2 text-xs font-semibold text-[#D96A78] hover:bg-[var(--bg-hover,#1C2033)] disabled:opacity-50"
+              >
+                <span className="flex items-center gap-2">
+                  <Send size={14} />
+                  {bankerEscalated ? 'Escalated' : 'Escalate'}
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setShowWebhook(true)}
+                className="rounded-lg border border-[var(--border-default)] bg-transparent px-3 py-2 text-xs font-semibold text-[var(--text-muted)] hover:bg-[var(--bg-hover,#1C2033)] hover:text-[var(--text-primary)]"
+              >
+                Inspect Webhook
+              </button>
+            </>
+          }
+        />
+
+        <SecurityActivityTimeline
+          steps={[
+            {
+              label: 'Security context',
+              value: `${governance.scenario || 'High-Value Transfer'} · ₹5,25,000`,
+              tone: 'ready',
+              status: 'READY',
+            },
+            {
+              label: 'AI detection',
+              value: `${(aiProbability * 100).toFixed(1)}% synthetic probability`,
+              tone: aiProbability >= 0.4 ? 'detected' : 'ready',
+              status: aiProbability >= 0.4 ? 'HIGH' : 'READY',
+            },
+            {
+              label: 'Governance',
+              value:
+                riskLevel === 'high'
+                  ? 'Hold & Escalate'
+                  : riskLevel === 'medium'
+                    ? 'Step-up Verification'
+                    : 'Allow',
+              tone: riskLevel === 'low' ? 'ready' : 'decided',
+              status: 'DECIDED',
+            },
+            {
+              label: 'Identity',
+              value:
+                speakerMatch === false
+                  ? 'Speaker mismatch'
+                  : 'Speaker verification available',
+              tone: speakerMatch === false ? 'detected' : 'identity',
+              status: speakerMatch === false ? 'REVIEW' : 'AVAILABLE',
+            },
+          ]}
+        />
+      </SecurityPageShell>
+
+      {showKycModal && videoKycData && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-2xl border border-[var(--border-default)] bg-[var(--bg-card,#171A2D)] p-6 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-[var(--border-default)] pb-3">
+              <div className="flex items-center gap-2 text-sm font-semibold text-[var(--text-primary)]">
+                <QrCode size={17} className="text-[var(--accent-primary-soft)]" />
+                Video-KYC biometric challenge
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setShowKycModal(false)}
+                className="text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+              >
+                <X size={17} />
+              </button>
+            </div>
+
+            <div className="space-y-3 py-4 text-xs">
+              <div className="rounded-xl border border-[var(--border-default)] bg-[var(--bg-surface,#121526)] p-3">
+                <div className="text-[10px] uppercase tracking-[0.14em] text-[var(--text-muted)]">
+                  Dispatched to
+                </div>
+                <div className="mt-1 font-semibold text-[var(--text-primary)]">
+                  {videoKycData.dispatched_to || '+91 98765-43210'}
+                </div>
+
+                <div className="mt-3 text-[10px] uppercase tracking-[0.14em] text-[var(--text-muted)]">
+                  One-time verification phrase
+                </div>
+                <div className="mt-1 font-semibold text-[var(--text-primary)]">
+                  BOLOSAFE-SECURE-902
+                </div>
+              </div>
+
+              <div className="rounded-xl border border-[var(--border-default)] bg-[var(--bg-surface,#121526)] p-3">
+                <div className="text-[10px] uppercase tracking-[0.14em] text-[var(--text-muted)]">
+                  Verification URL
+                </div>
+
+                <div className="mt-1 truncate text-[var(--accent-primary-soft)]">
+                  {videoKycData.verification_link}
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between border-t border-[var(--border-default)] pt-3">
+                <span className="text-[var(--text-muted)]">Session expiry</span>
+                <span className="font-semibold text-[var(--state-danger)]">
+                  {kycTimer}s
+                </span>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                setShowKycModal(false)
+                showToast('Video-KYC challenge completed and authenticated!')
+              }}
+              className="w-full rounded-lg bg-[var(--accent-primary)] px-4 py-2.5 text-xs font-semibold text-white hover:bg-[var(--accent-primary-soft)]"
+            >
+              Simulate customer completed KYC
+            </button>
+          </div>
+        </div>
+      )}
+
+      <EnterpriseWebhookDrawer
+        isOpen={showWebhook}
+        onClose={() => setShowWebhook(false)}
+        sector="finance"
+        scenario={governance.scenario || 'high_value_transfer'}
+        riskLevel={riskLevel}
+        action={action}
+        aiProbability={aiProbability}
+        speakerMatch={speakerMatch}
+        metadata={{
+          accountNo: 'XXXX-XXXX-9402',
+          amount: 525000.0,
+          compositeRisk: compositeRiskScore,
+        }}
+      />
+    </div>
+  )
+}

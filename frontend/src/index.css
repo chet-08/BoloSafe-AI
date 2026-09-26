@@ -1,14 +1,174 @@
 @import "tailwindcss";
 
-@theme {
-  --color-bolosafe-darkest: #050505;    /* Deepened near-black for base backgrounds */
-  --color-bolosafe-dark: #141414;        /* Slightly adjusted charcoal for cards/sidebars to maintain contrast */
-  /* ... rest of your colors ... */
+:root {
+  --bg-page: #f4f5f9;
+  --bg-surface: #ffffff;
+  --bg-card: #f8f9fc;
+  --bg-hover: #f0f2f7;
 
-  --color-bolosafe-surface: #1a1a1a;     /* Surface layer elements */
-  --color-bolosafe-cardHover: #2d2d2d;   /* Hover states */
-  --color-bolosafe-border: #333333;      /* Subtle border tone */
-  --color-bolosafe-pink: #FF206E;        /* Neon Pink - Main accent / highlights[cite: 3] */
-  --color-bolosafe-yellow: #FBFF12;      /* Neon Yellow - Badges / warnings / active states[cite: 3] */
-  --color-bolosafe-cyan: #41EAD4;        /* Bright Cyan - Secondary highlights / active elements[cite: 3] */
+  --border-default: #dde1ec;
+  --border-strong: #cbd1df;
+
+  --text-primary: #1b1e2d;
+  --text-secondary: #555c70;
+  --text-muted: #70768a;
+  --text-subtle: #969caf;
+
+  --accent-primary: #5863d6;
+  --accent-primary-soft: #7079e0;
+  --accent-primary-muted: rgba(88, 99, 214, 0.10);
+
+  --status-success: #4d986c;
+  --status-warning: #b4872f;
+  --status-danger: #c65364;
+  --status-info: #5863d6;
+
+  --shadow-card: 0 8px 28px rgba(31, 36, 55, 0.07);
+  --shadow-panel: 0 18px 50px rgba(31, 36, 55, 0.08);
+}
+
+[data-theme='dark'] {
+  --bg-page: #0b0d18;
+  --bg-surface: #121526;
+  --bg-card: #171a2d;
+  --bg-hover: #1d2137;
+
+  --border-default: #292e46;
+  --border-strong: #373d58;
+
+  --text-primary: #f4f5fa;
+  --text-secondary: #b3b8c9;
+  --text-muted: #858ba3;
+  --text-subtle: #60677e;
+
+  --accent-primary: #5863d6;
+  --accent-primary-soft: #7079e0;
+  --accent-primary-muted: rgba(88, 99, 214, 0.14);
+
+  --status-success: #70b88a;
+  --status-warning: #d5ae52;
+  --status-danger: #d96a78;
+  --status-info: #7079e0;
+
+  --shadow-card: 0 8px 28px rgba(0, 0, 0, 0.20);
+  --shadow-panel: 0 18px 50px rgba(0, 0, 0, 0.28);
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+html {
+  background: var(--bg-page);
+  color-scheme: light;
+}
+
+html[data-theme='dark'] {
+  color-scheme: dark;
+}
+
+body {
+  margin: 0;
+  background: var(--bg-page);
+  color: var(--text-primary);
+  font-family:
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+  transition:
+    background-color 180ms ease,
+    color 180ms ease;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+::selection {
+  background: var(--accent-primary-muted);
+  color: var(--text-primary);
+}
+
+/* =========================================================
+   BOLOSAFE DESIGN TOKENS
+   Use these semantic classes for all new/refactored UI.
+   ========================================================= */
+
+.bolosafe-page {
+  background: var(--bg-page);
+  color: var(--text-primary);
+}
+
+.bolosafe-surface {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  box-shadow: var(--shadow-card);
+}
+
+.bolosafe-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-default);
+  box-shadow: var(--shadow-card);
+}
+
+.bolosafe-card-hover {
+  background: var(--bg-hover);
+}
+
+.bolosafe-border {
+  border-color: var(--border-default);
+}
+
+.bolosafe-text {
+  color: var(--text-primary);
+}
+
+.bolosafe-text-secondary {
+  color: var(--text-secondary);
+}
+
+.bolosafe-text-muted {
+  color: var(--text-muted);
+}
+
+.bolosafe-primary {
+  color: var(--accent-primary-soft);
+}
+
+.bolosafe-primary-bg {
+  background: var(--accent-primary);
+  color: #ffffff;
+}
+
+.bolosafe-success {
+  color: var(--status-success);
+}
+
+.bolosafe-warning {
+  color: var(--status-warning);
+}
+
+.bolosafe-danger {
+  color: var(--status-danger);
+}
+
+/* Kill the old high-glow feel on focus states. */
+*:focus-visible {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 2px;
+}
+
+/* Theme-aware scrollbar */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-strong) transparent;
 }

@@ -1,6 +1,7 @@
 'use client'
 
 import { useMemo, useState, useEffect, useRef } from 'react'
+
 import {
   LayoutDashboard,
   ShieldAlert,
@@ -11,10 +12,16 @@ import {
   UserCheck,
   PhoneCall,
   ChevronRight,
-  LogOut
-} from 'lucide-react'
-
-// Sub-components
+  LogOut,
+  ShoppingBag,
+  Hotel,
+  Film,
+  Landmark,
+  Sun,
+  Moon,
+  Shield,
+  ChevronLeft,
+} from 'lucide-react'// Sub-components
 import Overview from './pages/Overview'
 import Analytics from './pages/Analytics'
 import History from './pages/History'
@@ -24,12 +31,110 @@ import SecurityReport from './pages/SecurityReport'
 import Hero from "./pages/Hero";
 import Admin from "./pages/Admin";
 import RetailSecurity from './pages/sectors/RetailSecurity';
+import HospitalitySecurity from './pages/sectors/HospitalitySecurity'
+import EntertainmentSecurity from './pages/sectors/EntertainmentSecurity'
+import FinanceSecurity from './pages/sectors/FinanceSecurity'
+import {
+  getSectorFromResult,
+  getSectorRoute,
+} from './utils/sectorRouting'
 
 // Utilities
 import { initialHistories, getAnalyticsData } from './utils/helpers'
 
 // 1. Import the provider
 import { SecurityProvider } from './context/SecurityContext'
+import { ThemeProvider, useTheme } from './context/ThemeContext'
+
+
+function ThemeToggle() {
+  const { theme, toggleTheme } = useTheme()
+  const isDark = theme === 'dark'
+
+  return (
+    <button
+      type="button"
+      onClick={toggleTheme}
+      aria-label={`Switch to ${isDark ? 'light' : 'dark'} mode`}
+      className="inline-flex items-center gap-2 rounded-lg border border-[var(--border-default)] bg-[var(--bg-surface)] px-3 py-2 text-[var(--text-secondary)] transition-colors hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)]"
+    >
+      {isDark ? <Sun size={15} /> : <Moon size={15} />}
+      <span className="hidden text-xs font-semibold sm:inline">
+        {isDark ? 'Light' : 'Dark'}
+      </span>
+    </button>
+  )
+}
+
+const PAGE_LABELS = {
+  overview: 'Live Dashboard',
+  finance: 'Financial Security',
+  retail: 'Retail Security',
+  adversarial: 'Adversarial Testing',
+  analytics: 'Deep Analytics',
+  history: 'Incident History',
+  security: 'Security Report',
+  how: 'Architecture',
+  admin: 'Administration',
+}
+
+function ConsoleTopBar({ activePage, isBackendOnline, isConnected }) {
+  return (
+    <header className="sticky top-0 z-30 -mx-5 mb-6 border-b border-[var(--border-default)] bg-[var(--bg-page)]/95 px-5 py-3 backdrop-blur-md lg:-mx-10 lg:px-10">
+      <div className="flex items-center gap-4">
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2">
+            <span className="hidden text-xs font-medium text-[var(--text-muted)] sm:inline">
+              BoloSafe-AI
+            </span>
+            <ChevronRight
+              size={13}
+              className="hidden text-[var(--text-subtle)] sm:inline"
+            />
+            <span className="truncate text-sm font-bold text-[var(--text-primary)]">
+              {PAGE_LABELS[activePage] || 'Security Console'}
+            </span>
+          </div>
+        </div>
+
+        <div className="hidden min-w-[240px] max-w-md flex-1 md:block">
+          <div className="flex h-9 items-center rounded-lg border border-[var(--border-default)] bg-[var(--bg-surface)] px-3 text-xs text-[var(--text-muted)]">
+            <span className="mr-2 text-[var(--text-subtle)]">⌕</span>
+            Search anything...
+            <span className="ml-auto rounded border border-[var(--border-default)] px-1.5 py-0.5 text-[9px]">
+              /
+            </span>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <div className="hidden items-center gap-2 rounded-lg border border-[var(--border-default)] bg-[var(--bg-surface)] px-3 py-2 sm:flex">
+            <span
+              className={`size-1.5 rounded-full ${
+                isBackendOnline
+                  ? 'bg-[var(--status-success)]'
+                  : 'bg-[var(--status-warning)]'
+              }`}
+            />
+            <span className="text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">
+              {isConnected
+                ? 'Live'
+                : isBackendOnline
+                  ? 'Online'
+                  : 'Offline'}
+            </span>
+          </div>
+
+          <ThemeToggle />
+
+          <div className="flex size-9 items-center justify-center rounded-lg border border-[var(--border-default)] bg-[var(--bg-surface)] text-xs font-bold text-[var(--text-secondary)]">
+            CB
+          </div>
+        </div>
+      </div>
+    </header>
+  )
+}
 
 // Renamed your original component to MainApp to keep all its internal logic intact
 function MainApp() {
@@ -42,6 +147,7 @@ function MainApp() {
   // DASHBOARD STATE
   // =========================================================
   const [activePage, setActivePage] = useState('overview')
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [streams, setStreams] = useState({})
   const [streamHistories, setStreamHistories] = useState(initialHistories)
   const [activeStreamId, setActiveStreamId] = useState(null)
@@ -118,8 +224,89 @@ function MainApp() {
   const securityTerminatedRef = useRef(false)
   const transactionAmountRef = useRef('525000')
   const selectedScenarioRef = useRef('high_value_transfer')
+  const selectedSectorRef = useRef('finance')
 
-  const selected = activeStreamId ? (streams[activeStreamId] || {}) : {}
+  // Authoritative context for the currently configured security session.
+  // Routing must never be driven by stale results from another session.
+  const activeSessionRef = useRef(null)
+
+  const selected = activeStreamId
+    ? (streams[activeStreamId] || {})
+    : {}
+
+  // Strict sector isolation: a sector page may only consume
+  // a stream explicitly tagged with that same sector.
+  const sectorSelected =
+    selected.sector === selectedSector ||
+    selected.governance_decision?.sector === selectedSector
+      ? selected
+      : {}
+
+  // Sidebar sector pages must consume ONLY their own sector.
+  // Never reuse the currently selected stream just because
+  // another sector page was opened manually.
+  const retailSelected =
+    selected.sector === 'retail' ||
+    selected.governance_decision?.sector === 'retail'
+      ? selected
+      : null
+
+  const financeSelected =
+    selected.sector === 'finance' ||
+    selected.governance_decision?.sector === 'finance'
+      ? selected
+      : null
+
+  const hospitalitySelected =
+    selected.sector === 'hospitality' ||
+    selected.governance_decision?.sector === 'hospitality'
+      ? selected
+      : null
+
+  const entertainmentSelected =
+    selected.sector === 'entertainment' ||
+    selected.governance_decision?.sector === 'entertainment'
+      ? selected
+      : null
+  const openSectorDetails = (result = {}) => {
+    const session = activeSessionRef.current
+
+    if (!session?.streamId || !session?.sector) {
+      console.warn(
+        'Ignoring sector alert: no active security session is locked.'
+      )
+      return
+    }
+
+    const resultStreamId = result?.stream_id
+
+    if (
+      resultStreamId &&
+      resultStreamId !== session.streamId
+    ) {
+      console.warn(
+        `Ignoring stale stream alert: active=${session.streamId}, result=${resultStreamId}`
+      )
+      return
+    }
+
+    const resultSector = getSectorFromResult(
+      result,
+      session.sector
+    )
+
+    if (resultSector !== session.sector) {
+      console.warn(
+        `Ignoring cross-sector alert: session=${session.sector}, result=${resultSector}`
+      )
+      return
+    }
+
+    setSelectedSector(session.sector)
+    selectedSectorRef.current = session.sector
+    setActivePage(getSectorRoute(session.sector))
+  }
+
   const analytics = getAnalyticsData(selected)
   const currentHistory = streamHistories[activeStreamId] || []
 
@@ -202,15 +389,39 @@ function MainApp() {
         if (data.type === 'session_context_ack') {
           console.log('Session context acknowledged:', data)
 
+          const acknowledgedSector =
+            data.sector || selectedSectorRef.current
+
+          activeSessionRef.current = {
+            streamId: data.stream_id,
+            sector: acknowledgedSector,
+            scenario: data.scenario,
+          }
+
+          setSelectedSector(acknowledgedSector)
+          selectedSectorRef.current = acknowledgedSector
+
+          // Start a completely clean stream object for the
+          // newly acknowledged security context. Do not merge
+          // the previous sector's risk/governance fields.
           setStreams((prev) => ({
             ...prev,
             [data.stream_id]: {
-              ...(prev[data.stream_id] || {}),
               stream_id: data.stream_id,
+              name: inputMode === 'mic' ? 'Live Mic Stream' : 'Audio File Stream',
+              sector: data.sector || selectedSectorRef.current,
               transaction_amount_inr: data.transaction_amount_inr,
               notification_scenario: data.scenario,
               scenario_source: data.scenario_source,
-              response_workflow_status: 'MONITORING'
+              response_workflow_status: 'MONITORING',
+              timeSeries: [],
+              ai_probability: undefined,
+              rolling_score: undefined,
+              risk_level: undefined,
+              governance_decision: undefined,
+              alert_triggered: false,
+              alert_reason: null,
+              alert_consecutive_flags: null
             }
           }))
 
@@ -233,9 +444,52 @@ function MainApp() {
 
           setMicLevel(0)
           setMicStatus('ALERT: Synthetic Voice Clone Detected')
+
+          // Keep the user on the command dashboard.
+          // Sector navigation happens only from an explicit
+          // user action on the alert.
+          setEscalatedIncident({
+            ...data,
+            sector:
+              data.governance_decision?.sector ||
+              data.sector ||
+              selectedSectorRef.current,
+            streamId: data.stream_id || streamId,
+          })
+
+            // Keep the operator on the active sector page while
+            // live detection results update.
         }
 
         const currentStreamId = data.stream_id || streamId
+        const activeSession = activeSessionRef.current
+
+        // Ignore results that belong to a different security session.
+        if (
+          activeSession?.streamId &&
+          currentStreamId !== activeSession.streamId
+        ) {
+          return
+        }
+
+        // Never allow a result from another sector to populate
+        // the currently active sector session.
+        const resultSector =
+          data.governance_decision?.sector || data.sector
+
+        if (
+          resultSector &&
+          activeSession?.sector &&
+          resultSector !== activeSession.sector
+        ) {
+          console.warn(
+            'Ignoring cross-sector result:',
+            resultSector,
+            'expected:',
+            activeSession.sector
+          )
+          return
+        }
 
         setStreams((prev) => {
           const existing = prev[currentStreamId] || {
@@ -428,6 +682,19 @@ function MainApp() {
       scenario,
       transaction_amount_inr: parsedAmount,
     }
+
+    // Start a fresh sector-bound security session.
+    activeSessionRef.current = {
+      streamId: uniqueStreamIdRef.current,
+      sector,
+      scenario,
+    }
+
+      // Keep the current sector page while configuring its
+      // security session. Navigation is explicit.
+    setActiveStreamId(null)
+    setSecurityTerminated(false)
+    securityTerminatedRef.current = false
 
     ws.send(JSON.stringify(payload))
 
@@ -738,6 +1005,13 @@ function MainApp() {
               offset + chunkSize
             )
 
+          if (ws.readyState !== WebSocket.OPEN) {
+            fileStreamActiveRef.current = false
+            setMicLevel(0)
+            setMicStatus('Backend Connection Lost')
+            return
+          }
+
           ws.send(chunk)
 
           const chunkRms =
@@ -771,6 +1045,107 @@ function MainApp() {
       alert(
         'Failed to decode audio file. Please use a valid WAV/MP3 file.'
       )
+    }
+  }
+
+  const streamAudioFromUrl = async (url, sector, scenario, transactionAmount = null) => {
+    const ws = wsRef.current
+    if (!ws || ws.readyState !== WebSocket.OPEN) {
+      alert('WebSocket is not connected to the backend. Please wait for connection.')
+      return
+    }
+
+    try {
+      stopMicrophoneStream()
+
+      if (filePlaybackRef.current) {
+        filePlaybackRef.current.pause()
+        filePlaybackRef.current.currentTime = 0
+        filePlaybackRef.current = null
+      }
+
+      // 1. Send sector session context to backend
+      const contextPayload = {
+        type: 'session_context',
+        sector: sector,
+        scenario: scenario,
+        transaction_amount_inr: transactionAmount ? Number(transactionAmount) : null
+      }
+      ws.send(JSON.stringify(contextPayload))
+      setSelectedSector(sector)
+      setSelectedScenario(scenario)
+      selectedScenarioRef.current = scenario
+
+      const fileDisplayName = url.split('/').pop()
+      setFileName(fileDisplayName)
+      setInputMode('file')
+      setMicStatus(`Streaming ${sector.toUpperCase()}: ${fileDisplayName}`)
+
+      const playbackAudio = new Audio(url)
+      playbackAudio.onplay = () => setIsFilePlaying(true)
+      playbackAudio.onpause = () => setIsFilePlaying(false)
+      playbackAudio.onended = () => {
+        setIsFilePlaying(false)
+      }
+      filePlaybackRef.current = playbackAudio
+
+      const response = await fetch(url)
+      const arrayBuffer = await response.arrayBuffer()
+
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext
+      const audioCtx = new AudioContextClass()
+
+      const decodedAudio = await audioCtx.decodeAudioData(arrayBuffer)
+      const channelData = decodedAudio.getChannelData(0)
+      const sampleRate = decodedAudio.sampleRate
+      const resampled = resampleTo16k(channelData, sampleRate)
+      const pcm16 = float32ToPCM16(resampled)
+
+      try {
+        await playbackAudio.play()
+      } catch (playbackError) {
+        console.warn('Audio playback error:', playbackError)
+      }
+
+      const chunkSize = 8000
+      let offset = 0
+      fileStreamActiveRef.current = true
+
+      fileIntervalRef.current = setInterval(() => {
+        if (!fileStreamActiveRef.current) {
+          clearInterval(fileIntervalRef.current)
+          fileIntervalRef.current = null
+          return
+        }
+
+        if (offset >= pcm16.length) {
+          fileStreamActiveRef.current = false
+          clearInterval(fileIntervalRef.current)
+          fileIntervalRef.current = null
+
+          if (ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify({ type: 'audio_end' }))
+          }
+
+          setMicLevel(0)
+          setMicStatus('Stream Complete')
+          audioCtx.close()
+          return
+        }
+
+        const chunk = pcm16.subarray(offset, offset + chunkSize)
+        ws.send(chunk)
+
+        const chunkRms = calculateRMS(
+          resampled.subarray(offset, Math.min(offset + chunkSize, resampled.length))
+        )
+        setMicLevel(Math.min(Math.round(chunkRms * 200), 100))
+        offset += chunkSize
+      }, 500)
+
+    } catch (error) {
+      console.error('Failed to stream audio URL:', error)
+      setMicStatus('Audio Stream Error')
     }
   }
 
@@ -843,262 +1218,150 @@ function MainApp() {
 
   // 2. Show Dashboard if authenticated
   return (
-    <main className="relative flex min-h-screen flex-col overflow-hidden bg-[#03040b] font-sans text-white md:flex-row">
-
-      {/* =====================================================
-          AURORA BACKGROUND
-          ===================================================== */}
-
-      <div className="pointer-events-none fixed inset-0 overflow-hidden">
-
-        {/* Aurora glow */}
-        <div className="absolute -left-40 -top-40 h-[560px] w-[560px] rounded-full bg-cyan-400/[0.13] blur-[150px]" />
-
-        <div className="absolute right-[-180px] top-[5%] h-[650px] w-[650px] rounded-full bg-violet-500/[0.16] blur-[170px]" />
-
-        <div className="absolute bottom-[-240px] left-[20%] h-[600px] w-[800px] rounded-full bg-fuchsia-500/[0.10] blur-[180px]" />
-
-        <div className="absolute bottom-[0%] right-[12%] h-[400px] w-[400px] rounded-full bg-emerald-400/[0.08] blur-[140px]" />
-
-        {/* subtle cyan beam */}
-        <div className="absolute left-[38%] top-[-10%] h-[750px] w-[1px] rotate-[24deg] bg-gradient-to-b from-transparent via-cyan-300/[0.10] to-transparent blur-[1px]" />
-
-        {/* technical grid */}
+    <main className="relative flex min-h-screen flex-col overflow-hidden bg-[var(--bg-page)] font-sans text-[var(--text-primary)] md:flex-row">
+      <aside
+        className={[
+          'relative z-20 flex w-full shrink-0 flex-col border-b border-[var(--border-default)]',
+          'bg-[var(--bg-surface)] md:h-screen md:border-b-0 md:border-r',
+          'transition-[width] duration-300 ease-out',
+          sidebarCollapsed ? 'md:w-[76px]' : 'md:w-[76px] lg:w-[236px]',
+        ].join(' ')}
+      >
         <div
-          className="absolute inset-0 opacity-[0.045]"
-          style={{
-            backgroundImage:
-              'linear-gradient(rgba(148,163,184,0.35) 1px, transparent 1px), linear-gradient(90deg, rgba(148,163,184,0.35) 1px, transparent 1px)',
-            backgroundSize: '42px 42px'
-          }}
-        />
+          className={[
+            'relative flex h-16 items-center border-b border-[var(--border-default)] px-4',
+            sidebarCollapsed ? 'justify-center' : 'justify-between',
+          ].join(' ')}
+        >
+          <div className="flex min-w-0 items-center">
+            <div className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-[var(--border-default)] bg-[var(--accent-primary-muted)]">
+              <ShieldCheck
+                size={18}
+                className="text-[var(--accent-primary-soft)]"
+              />
+            </div>
 
-        {/* vignette */}
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_30%,rgba(2,3,10,0.72)_100%)]" />
-      </div>
-
-      {/* =====================================================
-          SIDEBAR (EXPANDABLE ON HOVER)
-          ===================================================== */}
-
-      <aside className="group relative z-20 flex w-full flex-col border-b border-white/[0.10] bg-[#060711]/90 p-4 shadow-[8px_0_40px_rgba(0,0,0,0.18)] backdrop-blur-2xl transition-all duration-300 ease-in-out md:h-screen md:w-24 md:shrink-0 md:border-b-0 md:border-r md:p-5 md:hover:w-64 lg:md:hover:w-72">
-
-        {/* BRANDING */}
-
-        <div className="mb-8 flex items-center gap-3 overflow-hidden">
-
-          <div className="relative flex size-11 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-cyan-300/30 bg-gradient-to-br from-cyan-400/20 via-violet-500/20 to-fuchsia-500/20 shadow-[0_0_30px_rgba(34,211,238,0.20)]">
-
-            <div className="absolute inset-0 bg-gradient-to-br from-cyan-300/10 to-fuchsia-400/10" />
-
-            <ShieldCheck
-              size={23}
-              strokeWidth={2.2}
-              className="relative z-10 text-cyan-200 drop-shadow-[0_0_8px_rgba(103,232,249,0.8)]"
-            />
-
-            <div className="absolute inset-0 rounded-xl bg-cyan-400/10 blur-md" />
+            {!sidebarCollapsed && (
+              <div className="ml-3 min-w-0">
+                <p className="truncate text-sm font-black tracking-tight text-[var(--text-primary)]">
+                  BoloSafe-AI
+                </p>
+                <p className="mt-0.5 text-[9px] font-semibold uppercase tracking-[0.18em] text-[var(--text-muted)]">
+                  Security Console
+                </p>
+              </div>
+            )}
           </div>
 
-          <div className="whitespace-nowrap transition-opacity duration-300 md:opacity-0 md:group-hover:opacity-100">
-
-            <p className="text-[19px] font-extrabold leading-[0.95] tracking-tight text-white drop-shadow-[0_0_14px_rgba(255,255,255,0.12)]">
-              BoloSafe-AI
-            </p>
-
-            <p className="mt-1 bg-gradient-to-r from-cyan-200 via-violet-200 to-fuchsia-200 bg-clip-text text-[9px] font-mono font-semibold uppercase tracking-[0.24em] text-transparent">
-              Neural Guard
-            </p>
-
-          </div>
+          <button
+            type="button"
+            onClick={() => setSidebarCollapsed((value) => !value)}
+            title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            aria-label={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            className="absolute -right-3 top-1/2 z-40 hidden size-7 -translate-y-1/2 items-center justify-center rounded-full border border-[var(--border-default)] bg-[var(--bg-card)] text-[var(--text-muted)] shadow-lg transition hover:border-[var(--accent-primary)]/50 hover:text-[var(--text-primary)] lg:flex"
+          >
+            {sidebarCollapsed ? (
+              <ChevronRight size={14} />
+            ) : (
+              <ChevronLeft size={14} />
+            )}
+          </button>
         </div>
 
-        {/* NAVIGATION */}
-
-        <nav className="flex flex-1 flex-col gap-2">
-
+        <nav className="flex flex-1 flex-row gap-1 overflow-x-auto p-3 md:flex-col md:overflow-x-visible md:overflow-y-auto">
           {[
-            {
-              id: 'overview',
-              label: 'Live Dashboard',
-              icon: LayoutDashboard
-            },
-            {
-              id: 'retail',
-              label: 'Retail Security',
-              icon: PhoneCall
-            },
-            {
-              id: 'adversarial',
-              label: 'Adversarial',
-              icon: ShieldAlert
-            },
-            {
-              id: 'analytics',
-              label: 'Deep Analytics',
-              icon: BarChart3
-            },
-            {
-              id: 'history',
-              label: 'History',
-              icon: HistoryIcon
-            },
-            {
-              id: 'security',
-              label: 'Security Report',
-              icon: ShieldCheck
-            },
-            {
-              id: 'how',
-              label: 'Architecture',
-              icon: CircleHelp
-            }
-          ].map(
-            ({ id, label, icon: Icon }) => (
-              <button
-                key={id}
-                onClick={() => setActivePage(id)}
-                className={`group/btn relative flex w-full items-center gap-3 overflow-hidden rounded-xl border p-3 text-[13px] font-semibold tracking-[0.01em] transition-all duration-300 ${
-                  activePage === id
-                    ? 'border-cyan-300/30 bg-gradient-to-r from-cyan-400/[0.14] via-violet-500/[0.12] to-fuchsia-500/[0.10] text-white shadow-[0_0_28px_rgba(34,211,238,0.10),inset_0_1px_0_rgba(255,255,255,0.08)]'
-                    : 'border-transparent text-slate-300 hover:border-white/[0.12] hover:bg-white/[0.055] hover:text-white hover:shadow-[0_0_20px_rgba(34,211,238,0.05)]'
-                }`}
-              >
-
-                {activePage === id && (
-                  <>
-                    <span className="absolute left-0 top-1/2 h-8 w-[2px] -translate-y-1/2 rounded-full bg-gradient-to-b from-cyan-300 via-violet-400 to-fuchsia-400 shadow-[0_0_12px_rgba(34,211,238,0.9)]" />
-
-                    <span className="absolute inset-y-0 left-0 w-16 bg-gradient-to-r from-cyan-300/[0.07] to-transparent" />
-                  </>
-                )}
-
-                <Icon
-                  size={18}
-                  strokeWidth={activePage === id ? 2.2 : 1.9}
-                  className={`shrink-0 transition-all ${
-                    activePage === id
-                      ? 'relative z-10 text-cyan-200 drop-shadow-[0_0_7px_rgba(103,232,249,0.7)]'
-                      : 'relative z-10 text-slate-400 group-hover/btn:text-cyan-200 group-hover/btn:drop-shadow-[0_0_6px_rgba(103,232,249,0.5)]'
-                  }`}
-                />
-
-                <span className="relative z-10 whitespace-nowrap transition-opacity duration-300 md:opacity-0 md:group-hover:opacity-100">
-                  {label}
-                </span>
-
-                {activePage === id && (
-                  <span className="ml-auto size-1.5 shrink-0 rounded-full bg-cyan-300 shadow-[0_0_9px_rgba(103,232,249,0.9)] transition-opacity duration-300 md:opacity-0 md:group-hover:opacity-100" />
-                )}
-              </button>
-            )
-          )}
+            { id: 'overview', label: 'Live Dashboard', icon: LayoutDashboard },
+            { id: 'finance', label: 'Financial Services', icon: Landmark },
+            { id: 'retail', label: 'Retail Security', icon: ShoppingBag },
+            { id: 'hospitality', label: 'Hospitality', icon: Hotel },
+            { id: 'entertainment', label: 'Entertainment', icon: Film },
+            { id: 'adversarial', label: 'Adversarial Testing', icon: ShieldAlert },
+            { id: 'analytics', label: 'Deep Analytics', icon: BarChart3 },
+            { id: 'history', label: 'Incident History', icon: HistoryIcon },
+            { id: 'security', label: 'Security Report', icon: ShieldCheck },
+            { id: 'how', label: 'Architecture', icon: CircleHelp },
+          ].map(({ id, label, icon: Icon }) => (
+            <button
+              key={id}
+              type="button"
+              onClick={() => setActivePage(id)}
+              title={sidebarCollapsed ? label : undefined}
+              className={[
+                'group flex shrink-0 items-center rounded-lg border py-2.5 text-left text-xs font-semibold',
+                'transition-all duration-200 md:w-full',
+                sidebarCollapsed
+                  ? 'justify-center px-0'
+                  : 'justify-start gap-3 px-3',
+                activePage === id
+                  ? 'border-[var(--accent-primary)]/25 bg-[var(--accent-primary-muted)] text-[var(--accent-primary-soft)]'
+                  : 'border-transparent text-[var(--text-muted)] hover:border-[var(--border-default)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)]',
+              ].join(' ')}
+            >
+              <Icon
+                size={18}
+                strokeWidth={activePage === id ? 2.1 : 1.8}
+              />
+              {!sidebarCollapsed && <span>{label}</span>}
+            </button>
+          ))}
         </nav>
 
-        {/* BOTTOM STATUS, ACTIONS & ADMIN PROFILE */}
-
-        <div className="mt- auto flex flex-col gap-3 pt-4">
-
-          {/* RETURN TO HERO BUTTON */}
+        <div className="border-t border-[var(--border-default)] p-3">
           <button
+            type="button"
             onClick={() => setIsAuthenticated(false)}
-            className="group/btn relative flex w-full items-center gap-2 overflow-hidden rounded-xl border border-cyan-300/20 bg-gradient-to-r from-cyan-400/[0.07] via-violet-500/[0.05] to-fuchsia-500/[0.06] p-2.5 text-left text-[11px] font-mono font-semibold tracking-wide text-cyan-200 shadow-[0_0_22px_rgba(34,211,238,0.05)] transition-all duration-300 hover:border-cyan-300/40 hover:bg-cyan-400/10 hover:text-cyan-100 hover:shadow-[0_0_30px_rgba(34,211,238,0.12)]"
+            title={sidebarCollapsed ? 'Return to Home' : undefined}
+            className={[
+              'flex w-full items-center rounded-lg border border-transparent py-2.5 text-xs font-semibold',
+              sidebarCollapsed ? 'justify-center px-0' : 'gap-3 px-3',
+              'text-[var(--text-muted)] transition-colors hover:border-[var(--border-default)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)]',
+            ].join(' ')}
           >
-            <LogOut size={16} className="shrink-0 text-cyan-300" />
-
-            <div className="flex flex-1 items-center justify-between whitespace-nowrap transition-opacity duration-300 md:opacity-0 md:group-hover:opacity-100">
-              <span>
-                Return to Home
-              </span>
-              <ChevronRight size={14} className="text-cyan-400/50 group-hover/btn:translate-x-0.5" />
-            </div>
+            <LogOut size={18} />
+            {!sidebarCollapsed && <span>Return to Home</span>}
           </button>
 
-          {/* SYSTEM STATUS CARD */}
-          <div className="relative overflow-hidden rounded-xl border border-white/[0.11] bg-white/[0.045] p-3 text-xs backdrop-blur-xl shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">
-
-            <div className="absolute inset-0 bg-gradient-to-br from-cyan-400/[0.04] via-transparent to-violet-500/[0.07]" />
-
-            <div className="relative flex items-center gap-2.5">
-
-              <span
-                className={`size-2.5 shrink-0 rounded-full ${
-                  selected.security_terminated ||
-                  securityTerminated
-                    ? 'bg-amber-300 shadow-[0_0_14px_rgba(252,211,77,1)]'
-                    : isBackendOnline
-                    ? 'bg-emerald-300 shadow-[0_0_14px_rgba(52,211,153,0.9)] animate-pulse'
-                    : 'bg-cyan-300 shadow-[0_0_12px_rgba(34,211,238,0.9)]'
-                }`}
-              />
-
-              <span className="whitespace-nowrap font-mono text-[11px] font-bold uppercase tracking-[0.14em] text-white transition-opacity duration-300 md:opacity-0 md:group-hover:opacity-100">
-                System Status
-              </span>
+          <button
+            type="button"
+            onClick={() => setActivePage('admin')}
+            title={sidebarCollapsed ? 'Administration' : undefined}
+            className={[
+              'mt-1 flex w-full items-center rounded-lg border py-2.5 text-left transition-colors',
+              sidebarCollapsed ? 'justify-center px-0' : 'gap-3 px-3',
+              activePage === 'admin'
+                ? 'border-[var(--accent-primary)]/25 bg-[var(--accent-primary-muted)]'
+                : 'border-transparent hover:border-[var(--border-default)] hover:bg-[var(--bg-hover)]',
+            ].join(' ')}
+          >
+            <div className="relative flex size-7 shrink-0 items-center justify-center rounded-md bg-[var(--bg-hover)] text-[var(--text-secondary)]">
+              <UserCheck size={16} />
+              <span className="absolute -bottom-0.5 -right-0.5 size-1.5 rounded-full bg-[var(--status-success)]" />
             </div>
 
-            <div className="hidden whitespace-nowrap transition-opacity duration-300 md:group-hover:block md:opacity-0 md:group-hover:opacity-100">
-              <span className="relative mt-2 block font-mono text-[9px] font-semibold leading-relaxed tracking-[0.08em] text-slate-400">
-                {securityTerminated
-                  ? 'TERMINATED · SECURITY ALERT'
-                  : isBackendOnline
-                  ? isConnected
-                    ? 'BACKEND ONLINE · STREAM ACTIVE'
-                    : 'BACKEND ONLINE'
-                  : 'BACKEND OFFLINE'}
-              </span>
-
-              <div className="relative mt-2 h-px w-full bg-gradient-to-r from-cyan-400/20 via-violet-400/10 to-transparent" />
-
-              <div className="relative mt-2 flex items-center justify-between text-[8px] font-mono uppercase tracking-[0.14em] text-slate-500">
-                <span>BOLOSAFE CORE</span>
-                <span className="text-cyan-300/70">
-                  LIVE
-                </span>
+            {!sidebarCollapsed && (
+              <div className="min-w-0">
+                <p className="text-xs font-semibold text-[var(--text-primary)]">
+                  Controller
+                </p>
+                <p className="mt-0.5 text-[9px] text-[var(--text-muted)]">
+                  Admin access
+                </p>
               </div>
-            </div>
-          </div>
-
-          {/* ADMIN PROFILE HANDLING */}
-<button 
-  onClick={() => setActivePage('admin')}
-  className={`group/admin relative flex w-full overflow-hidden rounded-xl border p-2 transition-all duration-300 text-left ${
-    activePage === 'admin'
-      ? 'border-cyan-300/40 bg-gradient-to-r from-cyan-400/[0.14] via-violet-500/[0.12] to-fuchsia-500/[0.10] shadow-[0_0_20px_rgba(34,211,238,0.15)]'
-      : 'border-white/[0.10] bg-white/[0.03] hover:border-cyan-300/30 hover:bg-white/[0.06]'
-  }`}
->
-  <div className="flex items-center gap-3 w-full">
-    <div className={`relative flex size-9 shrink-0 items-center justify-center rounded-lg border transition-colors ${
-      activePage === 'admin' 
-        ? 'border-cyan-300 bg-cyan-400/30 text-white' 
-        : 'border-cyan-400/30 bg-gradient-to-br from-cyan-500/20 via-violet-600/20 to-fuchsia-600/20 text-cyan-200'
-    }`}>
-      <UserCheck size={18} />
-      <span className="absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full border border-[#060711] bg-emerald-400" />
-    </div>
-
-    <div className="flex flex-1 flex-col overflow-hidden whitespace-nowrap transition-opacity duration-300 md:opacity-0 md:group-hover:opacity-100">
-      <span className={`truncate text-xs font-bold ${activePage === 'admin' ? 'text-white' : 'text-slate-200'}`}>
-        Admin
-      </span>
-      <span className="truncate text-[10px] font-mono tracking-wider text-cyan-400/80 uppercase">
-        Security Admin
-      </span>
-    </div>
-  </div>
-</button>
-
+            )}
+          </button>
         </div>
       </aside>
 
-      {/* =====================================================
-          MAIN CONTENT AREA
-          ===================================================== */}
-
       <div className="relative z-10 flex-1 overflow-y-auto md:h-screen">
 
-        <div className="mx-auto max-w-7xl px-5 py-8 lg:p-10">
+        <div className="w-full px-5 py-4 lg:px-8 lg:py-5 xl:px-10">
+          <ConsoleTopBar
+            activePage={activePage}
+            isBackendOnline={isBackendOnline}
+            isConnected={isConnected}
+          />
+
+          <div className="pb-8">
 
           {activePage === 'overview' && (
             <Overview
@@ -1117,10 +1380,12 @@ function MainApp() {
               toggleLiveMonitor={toggleLiveMonitor}
               handleFileUpload={handleFileUpload}
               acknowledgeAlert={acknowledgeAlert}
+              onViewSectorResponse={() => openSectorDetails(selected)}
               setActiveStreamId={setActiveStreamId}
               selectedSector={selectedSector}
               setSelectedSector={(value) => {
                 setSelectedSector(value)
+                selectedSectorRef.current = value
 
                 const nextScenario =
                   sectorOptions[value]?.scenarios?.[0]?.value ||
@@ -1129,7 +1394,15 @@ function MainApp() {
                 setSelectedScenario(nextScenario)
                 selectedScenarioRef.current = nextScenario
 
+                // A sector switch always starts a fresh UI/security session.
+                activeSessionRef.current = null
+                securityTerminatedRef.current = false
+
+                setActivePage('overview')
+                setSecurityTerminated(false)
                 setContextConfigured(false)
+                setActiveStreamId(null)
+                setMicLevel(0)
                 setMicStatus('Select Security Context')
               }}
               sectorOptions={sectorOptions}
@@ -1153,14 +1426,62 @@ function MainApp() {
             />
           )}
 
-          {activePage === 'retail' && (
-            <RetailSecurity
-              selected={selected}
+          {activePage === 'finance' && (
+            <FinanceSecurity
+              selected={financeSelected || {}}
               isConnected={isConnected}
+              streamAudioFromUrl={streamAudioFromUrl}
+              startMicrophoneStream={startMicrophoneStream}
+              stopMicrophoneStream={stopMicrophoneStream}
+              handleFileUpload={handleFileUpload}
+              micStatus={micStatus}
+              micLevel={micLevel}
+              isStreaming={fileStreamActiveRef.current || isFilePlaying}
             />
           )}
 
-          {activePage === 'adversarial' && (
+          {activePage === 'retail' && (
+            <RetailSecurity
+              selected={retailSelected || {}}
+              isConnected={isConnected}
+              streamAudioFromUrl={streamAudioFromUrl}
+              startMicrophoneStream={startMicrophoneStream}
+              stopMicrophoneStream={stopMicrophoneStream}
+              handleFileUpload={handleFileUpload}
+              micStatus={micStatus}
+              micLevel={micLevel}
+              isStreaming={fileStreamActiveRef.current || isFilePlaying}
+            />
+          )}
+
+          {activePage === 'hospitality' && (
+            <HospitalitySecurity
+              selected={hospitalitySelected || {}}
+              isConnected={isConnected}
+              streamAudioFromUrl={streamAudioFromUrl}
+              startMicrophoneStream={startMicrophoneStream}
+              stopMicrophoneStream={stopMicrophoneStream}
+              handleFileUpload={handleFileUpload}
+              micStatus={micStatus}
+              micLevel={micLevel}
+              isStreaming={fileStreamActiveRef.current || isFilePlaying}
+            />
+          )}
+
+          {activePage === 'entertainment' && (
+            <EntertainmentSecurity
+              selected={entertainmentSelected || {}}
+              isConnected={isConnected}
+              streamAudioFromUrl={streamAudioFromUrl}
+              startMicrophoneStream={startMicrophoneStream}
+              stopMicrophoneStream={stopMicrophoneStream}
+              handleFileUpload={handleFileUpload}
+              micStatus={micStatus}
+              micLevel={micLevel}
+              isStreaming={fileStreamActiveRef.current || isFilePlaying}
+            />
+          )}
+{activePage === 'adversarial' && (
             <div className="mx-auto max-w-6xl space-y-8">
               <AdversarialRobustness />
             </div>
@@ -1203,17 +1524,20 @@ function MainApp() {
           )}
 
           {activePage === 'how' && <Architecture />}
+          </div>
         </div>
       </div>
     </main>
   )
 }
 
-// 2. Wrap the entire application components/routes inside the provider
+// 2. Wrap the entire application components/routes inside the providers
 export default function App() {
   return (
-    <SecurityProvider>
-      <MainApp />
-    </SecurityProvider>
+    <ThemeProvider>
+      <SecurityProvider>
+        <MainApp />
+      </SecurityProvider>
+    </ThemeProvider>
   )
 }

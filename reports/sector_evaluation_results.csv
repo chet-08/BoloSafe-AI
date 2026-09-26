@@ -1,0 +1,13 @@
+sector,scenario,language,label,filename,duration_sec,feature_dim,ai_probability,speaker_similarity,risk_level,action,latency_ms,correct_decision,reason
+retail,order_modification,hi,spoof,retail_spoof_address_change_hi.wav,3.5,58,0.902,0.324,high,hold_and_escalate,12296.18,True,High voice-AI risk detected during the retail interaction.
+retail,customer_care,en,bonafide,retail_bonafide_inquiry_en.wav,3.5,58,0.099,0.956,low,allow,70.66,True,No retail security escalation is currently required.
+retail,order_modification,ta,spoof,retail_spoof_refund_redirect_ta.wav,3.5,58,0.82,0.33,high,hold_and_escalate,162.92,True,High voice-AI risk detected during the retail interaction.
+hospitality,vip_booking,ta,spoof,hospitality_spoof_vip_folio_ta.wav,3.5,58,0.871,0.43,high,lock_folio_and_escalate,270.66,True,High voice-AI clone likelihood detected during hospitality service request.
+hospitality,guest_verification,en,bonafide,hospitality_bonafide_reservation_en.wav,3.5,58,0.12,0.888,low,allow,255.86,True,Guest voice verified within authentic biometric parameters.
+hospitality,reservation_change,hi,spoof,hospitality_spoof_suite_cancel_hi.wav,3.5,58,0.87,0.353,high,lock_folio_and_escalate,243.52,True,High voice-AI clone likelihood detected during hospitality service request.
+entertainment,voice_authenticity,hi,spoof,entertainment_spoof_celebrity_dub_hi.wav,3.5,58,0.868,0.422,high,block_rights_and_escalate,242.38,True,High likelihood of synthetic voice generation or unauthorized vocal deepfake.
+entertainment,dubbing_verification,en,bonafide,entertainment_bonafide_studio_stem_en.wav,3.5,58,0.157,0.922,low,certify_authentic,266.75,True,Audio certified authentic with natural organic glottal pulse characteristics.
+entertainment,speaker_comparison,ta,spoof,entertainment_spoof_artist_clone_ta.wav,3.5,58,0.854,0.216,high,block_rights_and_escalate,253.31,True,High likelihood of synthetic voice generation or unauthorized vocal deepfake.
+finance,high_value_transfer,hi,spoof,finance_spoof_rtgs_transfer_hi.wav,3.5,58,0.884,0.352,high,hold_and_escalate,231.7,True,High voice-fraud risk detected during the financial interaction.
+finance,customer_verification,en,bonafide,finance_bonafide_balance_inquiry_en.wav,3.5,58,0.128,0.911,low,allow,228.03,True,No financial security escalation is currently required.
+finance,account_recovery,hi,spoof,finance_spoof_account_recovery_hi.wav,3.5,58,0.857,0.329,high,hold_and_escalate,215.61,True,High voice-fraud risk detected during the financial interaction.
