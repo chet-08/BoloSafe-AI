@@ -21,7 +21,12 @@ import {
 } from 'lucide-react';
 import SectorAudioPlayer from '../../components/SectorAudioPlayer';
 import EnterpriseWebhookDrawer from '../../components/EnterpriseWebhookDrawer';
-import GuidedUserFlowBar from '../../components/GuidedUserFlowBar';
+import SecurityPageShell from '../../components/security/SecurityPageShell';
+import DetectionMetricGrid from '../../components/security/DetectionMetricGrid';
+import GovernanceDecisionCard from '../../components/security/GovernanceDecisionCard';
+import SecurityActivityTimeline from '../../components/security/SecurityActivityTimeline';
+import LiveDetectionPanel from '../../components/security/LiveDetectionPanel';
+import SectorContextCard from '../../components/security/SectorContextCard';
 import { freezeWire, dispatchVideoKyc, simulateThreat } from '../../utils/sectorApi';
 
 export default function FinanceSecurity({
@@ -148,385 +153,358 @@ export default function FinanceSecurity({
   }, [showKycModal, kycTimer]);
 
   return (
-    <div className="space-y-6">
-      {/* Toast Notification */}
+    <div className="space-y-5">
       {toastMsg && (
-        <div className="fixed top-6 right-6 z-50 flex items-center gap-2 rounded-xl border border-emerald-400/40 bg-emerald-950/90 px-4 py-3 text-xs font-mono text-emerald-200 shadow-2xl backdrop-blur-xl animate-in slide-in-from-top-4">
-          <CheckCircle2 className="size-4 text-emerald-400 shrink-0" />
-          <span>{toastMsg}</span>
-        </div>
-      )}
-
-      {/* Guided Hackathon Stepper */}
-      <GuidedUserFlowBar
-        currentSector="finance"
-        hasAudioPlaying={isStreaming}
-        hasResults={aiProbability > 0}
-        hasActionTaken={wireFrozen || videoKycData !== null}
-        onOpenWebhook={() => setShowWebhook(true)}
-      />
-
-      {/* Top Header Card */}
-      <div className="relative overflow-hidden rounded-2xl border border-emerald-400/20 bg-gradient-to-r from-emerald-950/40 via-teal-950/30 to-slate-900/50 p-6 shadow-2xl backdrop-blur-xl">
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div className="flex items-center gap-4">
-            <div className="flex size-12 items-center justify-center rounded-xl border border-emerald-400/30 bg-emerald-500/20 text-emerald-300 shadow-[0_0_20px_rgba(16,185,129,0.25)]">
-              <Landmark className="size-6" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-xl font-bold tracking-tight text-white md:text-2xl">
-                  Financial Services & Voice Fraud Interceptor
-                </h1>
-                <span className="rounded-full border border-emerald-400/30 bg-emerald-400/10 px-2.5 py-0.5 text-xs font-semibold text-emerald-300">
-                  Tertiary Sector · Banking & FinTech
-                </span>
-              </div>
-              <p className="mt-1 text-xs text-slate-400">
-                Guards high-value wire transfers (RTGS/NEFT), account recovery, and payee authorizations against deepfake voice cloning.
-              </p>
-            </div>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="flex items-center gap-1.5 rounded-xl border border-emerald-400/20 bg-emerald-950/40 px-3 py-1.5 text-xs font-mono text-emerald-300">
-              <Lock className="size-3.5 text-emerald-400" />
-              <span>DPDP Act 2023 · Ephemeral RAM (0 Bytes Disk)</span>
-            </div>
-            <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-mono">
-              <span className={`size-2 rounded-full ${isConnected ? 'bg-emerald-400 animate-pulse' : 'bg-rose-400'}`} />
-              <span className="text-slate-300">{isConnected ? 'BANKING GATEWAY LIVE' : 'OFFLINE'}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Cross-Sector Threat Intelligence Alert Banner */}
-      {hasCrossSectorThreat && (
-        <div className="relative overflow-hidden rounded-2xl border border-rose-500/50 bg-gradient-to-r from-rose-950/80 via-red-950/60 to-slate-900/80 p-4 shadow-[0_0_30px_rgba(244,63,94,0.3)] backdrop-blur-xl animate-pulse">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="flex size-10 items-center justify-center rounded-xl bg-rose-500/20 text-rose-300 border border-rose-500/40">
-                <ShieldAlert className="size-6" />
-              </div>
-              <div>
-                <div className="flex items-center gap-2 font-bold text-rose-200 text-sm">
-                  <span>🚨 CROSS-SECTOR THREAT INTELLIGENCE ALERT</span>
-                  <span className="rounded-full bg-rose-500/20 px-2 py-0.5 text-[10px] uppercase font-mono tracking-wider text-rose-300 border border-rose-500/30">
-                    Coordinated Attack Campaign
-                  </span>
-                </div>
-                <p className="mt-0.5 text-xs text-rose-300/90 font-mono">
-                  Originating caller voice signature previously flagged in: <strong className="text-white">{threatOrigin}</strong>. High-confidence synthetic voice clone attack recorded within last 60 minutes.
-                </p>
-              </div>
-            </div>
-            <button
-              onClick={() => setSimulatedThreat(false)}
-              className="text-xs text-rose-400 hover:text-white font-mono underline ml-4"
-            >
-              Dismiss
-            </button>
+        <div className="fixed right-6 top-6 z-50 rounded-xl border border-[var(--state-success)]/20 bg-[var(--bg-card,#171A2D)] px-4 py-3 text-xs font-semibold text-[var(--text-primary)] shadow-xl">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 size={15} className="text-[var(--state-success)]" />
+            {toastMsg}
           </div>
         </div>
       )}
 
-      {/* Sector Live Audio Controller & 1-Click Samples */}
-      <SectorAudioPlayer
-        title="Financial Services Audio Streamer & RTGS Wire Defense"
-        sector="finance"
-        scenario={governance.scenario || "high_value_transfer"}
-        samples={samples}
-        onPlaySample={(url, scn, amt) => streamAudioFromUrl?.(url, 'finance', scn || 'high_value_transfer', amt || 525000)}
-        onStartMic={startMicrophoneStream}
-        onStopMic={stopMicrophoneStream}
-        onFileUpload={handleFileUpload}
-        isStreaming={isStreaming}
-        micStatus={micStatus}
-        micLevel={micLevel}
-        accentColor="emerald"
-      />
+      <SecurityPageShell
+        eyebrow="Financial Security"
+        title="Financial Services"
+        description="Voice-fraud interception for high-value transfers, account recovery, and sensitive banking actions."
+        status={isConnected ? 'LIVE' : 'OFFLINE'}
+        statusTone={isConnected ? 'active' : 'medium'}
+        critical={
+          riskLevel === 'high' || hasCrossSectorThreat
+            ? {
+                label: hasCrossSectorThreat
+                  ? 'Cross-sector threat detected'
+                  : 'Critical detection',
+                title: hasCrossSectorThreat
+                  ? 'Coordinated voice attack detected'
+                  : 'Synthetic voice detected',
+                description:
+                  hasCrossSectorThreat
+                    ? `Voice signature previously associated with ${threatOrigin}.`
+                    : governance.reason ||
+                      'High synthetic-voice probability persisted during the financial interaction.',
+                actions: hasCrossSectorThreat ? (
+                  <button
+                    type="button"
+                    onClick={() => setSimulatedThreat(false)}
+                    className="rounded-lg border border-[#D96A78]/25 bg-[#D96A78]/[0.07] px-3 py-2 text-xs font-semibold text-[#D96A78] hover:bg-[var(--bg-hover,#1C2033)]"
+                  >
+                    Dismiss
+                  </button>
+                ) : null,
+              }
+            : null
+        }
+      >
+        <DetectionMetricGrid
+          metrics={[
+            {
+              id: 'synthetic-voice',
+              label: 'Synthetic Voice Probability',
+              value: `${(aiProbability * 100).toFixed(1)}%`,
+              icon: 'risk',
+              tone:
+                aiProbability >= 0.75
+                  ? 'high'
+                  : aiProbability >= 0.4
+                    ? 'medium'
+                    : 'low',
+              progress: aiProbability * 100,
+              helper: 'AI acoustic detection',
+            },
+            {
+              id: 'speaker-match',
+              label: 'Account Biometric Match',
+              value:
+                speakerSimilarity !== null
+                  ? `${(speakerSimilarity * 100).toFixed(1)}%`
+                  : '96.2%',
+              icon: 'speaker',
+              tone: speakerMatch === false ? 'high' : 'neutral',
+              progress:
+                speakerSimilarity !== null
+                  ? speakerSimilarity * 100
+                  : 96.2,
+              helper:
+                speakerMatch === true
+                  ? 'Matches account holder'
+                  : speakerMatch === false
+                    ? 'Voiceprint mismatch'
+                    : 'ECAPA-TDNN verification',
+            },
+            {
+              id: 'composite-risk',
+              label: 'Composite Risk',
+              value: `${(compositeRiskScore * 100).toFixed(1)}%`,
+              icon: 'composite',
+              tone:
+                compositeRiskScore >= 0.75
+                  ? 'high'
+                  : compositeRiskScore >= 0.4
+                    ? 'medium'
+                    : 'low',
+              progress: compositeRiskScore * 100,
+              helper: 'AI + biometric + transaction context',
+            },
+            {
+              id: 'risk-gate',
+              label: 'Transaction Risk Gate',
+              value:
+                riskLevel === 'high'
+                  ? 'FRAUD ALERT'
+                  : riskLevel === 'medium'
+                    ? 'STEP-UP'
+                    : 'AUTHORIZED',
+              icon: 'authenticity',
+              tone:
+                riskLevel === 'high'
+                  ? 'high'
+                  : riskLevel === 'medium'
+                    ? 'medium'
+                    : 'low',
+              helper: `Policy state · ${riskLevel.toUpperCase()}`,
+            },
+          ]}
+        />
 
-      {/* Main Grid */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        {/* Left Column: Simulated Banking Wire Context */}
-        <div className="rounded-2xl border border-white/10 bg-slate-900/60 p-5 shadow-xl backdrop-blur-md">
-          <h2 className="mb-4 flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-slate-300">
-            <CreditCard className="size-4 text-emerald-400" />
-            Wire Transfer Inbound Request
-          </h2>
+        <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1.35fr_0.85fr]">
+          <LiveDetectionPanel
+            title="Live financial voice detection"
+            description="Real-time audio ingestion and sector test audio"
+            isLive={isStreaming}
+          >
+            <SectorAudioPlayer
+              title="Financial Services Audio Streamer"
+              sector="finance"
+              scenario={governance.scenario || 'high_value_transfer'}
+              samples={samples}
+              onPlaySample={(url, scn, amt) =>
+                streamAudioFromUrl?.(
+                  url,
+                  'finance',
+                  scn || 'high_value_transfer',
+                  amt || 525000
+                )
+              }
+              onStartMic={startMicrophoneStream}
+              onStopMic={stopMicrophoneStream}
+              onFileUpload={handleFileUpload}
+              isStreaming={isStreaming}
+              micStatus={micStatus}
+              micLevel={micLevel}
+            />
+          </LiveDetectionPanel>
 
-          <div className="space-y-3 font-mono text-xs">
-            <div className="flex items-center justify-between rounded-lg border border-white/5 bg-white/[0.02] p-2.5">
-              <span className="text-slate-400">Account Number</span>
-              <span className="font-semibold text-white">XXXX-XXXX-9402</span>
-            </div>
-            <div className="flex items-center justify-between rounded-lg border border-white/5 bg-white/[0.02] p-2.5">
-              <span className="text-slate-400">Customer Name</span>
-              <span className="font-semibold text-white">Vikramaditya S.</span>
-            </div>
-            <div className="flex items-center justify-between rounded-lg border border-white/5 bg-white/[0.02] p-2.5">
-              <span className="text-slate-400">Transfer Amount</span>
-              <span className="font-semibold text-emerald-400">₹ 5,25,000.00</span>
-            </div>
-            <div className="flex items-center justify-between rounded-lg border border-white/5 bg-white/[0.02] p-2.5">
-              <span className="text-slate-400">Transfer Channel</span>
-              <span className="font-semibold text-cyan-300">RTGS Phone Banking</span>
-            </div>
-            <div className="flex items-center justify-between rounded-lg border border-white/5 bg-white/[0.02] p-2.5">
-              <span className="text-slate-400">Tenant Partition</span>
-              <span className="font-semibold text-purple-300">Biometric [finance_isolated]</span>
-            </div>
-            <div className="flex items-center justify-between rounded-lg border border-white/5 bg-white/[0.02] p-2.5">
-              <span className="text-slate-400">Beneficiary Tag</span>
-              <span className="font-semibold text-amber-300">New Payee Added (Immediate Transfer)</span>
-            </div>
-          </div>
-
-          <div className="mt-5 rounded-xl border border-rose-500/20 bg-rose-500/10 p-3 text-xs text-rose-200">
-            <div className="flex items-center gap-2 font-bold">
-              <AlertTriangle className="size-4 shrink-0 text-rose-400" />
-              RBI High-Risk Threshold
-            </div>
-            <p className="mt-1 text-[11px] leading-relaxed text-rose-300/80">
-              Transactions &gt; ₹50,000 to newly registered payees require continuous multi-factor or biometric voice authorization under RBI Section 4.2.
-            </p>
-          </div>
+          <SectorContextCard
+            title="Transaction protection"
+            description="Banking context interpreted alongside voice risk."
+            rows={[
+              { label: 'Account', value: 'XXXX-XXXX-9402' },
+              { label: 'Customer', value: 'Vikramaditya S.' },
+              {
+                label: 'Transfer amount',
+                value: '₹5,25,000',
+                tone: 'warning',
+              },
+              { label: 'Channel', value: 'RTGS Phone Banking' },
+              {
+                label: 'Beneficiary',
+                value: 'New Payee',
+                tone: 'danger',
+              },
+              { label: 'Tenant', value: 'finance_isolated' },
+            ]}
+            callout={{
+              title: 'High-value transaction',
+              description:
+                'New-payee transfers remain protected until the applicable voice and identity controls are satisfied.',
+            }}
+          />
         </div>
 
-        {/* Center Column: Live Risk & Biometric Gauges */}
-        <div className="space-y-4 lg:col-span-2">
-          {/* 4-Card Gauge Grid */}
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            {/* 1. Risk State Pill */}
-            <div className={`rounded-2xl border p-4 backdrop-blur-md transition-all ${
-              riskLevel === 'high'
-                ? 'border-rose-500/40 bg-rose-950/30 text-rose-200'
-                : riskLevel === 'medium'
-                ? 'border-amber-500/40 bg-amber-950/30 text-amber-200'
-                : 'border-emerald-500/40 bg-emerald-950/30 text-emerald-200'
-            }`}>
-              <div className="text-xs uppercase tracking-wider opacity-80">Banking Risk Gate</div>
-              <div className="mt-2 flex items-center gap-2 text-lg font-bold uppercase">
-                {riskLevel === 'high' ? (
-                  <>
-                    <XCircle className="size-5 text-rose-400" />
-                    Fraud Alert
-                  </>
-                ) : riskLevel === 'medium' ? (
-                  <>
-                    <AlertTriangle className="size-5 text-amber-400" />
-                    Step-Up Req.
-                  </>
-                ) : (
-                  <>
-                    <CheckCircle2 className="size-5 text-emerald-400" />
-                    Authorized
-                  </>
-                )}
-              </div>
-              <div className="mt-1 text-xs opacity-75 font-mono">
-                Level: {riskLevel.toUpperCase()}
-              </div>
-            </div>
-
-            {/* 2. AI Clone Probability */}
-            <div className="rounded-2xl border border-white/10 bg-slate-900/60 p-4 backdrop-blur-md">
-              <div className="text-xs uppercase tracking-wider text-slate-400">Voice Synthesis Index</div>
-              <div className="mt-2 text-xl font-mono font-bold text-white">
-                {(aiProbability * 100).toFixed(1)}%
-              </div>
-              <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-white/10">
-                <div
-                  className={`h-full transition-all duration-500 ${
-                    aiProbability > 0.75
-                      ? 'bg-rose-500'
-                      : aiProbability > 0.40
-                      ? 'bg-amber-400'
-                      : 'bg-emerald-400'
-                  }`}
-                  style={{ width: `${Math.min(100, Math.max(0, aiProbability * 100))}%` }}
-                />
-              </div>
-              <div className="mt-1 text-[10px] text-slate-400 font-mono">P(synthetic acoustic)</div>
-            </div>
-
-            {/* 3. Speaker Biometric Match */}
-            <div className="rounded-2xl border border-white/10 bg-slate-900/60 p-4 backdrop-blur-md">
-              <div className="text-xs uppercase tracking-wider text-slate-400">Account Biometric Match</div>
-              <div className="mt-2 text-xl font-mono font-bold text-white">
-                {speakerSimilarity !== null ? `${(speakerSimilarity * 100).toFixed(1)}%` : '96.2%'}
-              </div>
-              <div className="mt-1 flex items-center gap-1.5 text-xs text-slate-300">
-                <UserCheck className="size-3.5 text-emerald-400" />
-                <span className="text-[11px]">
-                  {speakerMatch === true
-                    ? 'Matches Account Holder'
-                    : speakerMatch === false
-                    ? 'Voiceprint Mismatch'
-                    : 'ECAPA-TDNN Verified'}
-                </span>
-              </div>
-            </div>
-
-            {/* 4. Unified Composite Risk Score */}
-            <div className={`rounded-2xl border p-4 backdrop-blur-md transition-all ${
-              compositeRiskScore >= 0.75
-                ? 'border-rose-500/30 bg-rose-950/20'
-                : compositeRiskScore >= 0.40
-                ? 'border-amber-500/30 bg-amber-950/20'
-                : 'border-emerald-500/30 bg-emerald-950/20'
-            }`}>
-              <div className="flex items-center justify-between text-xs uppercase tracking-wider text-slate-300">
-                <span>Composite Risk</span>
-                <Activity className="size-3.5 text-cyan-400" />
-              </div>
-              <div className="mt-2 text-xl font-mono font-bold text-white">
-                {(compositeRiskScore * 100).toFixed(1)}%
-              </div>
-              <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-white/10">
-                <div
-                  className={`h-full transition-all duration-500 ${
-                    compositeRiskScore >= 0.75
-                      ? 'bg-rose-500'
-                      : compositeRiskScore >= 0.40
-                      ? 'bg-amber-400'
-                      : 'bg-emerald-400'
-                  }`}
-                  style={{ width: `${Math.min(100, Math.max(0, compositeRiskScore * 100))}%` }}
-                />
-              </div>
-              <div className="mt-1 text-[9px] text-slate-400 font-mono">
-                R = 50% AI + 30% Bio + 20% ₹
-              </div>
-            </div>
-          </div>
-
-          {/* Decision & Action Workflow Panel */}
-          <div className="rounded-2xl border border-white/10 bg-slate-900/60 p-5 shadow-xl backdrop-blur-md">
-            <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-slate-300">
-              Banking Risk Engine & Transaction Controls
-            </h2>
-
-            <div className="mb-4 rounded-xl border border-white/5 bg-white/[0.02] p-4">
-              <div className="text-xs text-slate-400">Risk Policy Evaluation:</div>
-              <div className="mt-1 text-sm font-medium text-slate-200">
-                {governance.reason || (riskLevel === 'high' ? 'High voice-AI risk detected during high-value wire transaction.' : 'Voice biometric parameters verified within authorized thresholds.')}
-              </div>
-              
-              <div className="mt-3 space-y-1.5">
-                <div className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Recommended Next Steps:</div>
-                {recommendedActions.map((rec, i) => (
-                  <div key={i} className="flex items-start gap-2 text-xs text-slate-300">
-                    <ArrowRight className="size-3.5 mt-0.5 shrink-0 text-emerald-400" />
-                    <span>{rec}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Operator Actions - Connected to Backend REST Endpoints */}
-            <div className="flex flex-wrap items-center gap-3 pt-2">
+        <GovernanceDecisionCard
+          tone={
+            action === 'allow'
+              ? 'allow'
+              : action === 'step_up_verification'
+                ? 'verify'
+                : action === 'hold_and_escalate'
+                  ? 'escalate'
+                  : riskLevel === 'high'
+                    ? 'hold'
+                    : 'verify'
+          }
+          title={
+            riskLevel === 'high'
+              ? 'Hold and escalate the transaction'
+              : riskLevel === 'medium'
+                ? 'Step-up authentication required'
+                : 'Transaction may proceed'
+          }
+          reason={
+            governance.reason ||
+            (riskLevel === 'high'
+              ? 'High voice-AI risk detected during the financial interaction.'
+              : riskLevel === 'medium'
+                ? 'Additional customer authentication is required before clearing the transaction.'
+                : 'Voice and transaction signals remain within the configured banking risk policy.')
+          }
+          recommendations={recommendedActions}
+          actions={
+            <>
               <button
+                type="button"
                 onClick={handleHaltWire}
-                className={`flex items-center gap-2 rounded-xl border px-4 py-2.5 text-xs font-semibold transition-all active:scale-95 ${
+                className={[
+                  'rounded-lg border px-3 py-2 text-xs font-semibold transition-colors',
                   wireFrozen
-                    ? 'border-rose-400/50 bg-rose-500/30 text-rose-200'
-                    : 'border-rose-500/30 bg-rose-500/10 text-rose-300 hover:bg-rose-500/20'
-                }`}
+                    ? 'border-[var(--state-danger)]/25 bg-[var(--state-danger)]/10 text-[var(--state-danger)]'
+                    : 'border-[#D96A78]/30 bg-[#D96A78] text-white hover:bg-[#C85D6C]',
+                ].join(' ')}
               >
-                <Ban className="size-4" />
-                {wireFrozen ? 'Wire Frozen in Core Banking ✓' : 'Halt Wire Transfer Immediately'}
+                <span className="flex items-center gap-2">
+                  <Ban size={14} />
+                  {wireFrozen ? 'Wire Frozen' : 'Halt Wire'}
+                </span>
               </button>
 
               <button
+                type="button"
                 onClick={handleTriggerVkyc}
-                className="flex items-center gap-2 rounded-xl border border-cyan-400/40 bg-cyan-500/20 px-4 py-2.5 text-xs font-semibold text-cyan-200 transition-all hover:bg-cyan-500/30 active:scale-95"
+                className="rounded-lg border border-[#5863D6]/35 bg-[#5863D6]/15 px-3 py-2 text-xs font-semibold text-[#7079E0] hover:bg-[#5863D6]/25"
               >
-                <Lock className="size-4" />
-                {videoKycData ? 'Video-KYC Active (View Link) ✓' : 'Dispatch Video-KYC Step-Up'}
+                <span className="flex items-center gap-2">
+                  <Lock size={14} />
+                  {videoKycData ? 'View KYC' : 'Video-KYC'}
+                </span>
               </button>
 
               <button
+                type="button"
                 onClick={() => {
-                  setBankerEscalated(true);
-                  showToast("Re-routed to Relationship Manager Priority Queue!");
+                  setBankerEscalated(true)
+                  showToast('Re-routed to Relationship Manager Priority Queue!')
                 }}
                 disabled={bankerEscalated}
-                className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-xs font-semibold text-slate-200 transition-all hover:bg-white/10 active:scale-95 disabled:opacity-50"
+                className="rounded-lg border border-[#D96A78]/25 bg-[#D96A78]/[0.07] px-3 py-2 text-xs font-semibold text-[#D96A78] hover:bg-[var(--bg-hover,#1C2033)] disabled:opacity-50"
               >
-                <Send className="size-4 text-emerald-400" />
-                {bankerEscalated ? 'Escalated to Branch Banker ✓' : 'Re-route to Relationship Manager'}
+                <span className="flex items-center gap-2">
+                  <Send size={14} />
+                  {bankerEscalated ? 'Escalated' : 'Escalate'}
+                </span>
               </button>
 
               <button
+                type="button"
                 onClick={() => setShowWebhook(true)}
-                className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-xs font-mono font-semibold text-slate-300 hover:bg-white/10 hover:text-white transition-all active:scale-95"
+                className="rounded-lg border border-[var(--border-default)] bg-transparent px-3 py-2 text-xs font-semibold text-[var(--text-muted)] hover:bg-[var(--bg-hover,#1C2033)] hover:text-[var(--text-primary)]"
               >
-                <span>&lt;/&gt;</span>
-                Inspect Core Banking Webhook
+                Inspect Webhook
               </button>
+            </>
+          }
+        />
+
+        <SecurityActivityTimeline
+          steps={[
+            {
+              label: 'Security context',
+              value: `${governance.scenario || 'High-Value Transfer'} · ₹5,25,000`,
+              tone: 'ready',
+              status: 'READY',
+            },
+            {
+              label: 'AI detection',
+              value: `${(aiProbability * 100).toFixed(1)}% synthetic probability`,
+              tone: aiProbability >= 0.4 ? 'detected' : 'ready',
+              status: aiProbability >= 0.4 ? 'HIGH' : 'READY',
+            },
+            {
+              label: 'Governance',
+              value:
+                riskLevel === 'high'
+                  ? 'Hold & Escalate'
+                  : riskLevel === 'medium'
+                    ? 'Step-up Verification'
+                    : 'Allow',
+              tone: riskLevel === 'low' ? 'ready' : 'decided',
+              status: 'DECIDED',
+            },
+            {
+              label: 'Identity',
+              value:
+                speakerMatch === false
+                  ? 'Speaker mismatch'
+                  : 'Speaker verification available',
+              tone: speakerMatch === false ? 'detected' : 'identity',
+              status: speakerMatch === false ? 'REVIEW' : 'AVAILABLE',
+            },
+          ]}
+        />
+      </SecurityPageShell>
+
+      {showKycModal && videoKycData && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-2xl border border-[var(--border-default)] bg-[var(--bg-card,#171A2D)] p-6 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-[var(--border-default)] pb-3">
+              <div className="flex items-center gap-2 text-sm font-semibold text-[var(--text-primary)]">
+                <QrCode size={17} className="text-[var(--accent-primary-soft)]" />
+                Video-KYC biometric challenge
+              </div>
 
               <button
-                onClick={handleSimulateThreat}
-                className={`flex items-center gap-2 rounded-xl border px-4 py-2.5 text-xs font-semibold transition-all active:scale-95 ${
-                  hasCrossSectorThreat
-                    ? 'border-rose-500/40 bg-rose-500/20 text-rose-200'
-                    : 'border-white/10 bg-white/5 text-slate-300 hover:bg-white/10'
-                }`}
+                type="button"
+                onClick={() => setShowKycModal(false)}
+                className="text-[var(--text-muted)] hover:text-[var(--text-primary)]"
               >
-                <ShieldAlert className="size-4 text-rose-400" />
-                {hasCrossSectorThreat ? 'Cross-Sector Threat Active' : 'Simulate Cross-Sector Attacker'}
+                <X size={17} />
               </button>
             </div>
-          </div>
-        </div>
-      </div>
 
-      {/* Video-KYC Interactive Modal */}
-      {showKycModal && videoKycData && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-md animate-in fade-in duration-200">
-          <div className="relative w-full max-w-md overflow-hidden rounded-2xl border border-cyan-400/30 bg-[#070b14] p-6 shadow-2xl">
-            <div className="flex items-center justify-between border-b border-white/10 pb-3">
-              <div className="flex items-center gap-2 text-cyan-300 font-bold text-sm">
-                <QrCode className="size-5" />
-                <span>Video-KYC Biometric Challenge</span>
-              </div>
-              <button onClick={() => setShowKycModal(false)} className="text-slate-400 hover:text-white">
-                <X className="size-5" />
-              </button>
-            </div>
-            
-            <div className="py-4 space-y-3 text-xs">
-              <div className="rounded-xl border border-cyan-400/20 bg-cyan-950/30 p-3 font-mono text-cyan-200">
-                <div className="text-[10px] text-slate-400">DISPATCHED TO MOBILE:</div>
-                <div className="font-bold text-white text-sm">{videoKycData.dispatched_to || '+91 98765-43210'}</div>
-                <div className="mt-2 text-[10px] text-slate-400">ONE-TIME VOICE PASSPHRASE:</div>
-                <div className="font-bold text-amber-300 text-sm">"BOLOSAFE-SECURE-902"</div>
+            <div className="space-y-3 py-4 text-xs">
+              <div className="rounded-xl border border-[var(--border-default)] bg-[var(--bg-surface,#121526)] p-3">
+                <div className="text-[10px] uppercase tracking-[0.14em] text-[var(--text-muted)]">
+                  Dispatched to
+                </div>
+                <div className="mt-1 font-semibold text-[var(--text-primary)]">
+                  {videoKycData.dispatched_to || '+91 98765-43210'}
+                </div>
+
+                <div className="mt-3 text-[10px] uppercase tracking-[0.14em] text-[var(--text-muted)]">
+                  One-time verification phrase
+                </div>
+                <div className="mt-1 font-semibold text-[var(--text-primary)]">
+                  BOLOSAFE-SECURE-902
+                </div>
               </div>
 
-              <div className="rounded-xl border border-white/10 bg-black/50 p-3 font-mono text-[11px] text-slate-300 truncate">
-                <div className="text-[10px] text-slate-400 mb-1">VERIFICATION URL:</div>
-                <a href="#" onClick={(e) => e.preventDefault()} className="text-cyan-400 underline truncate flex items-center gap-1">
+              <div className="rounded-xl border border-[var(--border-default)] bg-[var(--bg-surface,#121526)] p-3">
+                <div className="text-[10px] uppercase tracking-[0.14em] text-[var(--text-muted)]">
+                  Verification URL
+                </div>
+
+                <div className="mt-1 truncate text-[var(--accent-primary-soft)]">
                   {videoKycData.verification_link}
-                  <ExternalLink className="size-3 shrink-0" />
-                </a>
+                </div>
               </div>
 
-              <div className="flex items-center justify-between text-xs text-slate-400 pt-2 font-mono">
-                <span>Session Expiry:</span>
-                <span className="font-bold text-rose-400">{kycTimer}s remaining</span>
+              <div className="flex items-center justify-between border-t border-[var(--border-default)] pt-3">
+                <span className="text-[var(--text-muted)]">Session expiry</span>
+                <span className="font-semibold text-[var(--state-danger)]">
+                  {kycTimer}s
+                </span>
               </div>
             </div>
 
             <button
+              type="button"
               onClick={() => {
-                setShowKycModal(false);
-                showToast("Video-KYC challenge completed and authenticated!");
+                setShowKycModal(false)
+                showToast('Video-KYC challenge completed and authenticated!')
               }}
-              className="w-full mt-2 rounded-xl bg-gradient-to-r from-cyan-500 to-emerald-500 py-2.5 text-xs font-bold text-black transition-all hover:opacity-90 active:scale-95"
+              className="w-full rounded-lg bg-[var(--accent-primary)] px-4 py-2.5 text-xs font-semibold text-white hover:bg-[var(--accent-primary-soft)]"
             >
-              Simulate Customer Completed V-KYC ✓
+              Simulate customer completed KYC
             </button>
           </div>
         </div>
@@ -536,13 +514,17 @@ export default function FinanceSecurity({
         isOpen={showWebhook}
         onClose={() => setShowWebhook(false)}
         sector="finance"
-        scenario={governance.scenario || "high_value_transfer"}
+        scenario={governance.scenario || 'high_value_transfer'}
         riskLevel={riskLevel}
         action={action}
         aiProbability={aiProbability}
         speakerMatch={speakerMatch}
-        metadata={{ accountNo: "XXXX-XXXX-9402", amount: 525000.0, compositeRisk: compositeRiskScore }}
+        metadata={{
+          accountNo: 'XXXX-XXXX-9402',
+          amount: 525000.0,
+          compositeRisk: compositeRiskScore,
+        }}
       />
     </div>
-  );
+  )
 }

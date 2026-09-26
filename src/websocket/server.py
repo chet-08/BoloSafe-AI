@@ -72,6 +72,8 @@ app.add_middleware(
     allow_origins=[
         "http://127.0.0.1:5173",
         "http://localhost:5173",
+        "http://127.0.0.1:5174",
+        "http://localhost:5174",
     ],
     allow_credentials=True,
     allow_methods=["*"],
@@ -1224,6 +1226,7 @@ async def audio_websocket_endpoint(
                     stream_id,
                     requested_scenario,
                     None,
+                    requested_sector,
                 )
 
                 scenario = resolution.scenario.value

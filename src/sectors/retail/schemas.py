@@ -33,3 +33,21 @@ class RetailDecision(BaseModel):
 
     reason: str
     recommended_actions: list[str] = Field(default_factory=list)
+
+    # Retail-specific workflow execution state.
+    workflow_status: Literal[
+        "allowed",
+        "verification_required",
+        "order_held",
+        "escalated",
+    ] = "allowed"
+
+    otp_challenge_required: bool = False
+    oms_hold_required: bool = False
+    supervisor_escalation_required: bool = False
+
+    workflow_actions: list[str] = Field(default_factory=list)
+
+    # Integration-ready mock payloads.
+    otp_challenge: dict | None = None
+    oms_hold: dict | None = None
