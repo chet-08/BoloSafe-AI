@@ -50,3 +50,9 @@ src/websocket/server.py.before_yin_restore
 data/*.ogg
 data/*.mp3
 data/*.wav
+
+# Allow sector demonstration audio datasets
+!data/sectors/
+!data/sectors/**
+!frontend/public/sector_audio/
+!frontend/public/sector_audio/**
