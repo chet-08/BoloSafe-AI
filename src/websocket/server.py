@@ -33,6 +33,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import ValidationError
 
 from src.adversarial.router import router as adversarial_router
+from src.sectors.api import router as sector_api_router
 from src.config import VAD_FRAME_SAMPLES, SAMPLE_RATE
 from src.features import extract_features
 from src.yin_analyzer import extract_yin_pitch_stats
@@ -78,6 +79,7 @@ app.add_middleware(
 )
 
 app.include_router(adversarial_router)
+app.include_router(sector_api_router, prefix="/api/v1/sectors")
 
 
 
