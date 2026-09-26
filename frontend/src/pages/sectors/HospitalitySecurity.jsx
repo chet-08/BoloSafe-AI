@@ -80,6 +80,10 @@ export default function HospitalitySecurity({
 
   const riskLevel = governance.risk_level || (aiProbability >= 0.75 || hasCrossSectorThreat ? 'high' : aiProbability >= 0.40 ? 'medium' : 'low');
   const action = governance.action || (riskLevel === 'high' ? 'lock_folio_and_escalate' : riskLevel === 'medium' ? 'require_front_desk_id' : 'allow');
+  const hasAudioResult =
+    selected.ai_probability !== undefined &&
+    selected.ai_probability !== null;
+
   const recommendedActions = governance.recommended_actions || [
     riskLevel === 'high'
       ? 'Immediately lock room folio and halt phone-authorized charges.'
@@ -270,71 +274,8 @@ export default function HospitalitySecurity({
         </div>
       )}
 
-      {/* Sector Live Audio Controller & 1-Click Samples */}
-      <SectorAudioPlayer
-        title="Concierge Audio Streamer & Room Folio Defense"
-        sector="hospitality"
-        scenario={governance.scenario || "vip_booking"}
-        samples={samples}
-        onPlaySample={(url, scn) => streamAudioFromUrl?.(url, 'hospitality', scn || 'vip_booking')}
-        onStartMic={startMicrophoneStream}
-        onStopMic={stopMicrophoneStream}
-        onFileUpload={handleFileUpload}
-        isStreaming={isStreaming}
-        micStatus={micStatus}
-        micLevel={micLevel}
-        accentColor="amber"
-      />
-
-      {/* Main Grid */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        {/* Left Column: Simulated Hotel Folio Context */}
-        <div className="rounded-2xl border border-white/10 bg-slate-900/60 p-5 shadow-xl backdrop-blur-md">
-          <h2 className="mb-4 flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-slate-300">
-            <Hotel className="size-4 text-amber-400" />
-            Guest In-House Folio Record
-          </h2>
-
-          <div className="space-y-3 font-mono text-xs">
-            <div className="flex items-center justify-between rounded-lg border border-white/5 bg-white/[0.02] p-2.5">
-              <span className="text-slate-400">Guest Name</span>
-              <span className="font-semibold text-white">S. Ramachandran</span>
-            </div>
-            <div className="flex items-center justify-between rounded-lg border border-white/5 bg-white/[0.02] p-2.5">
-              <span className="text-slate-400">Room / Suite</span>
-              <span className="font-semibold text-amber-300">Presidential Suite #1402</span>
-            </div>
-            <div className="flex items-center justify-between rounded-lg border border-white/5 bg-white/[0.02] p-2.5">
-              <span className="text-slate-400">Tenant Store</span>
-              <span className="font-semibold text-amber-300">Biometric [hospitality_isolated]</span>
-            </div>
-            <div className="flex items-center justify-between rounded-lg border border-white/5 bg-white/[0.02] p-2.5">
-              <span className="text-slate-400">Folio Credit Line</span>
-              <span className="font-semibold text-emerald-400">₹ 2,00,000.00 Limit</span>
-            </div>
-            <div className="flex items-center justify-between rounded-lg border border-white/5 bg-white/[0.02] p-2.5">
-              <span className="text-slate-400">Inbound Call Type</span>
-              <span className="font-semibold text-cyan-300">In-Room PBX Telephone Order</span>
-            </div>
-            <div className="flex items-center justify-between rounded-lg border border-white/5 bg-white/[0.02] p-2.5">
-              <span className="text-slate-400">Pending Request</span>
-              <span className="font-semibold text-rose-300">Chauffeured Luxury Car + Room Charge</span>
-            </div>
-          </div>
-
-          <div className="mt-5 rounded-xl border border-amber-500/20 bg-amber-500/10 p-3 text-xs text-amber-200">
-            <div className="flex items-center gap-2 font-bold">
-              <AlertTriangle className="size-4 shrink-0 text-amber-400" />
-              PCI-DSS & Folio Safeguard
-            </div>
-            <p className="mt-1 text-[11px] leading-relaxed text-amber-300/80">
-              Unattended phone requests exceeding ₹20,000 charged to room folios require front-desk physical keycard verification.
-            </p>
-          </div>
-        </div>
-
-        {/* Center Column: Live Risk & Biometric Gauges */}
-        <div className="space-y-4 lg:col-span-2">
+      {hasAudioResult && (
+        <div className="mb-6">
           {/* Primary Voice Security Decision */}
           <div className={`rounded-2xl border p-6 shadow-2xl backdrop-blur-md ${decisionStyle.container}`}>
             <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
@@ -431,6 +372,75 @@ export default function HospitalitySecurity({
               </div>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Sector Live Audio Controller & 1-Click Samples */}
+      <SectorAudioPlayer
+        title="Concierge Audio Streamer & Room Folio Defense"
+        sector="hospitality"
+        scenario={governance.scenario || "vip_booking"}
+        samples={samples}
+        onPlaySample={(url, scn) => streamAudioFromUrl?.(url, 'hospitality', scn || 'vip_booking')}
+        onStartMic={startMicrophoneStream}
+        onStopMic={stopMicrophoneStream}
+        onFileUpload={handleFileUpload}
+        isStreaming={isStreaming}
+        micStatus={micStatus}
+        micLevel={micLevel}
+        accentColor="amber"
+      />
+
+      {/* Main Grid */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        {/* Left Column: Simulated Hotel Folio Context */}
+        <div className="rounded-2xl border border-white/10 bg-slate-900/60 p-5 shadow-xl backdrop-blur-md">
+          <h2 className="mb-4 flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-slate-300">
+            <Hotel className="size-4 text-amber-400" />
+            Guest In-House Folio Record
+          </h2>
+
+          <div className="space-y-3 font-mono text-xs">
+            <div className="flex items-center justify-between rounded-lg border border-white/5 bg-white/[0.02] p-2.5">
+              <span className="text-slate-400">Guest Name</span>
+              <span className="font-semibold text-white">S. Ramachandran</span>
+            </div>
+            <div className="flex items-center justify-between rounded-lg border border-white/5 bg-white/[0.02] p-2.5">
+              <span className="text-slate-400">Room / Suite</span>
+              <span className="font-semibold text-amber-300">Presidential Suite #1402</span>
+            </div>
+            <div className="flex items-center justify-between rounded-lg border border-white/5 bg-white/[0.02] p-2.5">
+              <span className="text-slate-400">Tenant Store</span>
+              <span className="font-semibold text-amber-300">Biometric [hospitality_isolated]</span>
+            </div>
+            <div className="flex items-center justify-between rounded-lg border border-white/5 bg-white/[0.02] p-2.5">
+              <span className="text-slate-400">Folio Credit Line</span>
+              <span className="font-semibold text-emerald-400">₹ 2,00,000.00 Limit</span>
+            </div>
+            <div className="flex items-center justify-between rounded-lg border border-white/5 bg-white/[0.02] p-2.5">
+              <span className="text-slate-400">Inbound Call Type</span>
+              <span className="font-semibold text-cyan-300">In-Room PBX Telephone Order</span>
+            </div>
+            <div className="flex items-center justify-between rounded-lg border border-white/5 bg-white/[0.02] p-2.5">
+              <span className="text-slate-400">Pending Request</span>
+              <span className="font-semibold text-rose-300">Chauffeured Luxury Car + Room Charge</span>
+            </div>
+          </div>
+
+          <div className="mt-5 rounded-xl border border-amber-500/20 bg-amber-500/10 p-3 text-xs text-amber-200">
+            <div className="flex items-center gap-2 font-bold">
+              <AlertTriangle className="size-4 shrink-0 text-amber-400" />
+              PCI-DSS & Folio Safeguard
+            </div>
+            <p className="mt-1 text-[11px] leading-relaxed text-amber-300/80">
+              Unattended phone requests exceeding ₹20,000 charged to room folios require front-desk physical keycard verification.
+            </p>
+          </div>
+        </div>
+
+        {/* Center Column: Live Risk & Biometric Gauges */}
+        <div className="space-y-4 lg:col-span-2">
+
 
           {/* Decision & Action Workflow Panel */}
           <div className="rounded-2xl border border-white/10 bg-slate-900/60 p-5 shadow-xl backdrop-blur-md">
