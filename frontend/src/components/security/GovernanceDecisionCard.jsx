@@ -35,6 +35,13 @@ const toneMap = {
     bg: 'bg-[#D96A78]/[0.08]',
     label: 'ESCALATE',
   },
+  pending: {
+    icon: ShieldCheck,
+    iconClass: 'text-[#858BA3]',
+    border: 'border-[#292E46]',
+    bg: 'bg-[#171A2D]/60',
+    label: 'STANDBY',
+  },
 }
 
 export default function GovernanceDecisionCard({

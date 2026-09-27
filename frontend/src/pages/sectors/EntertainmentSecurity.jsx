@@ -15,7 +15,8 @@ import {
   Download,
   Ban,
   Lock,
-  Activity
+  Activity,
+  Clock
 } from 'lucide-react';
 import SectorAudioPlayer from '../../components/SectorAudioPlayer';
 import EnterpriseWebhookDrawer from '../../components/EnterpriseWebhookDrawer';
@@ -79,15 +80,47 @@ export default function EntertainmentSecurity({
     ? governance.composite_risk_score
     : Math.min(1.0, Math.max(0.0, (aiProbability * 0.50) + ((1.0 - (speakerSimilarity ?? 0.5)) * 0.30) + 0.20));
 
-  const riskLevel = governance.risk_level || (aiProbability >= 0.75 || hasCrossSectorThreat ? 'high' : aiProbability >= 0.40 ? 'medium' : 'low');
-  const action = governance.action || (riskLevel === 'high' ? 'block_rights_and_escalate' : riskLevel === 'medium' ? 'flag_for_spectral_audit' : 'certify_authentic');
-  const recommendedActions = governance.recommended_actions || [
-    riskLevel === 'high'
-      ? 'Withhold digital media rights clearance and suspend OTT distribution under Sec 38B.'
-      : riskLevel === 'medium'
-      ? 'Route track for secondary vocoder artifact & spectral phase audit.'
-      : 'Issue digital authenticity certificate for broadcast/dubbing release.'
-  ];
+  const hasDetectionResult =
+    selected?.ai_probability != null ||
+    selected?.rolling_score != null ||
+    governance?.action != null ||
+    governance?.risk_level != null;
+
+  const isSpoof =
+    hasDetectionResult &&
+    (governance.risk_level === 'high' ||
+      governance.risk_level === 'medium' ||
+      selected.alert_triggered === true ||
+      aiProbability >= 0.40 ||
+      hasCrossSectorThreat);
+
+  const isGenuine =
+    hasDetectionResult && !isSpoof && (governance.risk_level === 'low' || aiProbability < 0.40);
+
+  const riskLevel = hasDetectionResult
+    ? (governance.risk_level || (aiProbability >= 0.75 || hasCrossSectorThreat ? 'high' : aiProbability >= 0.40 ? 'medium' : 'low'))
+    : 'standby';
+
+  const action = hasDetectionResult
+    ? (governance.action || (riskLevel === 'high' ? 'block_rights_and_escalate' : riskLevel === 'medium' ? 'flag_for_spectral_audit' : 'certify_authentic'))
+    : 'standby';
+
+  const recommendedActions = !hasDetectionResult
+    ? [
+        'Run an authentic studio stem or cloned artist sample from library above.',
+        'Digital rights enforcement and WIPO copyright actions will execute based on live detection.'
+      ]
+    : isSpoof
+    ? [
+        'Withhold digital media rights clearance and suspend OTT distribution under Sec 38B.',
+        'Route track for secondary vocoder artifact & spectral phase audit.',
+        'Issue cease-and-desist notice for unauthorized neural voice synthesis.'
+      ]
+    : [
+        'Vocal master stem confirmed authentic.',
+        'Digital media rights clearance approved for broadcast and dubbing release.',
+        'Issue SHA-256 Provenance Certificate under WIPO guidelines.'
+      ];
 
   const showToast = (msg) => {
     setToastMsg(msg);
@@ -287,7 +320,9 @@ export default function EntertainmentSecurity({
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
             {/* 1. Risk State Pill */}
             <div className={`rounded-2xl border p-4 backdrop-blur-md transition-all ${
-              riskLevel === 'high'
+              !hasDetectionResult
+                ? 'border-slate-700/50 bg-slate-900/60 text-slate-300'
+                : riskLevel === 'high'
                 ? 'border-rose-500/40 bg-rose-950/30 text-rose-200'
                 : riskLevel === 'medium'
                 ? 'border-amber-500/40 bg-amber-950/30 text-amber-200'
@@ -295,7 +330,12 @@ export default function EntertainmentSecurity({
             }`}>
               <div className="text-xs uppercase tracking-wider opacity-80">Rights Clearance Gate</div>
               <div className="mt-2 flex items-center gap-2 text-lg font-bold uppercase">
-                {riskLevel === 'high' ? (
+                {!hasDetectionResult ? (
+                  <>
+                    <Clock className="size-5 text-slate-400" />
+                    Standby
+                  </>
+                ) : riskLevel === 'high' ? (
                   <>
                     <XCircle className="size-5 text-rose-400" />
                     IP Violation
@@ -313,7 +353,7 @@ export default function EntertainmentSecurity({
                 )}
               </div>
               <div className="mt-1 text-xs opacity-75 font-mono">
-                Level: {riskLevel.toUpperCase()}
+                Level: {!hasDetectionResult ? 'STANDBY' : riskLevel.toUpperCase()}
               </div>
             </div>
 
@@ -321,36 +361,48 @@ export default function EntertainmentSecurity({
             <div className="rounded-2xl border border-white/10 bg-slate-900/60 p-4 backdrop-blur-md">
               <div className="text-xs uppercase tracking-wider text-slate-400">Synthetic Voice Index</div>
               <div className="mt-2 text-xl font-mono font-bold text-white">
-                {(aiProbability * 100).toFixed(1)}%
+                {hasDetectionResult ? `${(aiProbability * 100).toFixed(1)}%` : 'WAITING'}
               </div>
               <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-white/10">
                 <div
                   className={`h-full transition-all duration-500 ${
-                    aiProbability > 0.75
+                    !hasDetectionResult
+                      ? 'bg-slate-600'
+                      : aiProbability > 0.75
                       ? 'bg-rose-500'
                       : aiProbability > 0.40
                       ? 'bg-amber-400'
                       : 'bg-emerald-400'
                   }`}
-                  style={{ width: `${Math.min(100, Math.max(0, aiProbability * 100))}%` }}
+                  style={{ width: `${hasDetectionResult ? Math.min(100, Math.max(0, aiProbability * 100)) : 0}%` }}
                 />
               </div>
-              <div className="mt-1 text-[10px] text-slate-400 font-mono">P(synthetic acoustic)</div>
+              <div className="mt-1 text-[10px] text-slate-400 font-mono">
+                {hasDetectionResult ? 'P(synthetic acoustic)' : 'Awaiting audio stream'}
+              </div>
             </div>
 
             {/* 3. Speaker Biometric Match */}
             <div className="rounded-2xl border border-white/10 bg-slate-900/60 p-4 backdrop-blur-md">
               <div className="text-xs uppercase tracking-wider text-slate-400">Artist Timbre Match</div>
               <div className="mt-2 text-xl font-mono font-bold text-white">
-                {speakerSimilarity !== null ? `${(speakerSimilarity * 100).toFixed(1)}%` : '98.4%'}
+                {hasDetectionResult
+                  ? speakerSimilarity !== null
+                    ? `${(speakerSimilarity * 100).toFixed(1)}%`
+                    : isGenuine
+                    ? '98.4%'
+                    : '—'
+                  : '—'}
               </div>
               <div className="mt-1 flex items-center gap-1.5 text-xs text-slate-300">
                 <UserCheck className="size-3.5 text-violet-400" />
                 <span className="text-[11px]">
-                  {speakerMatch === true
-                    ? 'Matches Licensed Performer'
-                    : speakerMatch === false
+                  {!hasDetectionResult
+                    ? 'Awaiting verification'
+                    : isSpoof
                     ? 'Unauthorized Vocal Timbre'
+                    : speakerMatch === true
+                    ? 'Matches Licensed Performer'
                     : 'ECAPA-TDNN Verified'}
                 </span>
               </div>
@@ -358,7 +410,9 @@ export default function EntertainmentSecurity({
 
             {/* 4. Unified Composite Risk Score */}
             <div className={`rounded-2xl border p-4 backdrop-blur-md transition-all ${
-              compositeRiskScore >= 0.75
+              !hasDetectionResult
+                ? 'border-white/10 bg-slate-900/60'
+                : compositeRiskScore >= 0.75
                 ? 'border-rose-500/30 bg-rose-950/20'
                 : compositeRiskScore >= 0.40
                 ? 'border-amber-500/30 bg-amber-950/20'
@@ -369,22 +423,24 @@ export default function EntertainmentSecurity({
                 <Activity className="size-3.5 text-cyan-400" />
               </div>
               <div className="mt-2 text-xl font-mono font-bold text-white">
-                {(compositeRiskScore * 100).toFixed(1)}%
+                {hasDetectionResult ? `${(compositeRiskScore * 100).toFixed(1)}%` : 'WAITING'}
               </div>
               <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-white/10">
                 <div
                   className={`h-full transition-all duration-500 ${
-                    compositeRiskScore >= 0.75
+                    !hasDetectionResult
+                      ? 'bg-slate-600'
+                      : compositeRiskScore >= 0.75
                       ? 'bg-rose-500'
                       : compositeRiskScore >= 0.40
                       ? 'bg-amber-400'
                       : 'bg-emerald-400'
                   }`}
-                  style={{ width: `${Math.min(100, Math.max(0, compositeRiskScore * 100))}%` }}
+                  style={{ width: `${hasDetectionResult ? Math.min(100, Math.max(0, compositeRiskScore * 100)) : 0}%` }}
                 />
               </div>
               <div className="mt-1 text-[9px] text-slate-400 font-mono">
-                R = 50% AI + 30% Timbre + 20% IP
+                {hasDetectionResult ? 'R = 50% AI + 30% Timbre + 20% IP' : 'Awaiting audio analysis'}
               </div>
             </div>
           </div>
@@ -398,7 +454,13 @@ export default function EntertainmentSecurity({
             <div className="mb-4 rounded-xl border border-white/5 bg-white/[0.02] p-4">
               <div className="text-xs text-slate-400">Authenticity Directive:</div>
               <div className="mt-1 text-sm font-medium text-slate-200">
-                {governance.reason || (riskLevel === 'high' ? 'High voice-AI clone probability detected. Potential copyright infringement.' : 'Track verified against licensed performer timbre embedding.')}
+                {governance.reason || (
+                  !hasDetectionResult
+                    ? 'Awaiting scenario audio run to evaluate studio stem authenticity and copyright clearance.'
+                    : isSpoof
+                    ? 'High voice-AI clone probability detected. Potential copyright infringement under Sec 38B.'
+                    : 'Vocal master stem confirmed authentic against licensed performer timbre embedding.'
+                )}
               </div>
               
               <div className="mt-3 space-y-1.5">
@@ -415,39 +477,48 @@ export default function EntertainmentSecurity({
             {/* Operator Actions - Connected to Backend REST Endpoints */}
             <div className="flex flex-wrap items-center gap-3 pt-2">
               <button
+                disabled={!hasDetectionResult}
                 onClick={() => {
                   setRightsBlocked(!rightsBlocked);
                   showToast(rightsBlocked ? "Rights clearance restored." : "Distribution revoked under Sec 38B!");
                 }}
-                className={`flex items-center gap-2 rounded-xl border px-4 py-2.5 text-xs font-semibold transition-all active:scale-95 ${
-                  rightsBlocked
+                className={`flex items-center gap-2 rounded-xl border px-4 py-2.5 text-xs font-semibold transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed ${
+                  rightsBlocked || isSpoof
                     ? 'border-rose-400/50 bg-rose-500/30 text-rose-200'
                     : 'border-rose-500/30 bg-rose-500/10 text-rose-300 hover:bg-rose-500/20'
                 }`}
               >
                 <Ban className="size-4" />
-                {rightsBlocked ? 'Media Rights Clearance Revoked ✓' : 'Revoke Distribution Clearance'}
+                {rightsBlocked || isSpoof ? 'Media Rights Clearance Revoked ✓' : 'Revoke Distribution Clearance'}
               </button>
 
               <button
+                disabled={!hasDetectionResult}
                 onClick={handleExportProvenance}
-                className="flex items-center gap-2 rounded-xl border border-violet-400/40 bg-violet-500/20 px-4 py-2.5 text-xs font-semibold text-violet-200 transition-all hover:bg-violet-500/30 active:scale-95"
+                className="flex items-center gap-2 rounded-xl border border-violet-400/40 bg-violet-500/20 px-4 py-2.5 text-xs font-semibold text-violet-200 transition-all hover:bg-violet-500/30 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 <Download className="size-4" />
                 {provenanceExported ? 'SHA-256 Provenance Cert Downloaded ✓' : 'Export SHA-256 Provenance Cert'}
               </button>
 
-              <button
-                onClick={() => {
-                  setCertified(true);
-                  showToast("WIPO DRM authenticity certification issued!");
-                }}
-                disabled={certified}
-                className="flex items-center gap-2 rounded-xl border border-emerald-400/30 bg-emerald-500/20 px-4 py-2.5 text-xs font-semibold text-emerald-200 transition-all hover:bg-emerald-500/30 active:scale-95 disabled:opacity-50"
-              >
-                <FileBadge2 className="size-4 text-emerald-400" />
-                {certified ? 'WIPO Rights Certified ✓' : 'Issue WIPO DRM Certification'}
-              </button>
+              {isGenuine ? (
+                <div className="flex items-center gap-2 rounded-xl border border-emerald-400/30 bg-emerald-500/20 px-4 py-2.5 text-xs font-semibold text-emerald-200">
+                  <CheckCircle2 className="size-4 text-emerald-400" />
+                  WIPO Rights Certified & Approved ✓
+                </div>
+              ) : (
+                <button
+                  onClick={() => {
+                    setCertified(true);
+                    showToast("WIPO DRM authenticity certification issued!");
+                  }}
+                  disabled={!hasDetectionResult || isSpoof || certified}
+                  className="flex items-center gap-2 rounded-xl border border-emerald-400/30 bg-emerald-500/20 px-4 py-2.5 text-xs font-semibold text-emerald-200 transition-all hover:bg-emerald-500/30 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  <FileBadge2 className="size-4 text-emerald-400" />
+                  {certified ? 'WIPO Rights Certified ✓' : 'Issue WIPO DRM Certification'}
+                </button>
+              )}
 
               <button
                 onClick={() => setShowWebhook(true)}

@@ -1312,7 +1312,14 @@ async def audio_websocket_endpoint(
                         f"[audio] End of audio stream received: "
                         f"stream_id={stream_id}"
                     )
-                    break
+                    await websocket.send_json(
+                        {
+                            "type": "audio_end_ack",
+                            "stream_id": stream_id,
+                            "status": "completed",
+                        }
+                    )
+                    continue
 
                 if context.get("type") != "session_context":
                     await websocket.send_json(
@@ -1379,7 +1386,7 @@ async def audio_websocket_endpoint(
                     )
                     continue
 
-                scenario = resolution.scenario.value
+                scenario = requested_for_context or resolution.scenario.value
                 scenario_source = resolution.source
                 transaction_amount_inr = (
                     resolution.transaction_amount_inr
@@ -2370,7 +2377,8 @@ async def audio_websocket_endpoint(
 
                     result = result.model_copy(
                         update={
-                            "governance_decision": governance_decision
+                            "sector": sector,
+                            "governance_decision": governance_decision,
                         }
                     )
 
