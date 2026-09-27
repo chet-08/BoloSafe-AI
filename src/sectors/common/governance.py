@@ -264,9 +264,22 @@ def evaluate_sector_result(
             scenario=resolved_scenario,
         )
     elif norm_sector == "hospitality":
+        hospitality_scenarios = {
+            "reservation_change",
+            "guest_verification",
+            "vip_booking",
+        }
+
+        hospitality_scenario = (
+            resolved_scenario
+            if resolved_scenario in hospitality_scenarios
+            else "guest_verification"
+        )
+
         decision = evaluate_hospitality_result(
             adapted_result,
-            scenario=resolved_scenario,
+            scenario=hospitality_scenario,
+            transaction_amount_inr=transaction_amount_inr,
         )
     elif norm_sector == "entertainment":
         decision = evaluate_entertainment_result(
