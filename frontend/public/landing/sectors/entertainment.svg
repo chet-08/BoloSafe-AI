@@ -1,0 +1,30 @@
+<svg width="900" height="700" viewBox="0 0 900 700" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1B1832"/>
+      <stop offset=".5" stop-color="#111526"/>
+      <stop offset="1" stop-color="#0B0F1D"/>
+    </linearGradient>
+    <radialGradient id="g" cx="72%" cy="28%" r="48%">
+      <stop offset="0" stop-color="#7079E0" stop-opacity=".28"/>
+      <stop offset="1" stop-color="#7079E0" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="900" height="700" fill="url(#bg)"/>
+  <rect width="900" height="700" fill="url(#g)"/>
+  <g opacity=".1" stroke="#7079E0">
+    <path d="M0 140H900M0 280H900M0 420H900M0 560H900"/>
+    <path d="M150 0V700M300 0V700M450 0V700M600 0V700M750 0V700"/>
+  </g>
+  <g transform="translate(515 95)">
+    <rect width="285" height="360" rx="28" fill="#101523" stroke="#7079E0" stroke-opacity=".38"/>
+    <circle cx="143" cy="138" r="75" fill="#7079E0" fill-opacity=".08" stroke="#7079E0" stroke-opacity=".24"/>
+    <circle cx="143" cy="138" r="48" fill="#171B2B" stroke="#7079E0" stroke-opacity=".28"/>
+    <path d="M143 102v72M107 138h72" stroke="#7079E0" stroke-width="8" stroke-linecap="round"/>
+    <rect x="35" y="245" width="215" height="90" rx="16" fill="#171B2B"/>
+    <path d="M55 291 C90 265 105 315 140 288 S195 265 230 293" fill="none" stroke="#7079E0" stroke-width="3"/>
+  </g>
+  <path d="M20 555 C140 490 250 610 355 515 S620 425 900 290" fill="none" stroke="#7079E0" stroke-width="3" opacity=".6"/>
+  <text x="55" y="80" fill="#7079E0" font-family="Arial" font-size="24" font-weight="700" letter-spacing="3">ENTERTAINMENT SECURITY</text>
+  <text x="55" y="115" fill="#F4F5FA" font-family="Arial" font-size="42" font-weight="700">VOICE CLONING</text>
+</svg>

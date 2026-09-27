@@ -493,6 +493,17 @@ function MainApp() {
           return
         }
 
+        // Once a security alert terminates the active session,
+        // ignore all subsequent/stale risk windows until a new
+        // security context explicitly starts a fresh session.
+        if (securityTerminatedRef.current) {
+          console.debug(
+            'Ignoring risk result after security hard stop:',
+            data.stream_id || data.type
+          )
+          return
+        }
+
         if (data.alert_triggered === true) {
           console.warn('HIGH-RISK ALERT: HARD STOPPING FILE STREAM')
           securityTerminatedRef.current = true
@@ -1810,7 +1821,7 @@ function MainApp() {
             />
           )}
 {activePage === 'adversarial' && (
-            <div className="mx-auto max-w-6xl space-y-8">
+            <div className="w-full max-w-[1600px] mx-auto">
               <AdversarialRobustness />
             </div>
           )}
@@ -1851,7 +1862,7 @@ function MainApp() {
             />
           )}
 
-          {activePage === 'how' && <Architecture />}
+
           </div>
         </div>
       </div>

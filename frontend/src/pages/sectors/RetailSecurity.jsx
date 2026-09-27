@@ -21,7 +21,12 @@ import {
 } from 'lucide-react';
 import SectorAudioPlayer from '../../components/SectorAudioPlayer';
 import EnterpriseWebhookDrawer from '../../components/EnterpriseWebhookDrawer';
-import GuidedUserFlowBar from '../../components/GuidedUserFlowBar';
+import SecurityPageShell from '../../components/security/SecurityPageShell';
+import DetectionMetricGrid from '../../components/security/DetectionMetricGrid';
+import GovernanceDecisionCard from '../../components/security/GovernanceDecisionCard';
+import SecurityActivityTimeline from '../../components/security/SecurityActivityTimeline';
+import LiveDetectionPanel from '../../components/security/LiveDetectionPanel';
+import SectorContextCard from '../../components/security/SectorContextCard';
 import { freezeOrder, sendRetailOtp, verifyRetailOtp, simulateThreat } from '../../utils/sectorApi';
 
 export default function RetailSecurity({
@@ -78,22 +83,63 @@ export default function RetailSecurity({
   const speakerMatch = selected.speaker_match ?? null;
   const governance = selected.governance_decision || {};
 
-  const hasCrossSectorThreat = governance.cross_sector_threat_detected || simulatedThreat;
+  const hasDetectionResult =
+    selected.ai_probability !== undefined &&
+    selected.ai_probability !== null;
+
+  const hasCrossSectorThreat =
+    governance.cross_sector_threat_detected || simulatedThreat;
   const threatOrigin = governance.threat_intel?.origin_sectors?.join(', ') || 'FINANCIAL SERVICES (High-Value RTGS Wire Fraud Attempt)';
 
-  const compositeRiskScore = governance.composite_risk_score !== undefined
-    ? governance.composite_risk_score
-    : Math.min(1.0, Math.max(0.0, (aiProbability * 0.55) + ((1.0 - (speakerSimilarity ?? 0.5)) * 0.35) + 0.10));
+  const compositeRiskScore =
+    governance.composite_risk_score !== undefined
+      ? governance.composite_risk_score
+      : hasDetectionResult
+        ? Math.min(
+            1.0,
+            Math.max(
+              0.0,
+              (aiProbability * 0.55) +
+                ((1.0 - (speakerSimilarity ?? 0.5)) * 0.35) +
+                0.10
+            )
+          )
+        : null;
 
-  const riskLevel = governance.risk_level || (aiProbability >= 0.75 || hasCrossSectorThreat ? 'high' : aiProbability >= 0.40 ? 'medium' : 'low');
-  const action = governance.action || (riskLevel === 'high' ? 'hold_and_escalate' : riskLevel === 'medium' ? 'step_up_verification' : 'allow');
-  const recommendedActions = governance.recommended_actions || [
-    riskLevel === 'high'
-      ? 'Place requested order modification on hold immediately.'
-      : riskLevel === 'medium'
-      ? 'Trigger secondary OTP challenge to registered mobile.'
-      : 'Caller authenticated. Normal retail workflow permitted.'
-  ];
+  const riskLevel =
+    governance.risk_level ||
+    (hasDetectionResult
+      ? aiProbability >= 0.75 || hasCrossSectorThreat
+        ? 'high'
+        : aiProbability >= 0.40
+          ? 'medium'
+          : 'low'
+      : 'pending');
+
+  const action =
+    governance.action ||
+    (hasDetectionResult
+      ? riskLevel === 'high'
+        ? 'hold_and_escalate'
+        : riskLevel === 'medium'
+          ? 'step_up_verification'
+          : 'allow'
+      : 'pending');
+
+  const recommendedActions =
+    governance.recommended_actions ||
+    (hasDetectionResult
+      ? [
+          riskLevel === 'high'
+            ? 'Place requested order modification on hold immediately.'
+            : riskLevel === 'medium'
+              ? 'Trigger secondary OTP challenge to registered mobile.'
+              : 'Caller authenticated. Normal retail workflow permitted.',
+        ]
+      : [
+          'Run a live retail voice scenario or start the microphone.',
+          'Governance actions will appear after detection is evaluated.',
+        ]);
 
   const showToast = (msg) => {
     setToastMsg(msg);
@@ -156,391 +202,466 @@ export default function RetailSecurity({
   };
 
   return (
-    <div className="space-y-6">
-      {/* Toast Notification */}
+    <div className="space-y-5">
       {toastMsg && (
-        <div className="fixed top-6 right-6 z-50 flex items-center gap-2 rounded-xl border border-cyan-400/40 bg-cyan-950/90 px-4 py-3 text-xs font-mono text-cyan-200 shadow-2xl backdrop-blur-xl animate-in slide-in-from-top-4">
-          <CheckCircle2 className="size-4 text-cyan-400 shrink-0" />
-          <span>{toastMsg}</span>
-        </div>
-      )}
-
-      {/* Guided Hackathon Stepper */}
-      <GuidedUserFlowBar
-        currentSector="retail"
-        hasAudioPlaying={isStreaming}
-        hasResults={aiProbability > 0}
-        hasActionTaken={orderHold || stepUpStatus === 'verified'}
-        onOpenWebhook={() => setShowWebhook(true)}
-      />
-
-      {/* Top Header Card */}
-      <div className="relative overflow-hidden rounded-2xl border border-cyan-400/20 bg-gradient-to-r from-cyan-950/40 via-violet-950/30 to-slate-900/50 p-6 shadow-2xl backdrop-blur-xl">
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div className="flex items-center gap-4">
-            <div className="flex size-12 items-center justify-center rounded-xl border border-cyan-400/30 bg-cyan-500/20 text-cyan-300 shadow-[0_0_20px_rgba(6,182,212,0.25)]">
-              <ShoppingBag className="size-6" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-xl font-bold tracking-tight text-white md:text-2xl">
-                  Retail Call Security & Order Defense
-                </h1>
-                <span className="rounded-full border border-cyan-400/30 bg-cyan-400/10 px-2.5 py-0.5 text-xs font-semibold text-cyan-300">
-                  Tertiary Sector · Retail & E-Commerce
-                </span>
-              </div>
-              <p className="mt-1 text-xs text-slate-400">
-                Detects synthetic voice clones attempting customer care impersonation, fraudulent address changes, and refund rerouting.
-              </p>
-            </div>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="flex items-center gap-1.5 rounded-xl border border-cyan-400/20 bg-cyan-950/40 px-3 py-1.5 text-xs font-mono text-cyan-300">
-              <Lock className="size-3.5 text-cyan-400" />
-              <span>DPDP Act 2023 · Ephemeral RAM (0 Bytes Disk)</span>
-            </div>
-            <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-mono">
-              <span className={`size-2 rounded-full ${isConnected ? 'bg-emerald-400 animate-pulse' : 'bg-rose-400'}`} />
-              <span className="text-slate-300">{isConnected ? 'LIVE MONITORING' : 'OFFLINE'}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Cross-Sector Threat Intelligence Alert Banner */}
-      {hasCrossSectorThreat && (
-        <div className="relative overflow-hidden rounded-2xl border border-rose-500/50 bg-gradient-to-r from-rose-950/80 via-red-950/60 to-slate-900/80 p-4 shadow-[0_0_30px_rgba(244,63,94,0.3)] backdrop-blur-xl animate-pulse">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="flex size-10 items-center justify-center rounded-xl bg-rose-500/20 text-rose-300 border border-rose-500/40">
-                <ShieldAlert className="size-6" />
-              </div>
-              <div>
-                <div className="flex items-center gap-2 font-bold text-rose-200 text-sm">
-                  <span>🚨 CROSS-SECTOR THREAT INTELLIGENCE ALERT</span>
-                  <span className="rounded-full bg-rose-500/20 px-2 py-0.5 text-[10px] uppercase font-mono tracking-wider text-rose-300 border border-rose-500/30">
-                    Coordinated Retail & Banking Syndicate
-                  </span>
-                </div>
-                <p className="mt-0.5 text-xs text-rose-300/90 font-mono">
-                  Caller acoustic profile previously flagged in: <strong className="text-white">{threatOrigin}</strong>. Voice cloning attack vector registered within cross-sector blacklist.
-                </p>
-              </div>
-            </div>
-            <button
-              onClick={() => setSimulatedThreat(false)}
-              className="text-xs text-rose-400 hover:text-white font-mono underline ml-4"
-            >
-              Dismiss
-            </button>
+        <div className="fixed right-6 top-6 z-50 rounded-xl border border-[#70B88A]/20 bg-[#171A2D] px-4 py-3 text-xs font-semibold text-[#F4F5FA] shadow-xl">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 size={15} className="text-[#70B88A]" />
+            {toastMsg}
           </div>
         </div>
       )}
 
-      {/* Sector Live Audio Controller & 1-Click Samples */}
-      <SectorAudioPlayer
-        title="Retail Call Center Audio Streamer & Attack Simulator"
-        sector="retail"
-        scenario={governance.scenario || "order_modification"}
-        samples={samples}
-        onPlaySample={(url, scn) => streamAudioFromUrl?.(url, 'retail', scn || 'order_modification')}
-        onStartMic={startMicrophoneStream}
-        onStopMic={stopMicrophoneStream}
-        onFileUpload={handleFileUpload}
-        isStreaming={isStreaming}
-        micStatus={micStatus}
-        micLevel={micLevel}
-        accentColor="cyan"
-      />
-
-      {/* Main Grid */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        {/* Left Column: Simulated Retail Order & Customer Context */}
-        <div className="rounded-2xl border border-white/10 bg-slate-900/60 p-5 shadow-xl backdrop-blur-md">
-          <h2 className="mb-4 flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-slate-300">
-            <PhoneCall className="size-4 text-cyan-400" />
-            Inbound Call Metadata
-          </h2>
-
-          <div className="space-y-3 font-mono text-xs">
-            <div className="flex items-center justify-between rounded-lg border border-white/5 bg-white/[0.02] p-2.5">
-              <span className="text-slate-400">Customer ID</span>
-              <span className="font-semibold text-white">RET-IN-90824</span>
-            </div>
-            <div className="flex items-center justify-between rounded-lg border border-white/5 bg-white/[0.02] p-2.5">
-              <span className="text-slate-400">Caller Line</span>
-              <span className="font-semibold text-white">+91 98765-XXXXX</span>
-            </div>
-            <div className="flex items-center justify-between rounded-lg border border-white/5 bg-white/[0.02] p-2.5">
-              <span className="text-slate-400">Tenant Store</span>
-              <span className="font-semibold text-cyan-300">Biometric [retail_isolated]</span>
-            </div>
-            <div className="flex items-center justify-between rounded-lg border border-white/5 bg-white/[0.02] p-2.5">
-              <span className="text-slate-400">Order ID</span>
-              <span className="font-semibold text-white">#BLS-4489-IND</span>
-            </div>
-            <div className="flex items-center justify-between rounded-lg border border-white/5 bg-white/[0.02] p-2.5">
-              <span className="text-slate-400">Shipment Value</span>
-              <span className="font-semibold text-emerald-400">₹ 48,990.00</span>
-            </div>
-            <div className="flex items-center justify-between rounded-lg border border-white/5 bg-white/[0.02] p-2.5">
-              <span className="text-slate-400">Caller Request</span>
-              <span className="font-semibold text-amber-300">Re-route Delivery Address</span>
-            </div>
-          </div>
-
-          <div className="mt-5 rounded-xl border border-amber-500/20 bg-amber-500/10 p-3 text-xs text-amber-200">
-            <div className="flex items-center gap-2 font-bold">
-              <AlertTriangle className="size-4 shrink-0 text-amber-400" />
-              High-Risk Vector
-            </div>
-            <p className="mt-1 text-[11px] leading-relaxed text-amber-300/80">
-              Mid-transit address change requests during live calls account for 64% of high-value electronics delivery theft under E-Commerce Consumer Protection Rules.
-            </p>
-          </div>
-        </div>
-
-        {/* Center Column: Live Risk & Biometric Gauges */}
-        <div className="space-y-4 lg:col-span-2">
-          {/* 4-Card Gauge Grid */}
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            {/* 1. Risk State Pill */}
-            <div className={`rounded-2xl border p-4 backdrop-blur-md transition-all ${
-              riskLevel === 'high'
-                ? 'border-rose-500/40 bg-rose-950/30 text-rose-200'
-                : riskLevel === 'medium'
-                ? 'border-amber-500/40 bg-amber-950/30 text-amber-200'
-                : 'border-emerald-500/40 bg-emerald-950/30 text-emerald-200'
-            }`}>
-              <div className="text-xs uppercase tracking-wider opacity-80">Security Risk State</div>
-              <div className="mt-2 flex items-center gap-2 text-lg font-bold uppercase">
-                {riskLevel === 'high' ? (
-                  <>
-                    <XCircle className="size-5 text-rose-400" />
-                    AI Suspected
-                  </>
-                ) : riskLevel === 'medium' ? (
-                  <>
-                    <AlertTriangle className="size-5 text-amber-400" />
-                    Mismatch
-                  </>
-                ) : (
-                  <>
-                    <CheckCircle2 className="size-5 text-emerald-400" />
-                    Verified
-                  </>
-                )}
-              </div>
-              <div className="mt-1 text-xs opacity-75 font-mono">
-                Level: {riskLevel.toUpperCase()}
-              </div>
-            </div>
-
-            {/* 2. AI Clone Probability */}
-            <div className="rounded-2xl border border-white/10 bg-slate-900/60 p-4 backdrop-blur-md">
-              <div className="text-xs uppercase tracking-wider text-slate-400">AI Clone Probability</div>
-              <div className="mt-2 text-xl font-mono font-bold text-white">
-                {(aiProbability * 100).toFixed(1)}%
-              </div>
-              <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-white/10">
-                <div
-                  className={`h-full transition-all duration-500 ${
-                    aiProbability > 0.75
-                      ? 'bg-rose-500'
-                      : aiProbability > 0.40
-                      ? 'bg-amber-400'
-                      : 'bg-emerald-400'
-                  }`}
-                  style={{ width: `${Math.min(100, Math.max(0, aiProbability * 100))}%` }}
-                />
-              </div>
-              <div className="mt-1 text-[10px] text-slate-400 font-mono">P(synthetic acoustic)</div>
-            </div>
-
-            {/* 3. Speaker Biometric Match */}
-            <div className="rounded-2xl border border-white/10 bg-slate-900/60 p-4 backdrop-blur-md">
-              <div className="text-xs uppercase tracking-wider text-slate-400">Account Biometric Match</div>
-              <div className="mt-2 text-xl font-mono font-bold text-white">
-                {speakerSimilarity !== null ? `${(speakerSimilarity * 100).toFixed(1)}%` : '94.8%'}
-              </div>
-              <div className="mt-1 flex items-center gap-1.5 text-xs text-slate-300">
-                <UserCheck className="size-3.5 text-cyan-400" />
-                <span className="text-[11px]">
-                  {speakerMatch === true
-                    ? 'Matches Enrolled Customer'
-                    : speakerMatch === false
-                    ? 'Acoustic Mismatch'
-                    : 'ECAPA-TDNN Verified'}
-                </span>
-              </div>
-            </div>
-
-            {/* 4. Unified Composite Risk Score */}
-            <div className={`rounded-2xl border p-4 backdrop-blur-md transition-all ${
-              compositeRiskScore >= 0.75
-                ? 'border-rose-500/30 bg-rose-950/20'
-                : compositeRiskScore >= 0.40
-                ? 'border-amber-500/30 bg-amber-950/20'
-                : 'border-emerald-500/30 bg-emerald-950/20'
-            }`}>
-              <div className="flex items-center justify-between text-xs uppercase tracking-wider text-slate-300">
-                <span>Composite Risk</span>
-                <Activity className="size-3.5 text-cyan-400" />
-              </div>
-              <div className="mt-2 text-xl font-mono font-bold text-white">
-                {(compositeRiskScore * 100).toFixed(1)}%
-              </div>
-              <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-white/10">
-                <div
-                  className={`h-full transition-all duration-500 ${
-                    compositeRiskScore >= 0.75
-                      ? 'bg-rose-500'
-                      : compositeRiskScore >= 0.40
-                      ? 'bg-amber-400'
-                      : 'bg-emerald-400'
-                  }`}
-                  style={{ width: `${Math.min(100, Math.max(0, compositeRiskScore * 100))}%` }}
-                />
-              </div>
-              <div className="mt-1 text-[9px] text-slate-400 font-mono">
-                R = 55% AI + 35% Bio + 10% OMS
-              </div>
-            </div>
-          </div>
-
-          {/* Decision & Action Workflow Panel */}
-          <div className="rounded-2xl border border-white/10 bg-slate-900/60 p-5 shadow-xl backdrop-blur-md">
-            <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-slate-300">
-              Retail CSR Automated Response Workflow
-            </h2>
-
-            <div className="mb-4 rounded-xl border border-white/5 bg-white/[0.02] p-4">
-              <div className="text-xs text-slate-400">Risk Assessment Reason:</div>
-              <div className="mt-1 text-sm font-medium text-slate-200">
-                {governance.reason || (riskLevel === 'high' ? 'High voice-AI risk detected during retail interaction.' : 'Customer voice verified within authorized thresholds.')}
-              </div>
-              
-              <div className="mt-3 space-y-1.5">
-                <div className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Recommended Actions:</div>
-                {recommendedActions.map((rec, i) => (
-                  <div key={i} className="flex items-start gap-2 text-xs text-slate-300">
-                    <ArrowRight className="size-3.5 mt-0.5 shrink-0 text-cyan-400" />
-                    <span>{rec}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Operator Actions - Connected to Backend REST Endpoints */}
-            <div className="flex flex-wrap items-center gap-3 pt-2">
-              <button
-                onClick={handleHoldOrder}
-                className={`flex items-center gap-2 rounded-xl border px-4 py-2.5 text-xs font-semibold transition-all active:scale-95 ${
-                  orderHold
-                    ? 'border-rose-400/50 bg-rose-500/30 text-rose-200'
-                    : 'border-rose-500/30 bg-rose-500/10 text-rose-300 hover:bg-rose-500/20'
-                }`}
-              >
-                <Package className="size-4" />
-                {orderHold ? 'Shipment Frozen in OMS ✓' : 'Hold Shipment in OMS'}
-              </button>
-
-              <button
-                onClick={handleTriggerOtp}
-                className="flex items-center gap-2 rounded-xl border border-cyan-400/40 bg-cyan-500/20 px-4 py-2.5 text-xs font-semibold text-cyan-200 transition-all hover:bg-cyan-500/30 active:scale-95"
-              >
-                <Lock className="size-4" />
-                {stepUpStatus === 'verified'
-                  ? 'OTP Verified ✓'
-                  : stepUpStatus === 'sent'
-                  ? 'OTP Active (Enter Code)'
-                  : 'Trigger SMS OTP Challenge'}
-              </button>
-
-              <button
-                onClick={() => {
-                  setEscalated(true);
-                  showToast("Escalated to Fraud Supervisor with Live Headset Whisper!");
-                }}
-                disabled={escalated}
-                className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-xs font-semibold text-slate-200 transition-all hover:bg-white/10 active:scale-95 disabled:opacity-50"
-              >
-                <ShieldAlert className="size-4 text-amber-400" />
-                {escalated ? 'Escalated to Fraud Team ✓' : 'Escalate to Fraud Team'}
-              </button>
-
-              <button
-                onClick={() => setShowWebhook(true)}
-                className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-xs font-mono font-semibold text-slate-300 hover:bg-white/10 hover:text-white transition-all active:scale-95"
-              >
-                <span>&lt;/&gt;</span>
-                Inspect Shopify / OMS Webhook
-              </button>
-
-              <button
-                onClick={handleSimulateThreat}
-                className={`flex items-center gap-2 rounded-xl border px-4 py-2.5 text-xs font-semibold transition-all active:scale-95 ${
+      <SecurityPageShell
+        eyebrow="Retail Security"
+        title="Retail & Customer Protection"
+        description="Voice impersonation detection for customer care, sensitive order changes, delivery rerouting and refund workflows."
+        status={isConnected ? 'LIVE' : 'OFFLINE'}
+        statusTone={isConnected ? 'active' : 'medium'}
+        critical={
+          riskLevel === 'high' || hasCrossSectorThreat
+            ? {
+                label: hasCrossSectorThreat
+                  ? 'Cross-sector threat detected'
+                  : 'Critical detection',
+                title: hasCrossSectorThreat
+                  ? 'Coordinated customer-impersonation attack detected'
+                  : 'Synthetic customer voice detected',
+                description:
                   hasCrossSectorThreat
-                    ? 'border-rose-500/40 bg-rose-500/20 text-rose-200'
-                    : 'border-white/10 bg-white/5 text-slate-300 hover:bg-white/10'
-                }`}
-              >
-                <ShieldAlert className="size-4 text-rose-400" />
-                {hasCrossSectorThreat ? 'Cross-Sector Threat Active' : 'Simulate Cross-Sector Attacker'}
-              </button>
-            </div>
-          </div>
+                    ? `Caller profile was previously associated with ${threatOrigin}.`
+                    : governance.reason ||
+                      'High synthetic-voice probability persisted during the retail interaction.',
+                actions: hasCrossSectorThreat ? (
+                  <button
+                    type="button"
+                    onClick={() => setSimulatedThreat(false)}
+                    className="rounded-lg border border-[#292E46] bg-[#121526] px-3 py-2 text-xs font-semibold text-[#F4F5FA] hover:bg-[#1C2033]"
+                  >
+                    Dismiss
+                  </button>
+                ) : null,
+              }
+            : null
+        }
+      >
+        <DetectionMetricGrid
+          metrics={[
+            {
+              id: 'ai-risk',
+              label: 'AI Voice Risk',
+              value: hasDetectionResult
+                ? `${(aiProbability * 100).toFixed(1)}%`
+                : 'WAITING',
+              icon: 'risk',
+              tone: !hasDetectionResult
+                ? 'neutral'
+                : aiProbability >= 0.75
+                  ? 'high'
+                  : aiProbability >= 0.4
+                    ? 'medium'
+                    : 'low',
+              progress: hasDetectionResult
+                ? aiProbability * 100
+                : null,
+              helper: hasDetectionResult
+                ? 'Synthetic acoustic probability'
+                : 'Awaiting live audio',
+            },
+            {
+              id: 'customer-match',
+              label: 'Customer Voice Match',
+              value: !hasDetectionResult
+                ? 'WAITING'
+                : speakerSimilarity !== null
+                  ? `${(speakerSimilarity * 100).toFixed(1)}%`
+                  : 'NOT EVALUATED',
+              icon: 'speaker',
+              tone: !hasDetectionResult
+                ? 'neutral'
+                : speakerMatch === false
+                  ? 'high'
+                  : 'neutral',
+              progress:
+                hasDetectionResult && speakerSimilarity !== null
+                  ? speakerSimilarity * 100
+                  : null,
+              helper: !hasDetectionResult
+                ? 'Awaiting speaker verification'
+                : speakerMatch === true
+                  ? 'Matches enrolled customer'
+                  : speakerMatch === false
+                    ? 'Acoustic mismatch'
+                    : 'ECAPA-TDNN verification',
+            },
+            {
+              id: 'account-risk',
+              label: 'Account Impersonation',
+              value: !hasDetectionResult
+                ? 'NOT EVALUATED'
+                : riskLevel === 'high'
+                  ? 'HIGH'
+                  : riskLevel === 'medium'
+                    ? 'MEDIUM'
+                    : 'LOW',
+              icon: 'authenticity',
+              tone: !hasDetectionResult
+                ? 'neutral'
+                : riskLevel === 'high'
+                  ? 'high'
+                  : riskLevel === 'medium'
+                    ? 'medium'
+                    : 'low',
+              helper: !hasDetectionResult
+                ? 'Awaiting live risk assessment'
+                : riskLevel === 'high'
+                  ? 'Sensitive customer action detected'
+                  : riskLevel === 'medium'
+                    ? 'Additional verification required'
+                    : 'Within retail policy',
+            },
+            {
+              id: 'composite-risk',
+              label: 'Composite Risk',
+              value: compositeRiskScore !== null
+                ? `${(compositeRiskScore * 100).toFixed(1)}%`
+                : 'WAITING',
+              icon: 'composite',
+              tone:
+                compositeRiskScore === null
+                  ? 'neutral'
+                  : compositeRiskScore >= 0.75
+                    ? 'high'
+                    : compositeRiskScore >= 0.4
+                      ? 'medium'
+                      : 'low',
+              progress:
+                compositeRiskScore !== null
+                  ? compositeRiskScore * 100
+                  : null,
+              helper:
+                compositeRiskScore !== null
+                  ? 'AI + biometric + retail context'
+                  : 'Awaiting live risk aggregation',
+            },
+          ]}
+        />
+
+        <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1.35fr_0.85fr]">
+          <LiveDetectionPanel
+            title="Live retail voice detection"
+            description="Real-time caller analysis and sector test scenarios"
+            isLive={isStreaming}
+          >
+            <SectorAudioPlayer
+              title="Retail Call Center Audio Streamer"
+              sector="retail"
+              scenario={governance.scenario || 'order_modification'}
+              samples={samples}
+              onPlaySample={(url, scn) =>
+                streamAudioFromUrl?.(
+                  url,
+                  'retail',
+                  scn || 'order_modification'
+                )
+              }
+              onStartMic={startMicrophoneStream}
+              onStopMic={stopMicrophoneStream}
+              onFileUpload={handleFileUpload}
+              isStreaming={isStreaming}
+              micStatus={micStatus}
+              micLevel={micLevel}
+            />
+          </LiveDetectionPanel>
+
+          <SectorContextCard
+            title="Customer & order protection"
+            description="Retail workflow context interpreted alongside voice risk."
+            rows={[
+              {
+                label: 'Customer ID',
+                value: 'RET-IN-90824',
+              },
+              {
+                label: 'Caller line',
+                value: '+91 98765-XXXXX',
+              },
+              {
+                label: 'Tenant store',
+                value: 'retail_isolated',
+              },
+              {
+                label: 'Order ID',
+                value: '#BLS-4489-IND',
+              },
+              {
+                label: 'Shipment value',
+                value: '₹48,990',
+                tone: 'warning',
+              },
+              {
+                label: 'Caller request',
+                value: 'Address reroute',
+                tone: 'danger',
+              },
+            ]}
+            callout={{
+              title:
+                riskLevel === 'high'
+                  ? 'High-risk order modification'
+                  : 'Sensitive retail action',
+              description:
+                'Delivery-address and refund changes remain protected until the configured identity and step-up controls are satisfied.',
+            }}
+          />
         </div>
-      </div>
 
-      {/* Interactive OTP Challenge Modal */}
+        <GovernanceDecisionCard
+          tone={
+            !hasDetectionResult
+              ? 'verify'
+              : action === 'allow'
+                ? 'allow'
+                : action === 'step_up_verification'
+                  ? 'verify'
+                  : action === 'hold_and_escalate'
+                    ? 'escalate'
+                    : riskLevel === 'high'
+                      ? 'hold'
+                      : 'verify'
+          }
+          title={
+            !hasDetectionResult
+              ? 'Waiting for live detection'
+              : riskLevel === 'high'
+                ? 'Hold the order and escalate the caller'
+                : riskLevel === 'medium'
+                  ? 'Step-up customer verification required'
+                  : 'Retail workflow may proceed'
+          }
+          reason={
+            !hasDetectionResult
+              ? 'Run a retail voice scenario or start the microphone. No governance decision is made until live detection returns.'
+              : governance.reason ||
+                (riskLevel === 'high'
+                  ? 'High voice-impersonation risk detected during a sensitive retail interaction.'
+                  : riskLevel === 'medium'
+                    ? 'Additional customer verification is required before the requested action is completed.'
+                    : 'Customer voice and workflow context remain within the configured retail risk policy.')
+          }
+          recommendations={recommendedActions}
+          actions={
+            <>
+              <button
+                type="button"
+                onClick={handleHoldOrder}
+                disabled={!hasDetectionResult}
+                className={[
+                  'rounded-lg border px-3 py-2 text-xs font-semibold transition-colors',
+                  !hasDetectionResult
+                    ? 'border-[#292E46] bg-[#121526] text-[#858BA3] cursor-not-allowed opacity-45'
+                    : orderHold
+                      ? 'border-[#D96A78]/25 bg-[#D96A78]/10 text-[#D96A78]'
+                      : 'border-[#D96A78]/30 bg-[#D96A78] text-white hover:bg-[#C85D6C]',
+                ].join(' ')}
+              >
+                <span className="flex items-center gap-2">
+                  <Package size={14} />
+                  {orderHold ? 'Order Held' : 'Hold Order'}
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleTriggerOtp}
+                disabled={!hasDetectionResult}
+                className="rounded-lg border border-[#5863D6]/35 bg-[#5863D6]/15 px-3 py-2 text-xs font-semibold text-[#7079E0] hover:bg-[#5863D6]/25 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                <span className="flex items-center gap-2">
+                  <Lock size={14} />
+                  {stepUpStatus === 'verified'
+                    ? 'OTP Verified'
+                    : stepUpStatus === 'sent'
+                      ? 'OTP Active'
+                      : 'Send SMS OTP'}
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setEscalated(true)
+                  showToast('Escalated to Fraud Supervisor.')
+                }}
+                disabled={escalated || !hasDetectionResult}
+                className="rounded-lg border border-[#292E46] bg-[#121526] px-3 py-2 text-xs font-semibold text-[#F4F5FA] hover:bg-[#1C2033] disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                <span className="flex items-center gap-2">
+                  <ShieldAlert size={14} />
+                  {escalated ? 'Escalated' : 'Escalate'}
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setShowWebhook(true)}
+                className="rounded-lg border border-[#292E46] bg-transparent px-3 py-2 text-xs font-semibold text-[#858BA3] hover:bg-[#1C2033] hover:text-[#F4F5FA]"
+              >
+                Inspect OMS
+              </button>
+
+              <button
+                type="button"
+                onClick={handleSimulateThreat}
+                className={[
+                  'rounded-lg border px-3 py-2 text-xs font-semibold transition-colors',
+                  hasCrossSectorThreat
+                    ? 'border-[#D96A78]/30 bg-[#D96A78]/10 text-[#D96A78]'
+                    : 'border-[#292E46] bg-transparent text-[#858BA3] hover:bg-[#1C2033] hover:text-[#F4F5FA]',
+                ].join(' ')}
+              >
+                Cross-sector test
+              </button>
+            </>
+          }
+        />
+
+        <SecurityActivityTimeline
+          steps={[
+            {
+              label: 'Security context',
+              value: `${governance.scenario || 'Order Modification'} · #BLS-4489-IND`,
+              tone: 'ready',
+              status: 'READY',
+            },
+            {
+              label: 'AI detection',
+              value: hasDetectionResult
+                ? `${(aiProbability * 100).toFixed(1)}% synthetic probability`
+                : 'Awaiting live audio',
+              tone: !hasDetectionResult
+                ? 'pending'
+                : aiProbability >= 0.4
+                  ? 'detected'
+                  : 'ready',
+              status: !hasDetectionResult
+                ? 'WAITING'
+                : aiProbability >= 0.4
+                  ? 'HIGH'
+                  : 'READY',
+            },
+            {
+              label: 'Governance',
+              value: !hasDetectionResult
+                ? 'No decision yet'
+                : riskLevel === 'high'
+                  ? 'Hold & Escalate'
+                  : riskLevel === 'medium'
+                    ? 'Step-up Verification'
+                    : 'Allow',
+              tone: !hasDetectionResult
+                ? 'pending'
+                : riskLevel === 'low'
+                  ? 'ready'
+                  : 'decided',
+              status: !hasDetectionResult ? 'WAITING' : 'DECIDED',
+            },
+            {
+              label: 'Identity',
+              value: !hasDetectionResult
+                ? 'Verification not evaluated'
+                : speakerMatch === false
+                  ? 'Customer voice mismatch'
+                  : stepUpStatus === 'verified'
+                    ? 'OTP + voice verified'
+                    : 'Customer verification available',
+              tone: !hasDetectionResult
+                ? 'pending'
+                : speakerMatch === false
+                  ? 'detected'
+                  : 'identity',
+              status: !hasDetectionResult
+                ? 'WAITING'
+                : speakerMatch === false
+                  ? 'REVIEW'
+                  : stepUpStatus === 'verified'
+                    ? 'VERIFIED'
+                    : 'AVAILABLE',
+            },
+          ]}
+        />
+      </SecurityPageShell>
+
       {showOtpModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-md animate-in fade-in duration-200">
-          <div className="relative w-full max-w-sm overflow-hidden rounded-2xl border border-cyan-400/30 bg-[#070b14] p-6 shadow-2xl">
-            <div className="flex items-center justify-between border-b border-white/10 pb-3">
-              <div className="flex items-center gap-2 text-cyan-300 font-bold text-sm">
-                <KeyRound className="size-5" />
-                <span>Secondary OTP Verification</span>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-2xl border border-[#292E46] bg-[#171A2D] p-6 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-[#292E46] pb-3">
+              <div className="flex items-center gap-2 text-sm font-semibold text-[#F4F5FA]">
+                <KeyRound size={17} className="text-[#7079E0]" />
+                Secondary OTP verification
               </div>
-              <button onClick={() => setShowOtpModal(false)} className="text-slate-400 hover:text-white">
-                <X className="size-5" />
+
+              <button
+                type="button"
+                onClick={() => setShowOtpModal(false)}
+                className="text-[#858BA3] hover:text-[#F4F5FA]"
+              >
+                <X size={17} />
               </button>
             </div>
 
-            <div className="py-4 space-y-3">
-              <p className="text-xs text-slate-300">
-                A 6-digit one-time code was dispatched to the customer's registered phone.
+            <div className="space-y-4 py-5">
+              <p className="text-sm leading-6 text-[#858BA3]">
+                A six-digit one-time code was dispatched to the customer's
+                registered mobile number for step-up verification.
               </p>
-              
-              <div className="rounded-xl border border-cyan-400/20 bg-cyan-950/30 p-2.5 text-center font-mono text-xs text-cyan-300">
-                <span>Demo Code: </span>
-                <strong className="text-white tracking-widest">{simulatedOtpCode}</strong>
-                <button
-                  onClick={() => setEnteredOtp(simulatedOtpCode)}
-                  className="ml-2 text-[10px] text-cyan-400 underline"
-                >
-                  Auto-fill
-                </button>
+
+              <div className="rounded-xl border border-[#5863D6]/25 bg-[#5863D6]/[0.06] p-4">
+                <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#858BA3]">
+                  Demo verification code
+                </div>
+
+                <div className="mt-2 flex items-center justify-between gap-3">
+                  <span className="text-2xl font-semibold tracking-[0.2em] text-[#F4F5FA]">
+                    {simulatedOtpCode}
+                  </span>
+
+                  <button
+                    type="button"
+                    onClick={() => setEnteredOtp(simulatedOtpCode)}
+                    className="rounded-lg border border-[#5863D6]/30 bg-[#5863D6]/10 px-3 py-2 text-[10px] font-semibold text-[#7079E0] hover:bg-[#5863D6]/20"
+                  >
+                    Auto-fill
+                  </button>
+                </div>
               </div>
 
-              <input
-                type="text"
-                maxLength={6}
-                value={enteredOtp}
-                onChange={(e) => setEnteredOtp(e.target.value)}
-                placeholder="Enter 6-digit OTP"
-                className="w-full rounded-xl border border-white/20 bg-black/50 px-4 py-2.5 text-center text-lg font-mono tracking-widest text-white focus:border-cyan-400 focus:outline-none"
-              />
+              <div>
+                <label className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#858BA3]">
+                  Enter OTP
+                </label>
+
+                <input
+                  type="text"
+                  maxLength={6}
+                  inputMode="numeric"
+                  value={enteredOtp}
+                  onChange={(e) =>
+                    setEnteredOtp(e.target.value.replace(/\D/g, ''))
+                  }
+                  placeholder="000000"
+                  className="mt-2 w-full rounded-xl border border-[#292E46] bg-[#121526] px-4 py-3 text-center text-2xl font-semibold tracking-[0.28em] text-[#F4F5FA] outline-none transition-colors focus:border-[#5863D6]"
+                />
+              </div>
             </div>
 
             <button
+              type="button"
               onClick={handleVerifyOtp}
               disabled={enteredOtp.length !== 6}
-              className="w-full rounded-xl bg-gradient-to-r from-cyan-500 to-blue-500 py-2.5 text-xs font-bold text-white transition-all hover:opacity-90 active:scale-95 disabled:opacity-40"
+              className="w-full rounded-lg bg-[#5863D6] px-4 py-3 text-xs font-semibold text-white hover:bg-[#7079E0] disabled:cursor-not-allowed disabled:opacity-40"
             >
-              Verify OTP Code
+              Verify customer
             </button>
           </div>
         </div>
@@ -550,13 +671,17 @@ export default function RetailSecurity({
         isOpen={showWebhook}
         onClose={() => setShowWebhook(false)}
         sector="retail"
-        scenario={governance.scenario || "order_modification"}
+        scenario={governance.scenario || 'order_modification'}
         riskLevel={riskLevel}
         action={action}
         aiProbability={aiProbability}
         speakerMatch={speakerMatch}
-        metadata={{ orderId: "#BLS-4489-IND", shipmentValue: 48990.0, compositeRisk: compositeRiskScore }}
+        metadata={{
+          orderId: '#BLS-4489-IND',
+          shipmentValue: 48990.0,
+          compositeRisk: compositeRiskScore,
+        }}
       />
     </div>
-  );
+  )
 }

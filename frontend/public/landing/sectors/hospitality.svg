@@ -1,0 +1,32 @@
+<svg width="900" height="700" viewBox="0 0 900 700" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#15291D"/>
+      <stop offset=".48" stop-color="#111626"/>
+      <stop offset="1" stop-color="#0B0F1D"/>
+    </linearGradient>
+    <radialGradient id="g" cx="75%" cy="25%" r="48%">
+      <stop offset="0" stop-color="#70B88A" stop-opacity=".25"/>
+      <stop offset="1" stop-color="#70B88A" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="900" height="700" fill="url(#bg)"/>
+  <rect width="900" height="700" fill="url(#g)"/>
+  <g opacity=".12" stroke="#70B88A">
+    <path d="M0 140H900M0 280H900M0 420H900M0 560H900"/>
+    <path d="M150 0V700M300 0V700M450 0V700M600 0V700M750 0V700"/>
+  </g>
+  <g transform="translate(510 105)">
+    <rect width="285" height="350" rx="28" fill="#101523" stroke="#70B88A" stroke-opacity=".32"/>
+    <rect x="32" y="28" width="221" height="185" rx="18" fill="#171C2B"/>
+    <rect x="57" y="64" width="166" height="105" rx="20" fill="#70B88A" fill-opacity=".07" stroke="#70B88A" stroke-opacity=".25"/>
+    <rect x="77" y="88" width="125" height="9" rx="4" fill="#70B88A" fill-opacity=".38"/>
+    <rect x="77" y="108" width="95" height="8" rx="4" fill="#858BA3" fill-opacity=".2"/>
+    <rect x="77" y="128" width="112" height="8" rx="4" fill="#858BA3" fill-opacity=".2"/>
+    <rect x="32" y="232" width="104" height="82" rx="15" fill="#171C2B"/>
+    <rect x="148" y="232" width="105" height="82" rx="15" fill="#171C2B"/>
+  </g>
+  <path d="M20 560 C120 500 240 600 360 520 S610 430 900 295" fill="none" stroke="#70B88A" stroke-width="3" opacity=".55"/>
+  <text x="55" y="80" fill="#70B88A" font-family="Arial" font-size="24" font-weight="700" letter-spacing="3">HOSPITALITY SECURITY</text>
+  <text x="55" y="115" fill="#F4F5FA" font-family="Arial" font-size="42" font-weight="700">GUEST FRAUD</text>
+</svg>

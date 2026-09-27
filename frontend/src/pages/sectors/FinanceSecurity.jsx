@@ -44,6 +44,7 @@ export default function FinanceSecurity({
   const [videoKycData, setVideoKycData] = useState(null); // stores backend KYC link & token
   const [showKycModal, setShowKycModal] = useState(false);
   const [bankerEscalated, setBankerEscalated] = useState(false);
+  const [activeSampleScenario, setActiveSampleScenario] = useState(null);
   const [showWebhook, setShowWebhook] = useState(false);
   const [simulatedThreat, setSimulatedThreat] = useState(false);
   const [toastMsg, setToastMsg] = useState(null);
@@ -91,6 +92,13 @@ export default function FinanceSecurity({
 
   const riskLevel = governance.risk_level || (aiProbability >= 0.75 || hasCrossSectorThreat ? 'high' : aiProbability >= 0.40 ? 'medium' : 'low');
   const action = governance.action || (riskLevel === 'high' ? 'hold_and_escalate' : riskLevel === 'medium' ? 'step_up_verification' : 'allow');
+
+  const hasDetectionResult =
+    selected?.ai_probability != null ||
+    selected?.rolling_score != null ||
+    governance?.action != null ||
+    governance?.risk_level != null;
+
   const recommendedActions = governance.recommended_actions || [
     riskLevel === 'high'
       ? 'Halt wire transfer and lock online banking access immediately.'
@@ -201,68 +209,90 @@ export default function FinanceSecurity({
             {
               id: 'synthetic-voice',
               label: 'Synthetic Voice Probability',
-              value: `${(aiProbability * 100).toFixed(1)}%`,
+              value: hasDetectionResult
+                ? `${(aiProbability * 100).toFixed(1)}%`
+                : 'WAITING',
               icon: 'risk',
-              tone:
-                aiProbability >= 0.75
+              tone: hasDetectionResult
+                ? aiProbability >= 0.75
                   ? 'high'
                   : aiProbability >= 0.4
                     ? 'medium'
-                    : 'low',
-              progress: aiProbability * 100,
-              helper: 'AI acoustic detection',
+                    : 'low'
+                : 'neutral',
+              progress: hasDetectionResult ? aiProbability * 100 : undefined,
+              helper: hasDetectionResult
+                ? 'AI acoustic detection'
+                : 'Awaiting live audio analysis',
             },
             {
               id: 'speaker-match',
               label: 'Account Biometric Match',
               value:
-                speakerSimilarity !== null
+                hasDetectionResult && speakerSimilarity !== null
                   ? `${(speakerSimilarity * 100).toFixed(1)}%`
-                  : '96.2%',
+                  : 'WAITING',
               icon: 'speaker',
-              tone: speakerMatch === false ? 'high' : 'neutral',
+              tone:
+                hasDetectionResult && speakerMatch === false
+                  ? 'high'
+                  : 'neutral',
               progress:
-                speakerSimilarity !== null
+                hasDetectionResult && speakerSimilarity !== null
                   ? speakerSimilarity * 100
-                  : 96.2,
+                  : undefined,
               helper:
-                speakerMatch === true
-                  ? 'Matches account holder'
-                  : speakerMatch === false
-                    ? 'Voiceprint mismatch'
-                    : 'ECAPA-TDNN verification',
+                !hasDetectionResult
+                  ? 'Awaiting ECAPA-TDNN verification'
+                  : speakerMatch === true
+                    ? 'Matches account holder'
+                    : speakerMatch === false
+                      ? 'Voiceprint mismatch'
+                      : 'ECAPA-TDNN verification',
             },
             {
               id: 'composite-risk',
               label: 'Composite Risk',
-              value: `${(compositeRiskScore * 100).toFixed(1)}%`,
+              value: hasDetectionResult
+                ? `${(compositeRiskScore * 100).toFixed(1)}%`
+                : 'WAITING',
               icon: 'composite',
-              tone:
-                compositeRiskScore >= 0.75
+              tone: hasDetectionResult
+                ? compositeRiskScore >= 0.75
                   ? 'high'
                   : compositeRiskScore >= 0.4
                     ? 'medium'
-                    : 'low',
-              progress: compositeRiskScore * 100,
-              helper: 'AI + biometric + transaction context',
+                    : 'low'
+                : 'neutral',
+              progress:
+                hasDetectionResult
+                  ? compositeRiskScore * 100
+                  : undefined,
+              helper: hasDetectionResult
+                ? 'AI + biometric + transaction context'
+                : 'Awaiting complete risk evaluation',
             },
             {
               id: 'risk-gate',
               label: 'Transaction Risk Gate',
-              value:
-                riskLevel === 'high'
+              value: !hasDetectionResult
+                ? 'NOT EVALUATED'
+                : riskLevel === 'high'
                   ? 'FRAUD ALERT'
                   : riskLevel === 'medium'
                     ? 'STEP-UP'
                     : 'AUTHORIZED',
               icon: 'authenticity',
-              tone:
-                riskLevel === 'high'
+              tone: !hasDetectionResult
+                ? 'neutral'
+                : riskLevel === 'high'
                   ? 'high'
                   : riskLevel === 'medium'
                     ? 'medium'
                     : 'low',
-              helper: `Policy state · ${riskLevel.toUpperCase()}`,
+              helper: !hasDetectionResult
+                ? 'Policy state · WAITING'
+                : `Policy state · ${riskLevel.toUpperCase()}`,
             },
           ]}
         />
@@ -276,19 +306,27 @@ export default function FinanceSecurity({
             <SectorAudioPlayer
               title="Financial Services Audio Streamer"
               sector="finance"
-              scenario={governance.scenario || 'high_value_transfer'}
+              scenario={activeSampleScenario}
               samples={samples}
-              onPlaySample={(url, scn, amt) =>
+              onPlaySample={(url, scn, amt) => {
+                setActiveSampleScenario(scn || null)
+
                 streamAudioFromUrl?.(
                   url,
                   'finance',
                   scn || 'high_value_transfer',
                   amt || 525000
                 )
-              }
-              onStartMic={startMicrophoneStream}
+              }}
+              onStartMic={() => {
+                setActiveSampleScenario(null)
+                startMicrophoneStream?.()
+              }}
               onStopMic={stopMicrophoneStream}
-              onFileUpload={handleFileUpload}
+              onFileUpload={(file) => {
+                setActiveSampleScenario(null)
+                handleFileUpload?.(file)
+              }}
               isStreaming={isStreaming}
               micStatus={micStatus}
               micLevel={micLevel}
@@ -355,11 +393,14 @@ export default function FinanceSecurity({
               <button
                 type="button"
                 onClick={handleHaltWire}
+                disabled={!hasDetectionResult || wireFrozen}
                 className={[
                   'rounded-lg border px-3 py-2 text-xs font-semibold transition-colors',
                   wireFrozen
                     ? 'border-[var(--state-danger)]/25 bg-[var(--state-danger)]/10 text-[var(--state-danger)]'
-                    : 'border-[#D96A78]/30 bg-[#D96A78] text-white hover:bg-[#C85D6C]',
+                    : !hasDetectionResult
+                      ? 'cursor-not-allowed border-[var(--border-default)] bg-[var(--bg-card)] text-[var(--text-muted)] opacity-60'
+                      : 'border-[#D96A78]/30 bg-[#D96A78] text-white hover:bg-[#C85D6C]',
                 ].join(' ')}
               >
                 <span className="flex items-center gap-2">
@@ -371,7 +412,13 @@ export default function FinanceSecurity({
               <button
                 type="button"
                 onClick={handleTriggerVkyc}
-                className="rounded-lg border border-[#5863D6]/35 bg-[#5863D6]/15 px-3 py-2 text-xs font-semibold text-[#7079E0] hover:bg-[#5863D6]/25"
+                disabled={!hasDetectionResult}
+                className={[
+                  'rounded-lg border px-3 py-2 text-xs font-semibold transition-colors',
+                  hasDetectionResult
+                    ? 'border-[#5863D6]/35 bg-[#5863D6]/15 text-[#7079E0] hover:bg-[#5863D6]/25'
+                    : 'cursor-not-allowed border-[var(--border-default)] bg-[var(--bg-card)] text-[var(--text-muted)] opacity-60',
+                ].join(' ')}
               >
                 <span className="flex items-center gap-2">
                   <Lock size={14} />
@@ -385,8 +432,15 @@ export default function FinanceSecurity({
                   setBankerEscalated(true)
                   showToast('Re-routed to Relationship Manager Priority Queue!')
                 }}
-                disabled={bankerEscalated}
-                className="rounded-lg border border-[#D96A78]/25 bg-[#D96A78]/[0.07] px-3 py-2 text-xs font-semibold text-[#D96A78] hover:bg-[var(--bg-hover,#1C2033)] disabled:opacity-50"
+                disabled={!hasDetectionResult || bankerEscalated}
+                className={[
+                  'rounded-lg border px-3 py-2 text-xs font-semibold transition-colors',
+                  bankerEscalated
+                    ? 'border-[#D96A78]/25 bg-[#D96A78]/10 text-[#D96A78]'
+                    : !hasDetectionResult
+                      ? 'cursor-not-allowed border-[var(--border-default)] bg-[var(--bg-card)] text-[var(--text-muted)] opacity-60'
+                      : 'border-[#D96A78]/25 bg-[#D96A78]/[0.07] text-[#D96A78] hover:bg-[var(--bg-hover,#1C2033)]',
+                ].join(' ')}
               >
                 <span className="flex items-center gap-2">
                   <Send size={14} />

@@ -155,7 +155,7 @@ export default function AdversarialRobustness() {
   const curve = results?.curve_data
 
   return (
-    <div className="relative mx-auto max-w-5xl space-y-7 text-slate-100">
+    <div className="relative mx-auto max-w-5xl space-y-7 text-slate-100 adversarial-modern-shell">
 
       {/* =====================================================
           AURORA BACKGROUND GLOW
