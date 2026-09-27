@@ -65,3 +65,15 @@ class GovernanceDecision(BaseModel):
     recommended_actions: list[str] = Field(
         default_factory=list
     )
+
+    composite_risk_score: float | None = Field(
+        default=None,
+        ge=0.0,
+        le=1.0,
+    )
+    rolling_score: float | None = Field(
+        default=None,
+        ge=0.0,
+        le=1.0,
+    )
+    alert_triggered: bool | None = None

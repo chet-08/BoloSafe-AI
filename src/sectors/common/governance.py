@@ -228,11 +228,35 @@ def evaluate_sector_result(
     )
     adapted_result["ai_probability"] = p_synth
 
+    # Biometric similarity & transaction amount
+    s_bio = result.get("speaker_similarity")
+    eff_tx_amount = (
+        transaction_amount_inr
+        if transaction_amount_inr is not None
+        else result.get("transaction_amount_inr")
+    )
+    if eff_tx_amount is not None:
+        adapted_result["transaction_amount_inr"] = eff_tx_amount
+
+    # Compute Composite Risk Score BEFORE sector policy evaluation
+    composite_risk = calculate_composite_risk(
+        p_synth=p_synth,
+        s_bio=s_bio,
+        transaction_amount_inr=eff_tx_amount,
+    )
+    adapted_result["composite_risk_score"] = composite_risk
+
+    # Check Cross-Sector Threat Intelligence Network
+    effective_caller = caller_id or result.get("caller_id") or result.get("speaker_id")
+    threat_info = GLOBAL_THREAT_NETWORK.lookup_threat(effective_caller)
+    adapted_result["is_cross_sector_threat"] = threat_info["is_cross_sector_threat"]
+    adapted_result["threat_intel"] = threat_info
+
     if norm_sector == "finance":
         decision = evaluate_financial_result(
             adapted_result,
             scenario=resolved_scenario,
-            transaction_amount_inr=transaction_amount_inr,
+            transaction_amount_inr=eff_tx_amount,
         )
     elif norm_sector == "retail":
         decision = evaluate_retail_result(
@@ -268,21 +292,7 @@ def evaluate_sector_result(
         )
 
     decision_dict = decision.model_dump()
-
-    # Biometric similarity
-    s_bio = result.get("speaker_similarity")
-
-    # Compute Composite Risk Score
-    composite_risk = calculate_composite_risk(
-        p_synth=p_synth,
-        s_bio=s_bio,
-        transaction_amount_inr=transaction_amount_inr,
-    )
     decision_dict["composite_risk_score"] = composite_risk
-
-    # Check and update Cross-Sector Threat Intelligence
-    effective_caller = caller_id or result.get("caller_id") or result.get("speaker_id")
-    threat_info = GLOBAL_THREAT_NETWORK.lookup_threat(effective_caller)
 
     if threat_info["is_cross_sector_threat"]:
         decision_dict["cross_sector_threat_detected"] = True
