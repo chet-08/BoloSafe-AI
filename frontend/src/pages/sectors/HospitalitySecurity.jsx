@@ -95,36 +95,44 @@ export default function HospitalitySecurity({
 
   // The ensemble AI probability is the authoritative voice-authenticity result.
   const decisionState = selected.alert_triggered
-    ? {
-        label: 'SECURITY ALERT',
-        shortLabel: 'ACTION REQUIRED',
-        description: selected.alert_reason || 'The security policy has triggered an alert.',
-        instruction: 'Stop authorization and follow the configured security escalation procedure.',
-        tone: 'danger',
-      }
-    : aiProbability >= 0.80
-    ? {
-        label: 'LIKELY AI-GENERATED',
-        shortLabel: 'HOLD & VERIFY',
-        description: 'Strong synthetic-voice signal detected.',
-        instruction: 'Do not authorize the requested room charge or booking change from this call alone.',
-        tone: 'danger',
-      }
-    : aiProbability >= 0.50
-    ? {
-        label: 'INCONCLUSIVE',
-        shortLabel: 'VERIFY',
-        description: 'The voice evidence is mixed.',
-        instruction: 'Do not make a security decision from the voice alone. Complete guest verification.',
-        tone: 'warning',
-      }
-    : {
-        label: 'LIKELY AUTHENTIC',
-        shortLabel: 'CONTINUE / MONITOR',
-        description: 'No strong synthetic-voice signal detected.',
-        instruction: 'Continue the normal hospitality workflow and monitor the transaction.',
-        tone: 'safe',
-      };
+  ? {
+      label: 'SECURITY ALERT',
+      shortLabel: 'LOCK ROOM FOLIO & VERIFY GUEST',
+      description:
+        'A security alert was triggered. Lock the room folio and verify the guest’s identity before authorizing any transaction.',
+      instruction:
+        'Lock the room folio and verify the guest’s identity before authorizing any transaction.',
+      tone: 'danger',
+    }
+  : aiProbability >= 0.80
+  ? {
+      label: 'LIKELY AI-GENERATED',
+      shortLabel: 'LOCK ROOM FOLIO & VERIFY GUEST',
+      description:
+        'A strong synthetic-voice signal was detected. Lock the room folio and verify the guest’s identity before authorizing any transaction.',
+      instruction:
+        'Lock the room folio and verify the guest’s identity before authorizing any transaction.',
+      tone: 'danger',
+    }
+  : aiProbability >= 0.50
+  ? {
+      label: 'INCONCLUSIVE',
+      shortLabel: 'VERIFY GUEST IDENTITY',
+      description:
+        'The voice evidence is mixed. Verify the guest’s identity before approving the requested change or transaction.',
+      instruction:
+        'Verify the guest’s identity before approving the requested change or transaction.',
+      tone: 'warning',
+    }
+  : {
+      label: 'LIKELY AUTHENTIC',
+      shortLabel: 'CONTINUE NORMAL WORKFLOW',
+      description:
+        'No strong synthetic-voice signal was detected. Continue the normal hospitality workflow.',
+      instruction:
+        'No security escalation required. Continue the normal hospitality workflow.',
+      tone: 'safe',
+    };
 
   const decisionStyles = {
     danger: {
@@ -178,6 +186,23 @@ export default function HospitalitySecurity({
       showToast("Front Desk alerted for physical passport ID check!");
     }
   };
+
+  const handlePrimaryDecisionAction = async () => {
+    if (decisionState.tone === 'danger') {
+      await handleLockFolio();
+      await handleChallengeGuest();
+      return;
+    }
+
+    if (decisionState.tone === 'warning') {
+      await handleChallengeGuest();
+      return;
+    }
+
+    showToast("Continue normal hospitality workflow. No security escalation required.");
+  };
+
+
 
   const handleSimulateThreat = async () => {
     try {
@@ -328,6 +353,16 @@ export default function HospitalitySecurity({
               <p className="text-xs leading-relaxed opacity-90">
                 {decisionState.instruction}
               </p>
+            </div>
+
+            <div className="mt-4 flex justify-end">
+              <button
+                onClick={handlePrimaryDecisionAction}
+                className={`inline-flex items-center gap-2 rounded-xl border px-5 py-3 text-sm font-bold transition-all active:scale-95 ${decisionStyle.action}`}
+              >
+                Take Action
+                <ArrowRight className="size-4" />
+              </button>
             </div>
 
             <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-3">

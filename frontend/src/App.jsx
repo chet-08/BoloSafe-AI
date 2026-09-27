@@ -211,6 +211,7 @@ function MainApp() {
   // Refs for WebSockets and Audio
   const monitorGainRef = useRef(null)
   const wsRef = useRef(null)
+  const streamRotationRef = useRef(false)
   const wsConnectResolverRef = useRef(null)
   const wsConnectRejecterRef = useRef(null)
   const createStreamId = () =>
@@ -228,6 +229,16 @@ function MainApp() {
   const transactionAmountRef = useRef('525000')
   const selectedScenarioRef = useRef('high_value_transfer')
   const selectedSectorRef = useRef('finance')
+
+  // Keep the imperative refs synchronized with React state so
+  // uploads always send the currently selected security context.
+  useEffect(() => {
+    selectedSectorRef.current = selectedSector
+  }, [selectedSector])
+
+  useEffect(() => {
+    selectedScenarioRef.current = selectedScenario
+  }, [selectedScenario])
 
   // Authoritative context for the currently configured security session.
   // Routing must never be driven by stale results from another session.
@@ -345,14 +356,36 @@ function MainApp() {
       ws.onclose = () => {
         console.log('Risk WebSocket closed:', streamId)
 
-        // Ignore stale sockets after stream rotation.
+        // Ignore sockets that are no longer the active socket.
         if (wsRef.current !== ws) {
           console.log('Ignoring stale Risk WebSocket close:', streamId)
           return
         }
 
         setIsConnected(false)
+
+        /*
+         * A stream rotation intentionally closes the current socket.
+         * rotateRiskStream() already generated the authoritative ID.
+         */
+        if (streamRotationRef.current) {
+          streamRotationRef.current = false
+
+          if (!isUnmounted && !securityTerminatedRef.current) {
+            reconnectTimeout = setTimeout(() => {
+              console.log(
+                'Reconnecting rotated Risk WebSocket with stream:',
+                uniqueStreamIdRef.current
+              )
+              connect()
+            }, 50)
+          }
+
+          return
+        }
+
         setIsBackendOnline(securityTerminatedRef.current)
+
         setMicStatus(
           securityTerminatedRef.current
             ? 'STREAM TERMINATED — SECURITY ALERT'
@@ -408,6 +441,10 @@ function MainApp() {
 
         if (data.type === 'session_context_ack') {
           console.log('Session context acknowledged:', data)
+
+          securityTerminatedRef.current = false
+          setSecurityTerminated(false)
+          setEscalatedIncident(null)
 
           if (contextAckResolverRef.current) {
             contextAckResolverRef.current(data)
@@ -526,6 +563,17 @@ function MainApp() {
           )
           return
         }
+
+        console.log(
+          'LIVE RESULT ROUTING:',
+          JSON.stringify({
+            stream_id: currentStreamId,
+            active_session: activeSession,
+            result_sector: resultSector,
+            ai_probability: data.ai_probability,
+            governance_sector: data.governance_decision?.sector,
+          })
+        )
 
         setStreams((prev) => {
           const existing = prev[currentStreamId] || {
@@ -935,11 +983,99 @@ function MainApp() {
     try {
       stopMicrophoneStream()
 
+      if (fileIntervalRef.current) {
+        clearInterval(fileIntervalRef.current)
+        fileIntervalRef.current = null
+      }
+
+      fileStreamActiveRef.current = false
+
       if (filePlaybackRef.current) {
         filePlaybackRef.current.pause()
         filePlaybackRef.current.currentTime = 0
         filePlaybackRef.current = null
       }
+
+      /*
+       * Uploaded files use the same stream lifecycle as sample audio:
+       *
+       * 1. Rotate to a fresh Risk Engine stream.
+       * 2. Let the central WebSocket lifecycle reconnect.
+       * 3. Reuse the central onmessage handler.
+       * 4. Send the security context.
+       * 5. Wait for session_context_ack.
+       * 6. Stream PCM16 chunks through that socket.
+       *
+       * This is important because the central onmessage handler is what
+       * updates streams -> selected -> the live Hospitality result cards.
+       */
+      rotateRiskStream()
+
+      const ws = await waitForRiskWebSocket()
+
+      if (!ws || ws.readyState !== WebSocket.OPEN) {
+        throw new Error(
+          'Risk WebSocket is not open after upload stream rotation'
+        )
+      }
+
+      const contextPayload = {
+        type: 'session_context',
+        sector: selectedSectorRef.current,
+        scenario: selectedScenarioRef.current,
+        transaction_amount_inr:
+          Number.parseFloat(transactionAmountRef.current) || 0,
+      }
+
+      const contextAck = new Promise((resolve, reject) => {
+        const timeout = setTimeout(() => {
+          contextAckResolverRef.current = null
+          reject(
+            new Error(
+              'Timed out waiting for security context ACK'
+            )
+          )
+        }, 10000)
+
+        contextAckResolverRef.current = (data) => {
+          clearTimeout(timeout)
+          resolve(data)
+        }
+      })
+
+      ws.send(JSON.stringify(contextPayload))
+
+      const acknowledgedContext = await contextAck
+
+      if (!acknowledgedContext) {
+        throw new Error(
+          'Security context was not acknowledged'
+        )
+      }
+
+      const acknowledgedStreamId =
+        acknowledgedContext.stream_id ||
+        uniqueStreamIdRef.current
+
+      const acknowledgedSector =
+        acknowledgedContext.sector ||
+        selectedSectorRef.current
+
+      const acknowledgedScenario =
+        acknowledgedContext.scenario ||
+        selectedScenarioRef.current
+
+      activeSessionRef.current = {
+        streamId: acknowledgedStreamId,
+        sector: acknowledgedSector,
+        scenario: acknowledgedScenario,
+      }
+
+      setSelectedSector(acknowledgedSector)
+      selectedSectorRef.current = acknowledgedSector
+      setActiveStreamId(acknowledgedStreamId)
+      setContextConfigured(true)
+      setMicStatus('Security Context Ready')
 
       const playbackUrl = URL.createObjectURL(file)
       const playbackAudio = new Audio(playbackUrl)
@@ -958,8 +1094,8 @@ function MainApp() {
       }
 
       filePlaybackRef.current = playbackAudio
-      setFileName(file.name)
 
+      setFileName(file.name)
       setInputMode('file')
       setMicStatus(`Preparing: ${file.name}`)
 
@@ -985,115 +1121,146 @@ function MainApp() {
       const pcm16 =
         float32ToPCM16(resampled)
 
-      const ws = wsRef.current
-
-      if (
-        !ws ||
-        ws.readyState !== WebSocket.OPEN
-      ) {
-        alert(
-          'WebSocket is not connected to the backend.'
-        )
-
-        await audioCtx.close()
-        return
-      }
-
       try {
         await playbackAudio.play()
       } catch (playbackError) {
-        console.warn('Uploaded audio playback could not start:', playbackError)
+        console.warn(
+          'Uploaded audio playback could not start:',
+          playbackError
+        )
       }
 
       const chunkSize = 8000
       let offset = 0
 
-      setMicStatus(
-        `Streaming File: ${file.name}`
-      )
-
+      setMicStatus(`Streaming File: ${file.name}`)
+      setMicLevel(0)
       fileStreamActiveRef.current = true
 
-      fileIntervalRef.current =
-        setInterval(() => {
-          if (!fileStreamActiveRef.current) {
-            clearInterval(fileIntervalRef.current)
-            fileIntervalRef.current = null
-            return
+      fileIntervalRef.current = setInterval(() => {
+        if (!fileStreamActiveRef.current) {
+          clearInterval(fileIntervalRef.current)
+          fileIntervalRef.current = null
+          return
+        }
+
+        if (offset >= pcm16.length) {
+          fileStreamActiveRef.current = false
+
+          clearInterval(fileIntervalRef.current)
+          fileIntervalRef.current = null
+
+          if (ws.readyState === WebSocket.OPEN) {
+            ws.send(
+              JSON.stringify({
+                type: 'audio_end',
+              })
+            )
           }
 
-          if (offset >= pcm16.length) {
-            fileStreamActiveRef.current = false
+          setMicLevel(0)
+          setMicStatus(`Completed: ${file.name}`)
+          return
+        }
 
-            clearInterval(fileIntervalRef.current)
-            fileIntervalRef.current = null
+        if (ws.readyState !== WebSocket.OPEN) {
+          fileStreamActiveRef.current = false
 
-            if (ws.readyState === WebSocket.OPEN) {
-              ws.send(
-                JSON.stringify({
-                  type: 'audio_end',
-                })
+          clearInterval(fileIntervalRef.current)
+          fileIntervalRef.current = null
+
+          setMicLevel(0)
+          setMicStatus('Audio File Connection Lost')
+          return
+        }
+
+        const end = Math.min(
+          offset + chunkSize,
+          pcm16.length
+        )
+
+        const chunk = pcm16.slice(offset, end)
+
+        ws.send(chunk.buffer)
+
+        offset = end
+
+        const level =
+          chunk.length > 0
+            ? Math.min(
+                1,
+                Math.sqrt(
+                  chunk.reduce(
+                    (sum, sample) =>
+                      sum + sample * sample,
+                    0
+                  ) / chunk.length
+                ) / 32768
               )
-            }
+            : 0
 
-            setMicLevel(0)
-            setMicStatus('File Stream Complete')
+        setMicLevel(level)
+      }, 250)
 
-            audioCtx.close()
-
-            return
-          }
-
-          const chunk =
-            pcm16.subarray(
-              offset,
-              offset + chunkSize
-            )
-
-          if (ws.readyState !== WebSocket.OPEN) {
-            fileStreamActiveRef.current = false
-            setMicLevel(0)
-            setMicStatus('Backend Connection Lost')
-            return
-          }
-
-          ws.send(chunk)
-
-          const chunkRms =
-            calculateRMS(
-              resampled.subarray(
-                offset,
-                Math.min(
-                  offset + chunkSize,
-                  resampled.length
-                )
-              )
-            )
-
-          setMicLevel(
-            Math.min(
-              Math.round(chunkRms * 200),
-              100
-            )
-          )
-
-          offset += chunkSize
-        }, 500)
     } catch (error) {
       console.error(
-        'Audio file processing error:',
+        'Audio file streaming failed:',
         error
       )
 
+      fileStreamActiveRef.current = false
+
+      if (fileIntervalRef.current) {
+        clearInterval(fileIntervalRef.current)
+        fileIntervalRef.current = null
+      }
+
+      setMicLevel(0)
       setMicStatus('Audio File Error')
 
       alert(
-        'Failed to decode audio file. Please use a valid WAV/MP3 file.'
+        error?.message ||
+        'Failed to process audio file. Please use a valid WAV/MP3 file.'
       )
+    } finally {
+      event.target.value = ''
     }
   }
 
   const rotateRiskStream = () => {
+    /*
+     * This is a NEW security session.
+     * Clear terminal state before creating the new stream.
+     */
+    securityTerminatedRef.current = false
+    setSecurityTerminated(false)
+    setEscalatedIncident(null)
+
+    /*
+     * Generate the authoritative stream ID FIRST.
+     */
+    const newStreamId = createStreamId()
+    uniqueStreamIdRef.current = newStreamId
+
+    /*
+     * Tell the old socket's onclose handler that this close
+     * is intentional and that it must reconnect using the ID
+     * above rather than generating another one.
+     */
+    streamRotationRef.current = true
+
+    activeSessionRef.current = null
+    contextAckResolverRef.current = null
+
+    if (fileIntervalRef.current) {
+      clearInterval(fileIntervalRef.current)
+      fileIntervalRef.current = null
+    }
+
+    fileStreamActiveRef.current = false
+
+    setMicLevel(0)
+
     const oldWs = wsRef.current
 
     if (oldWs) {
@@ -1112,12 +1279,6 @@ function MainApp() {
       }
     }
 
-    const newStreamId = createStreamId()
-    uniqueStreamIdRef.current = newStreamId
-
-    activeSessionRef.current = null
-    contextAckResolverRef.current = null
-
     return newStreamId
   }
 
@@ -1132,20 +1293,28 @@ function MainApp() {
     }
 
     return new Promise((resolve, reject) => {
-      wsConnectResolverRef.current = resolve
-      wsConnectRejecterRef.current = reject
-
-      setTimeout(() => {
+      const timeout = setTimeout(() => {
         if (wsConnectResolverRef.current === resolve) {
           wsConnectResolverRef.current = null
           wsConnectRejecterRef.current = null
+
           reject(
             new Error(
               'Timed out waiting for Risk WebSocket connection'
             )
           )
         }
-      }, 5000)
+      }, 10000)
+
+      wsConnectResolverRef.current = (ws) => {
+        clearTimeout(timeout)
+        resolve(ws)
+      }
+
+      wsConnectRejecterRef.current = (error) => {
+        clearTimeout(timeout)
+        reject(error)
+      }
     })
   }
 

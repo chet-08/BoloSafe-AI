@@ -50,7 +50,7 @@ export default function GuidedUserFlowBar({
       num: 5,
       title: 'Enterprise Dispatch',
       desc: 'Inspect ISO 20022 / OMS / PMS JSON',
-      status: 'pending',
+      status: hasActionTaken ? 'completed' : 'pending',
       icon: Code,
       action: onOpenWebhook
     }
