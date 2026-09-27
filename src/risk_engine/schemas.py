@@ -113,6 +113,9 @@ class RiskResult(BaseModel):
     dual_stream_risk: str | None = None
     modality_gate_alpha: float | None = None
     dual_stream_latency_ms: float | None = None
+    primary_xgb_ms: float | None = None
+    dual_stream_ms: float | None = None
+    total_detection_ms: float | None = None
     target_languages: list[str] = Field(default_factory=lambda: ["en", "hi", "ta"])
 
 

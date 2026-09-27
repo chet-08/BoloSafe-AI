@@ -80,6 +80,10 @@ export default function HospitalitySecurity({
 
   const riskLevel = governance.risk_level || (aiProbability >= 0.75 || hasCrossSectorThreat ? 'high' : aiProbability >= 0.40 ? 'medium' : 'low');
   const action = governance.action || (riskLevel === 'high' ? 'lock_folio_and_escalate' : riskLevel === 'medium' ? 'require_front_desk_id' : 'allow');
+  const hasAudioResult =
+    selected.ai_probability !== undefined &&
+    selected.ai_probability !== null;
+
   const recommendedActions = governance.recommended_actions || [
     riskLevel === 'high'
       ? 'Immediately lock room folio and halt phone-authorized charges.'
@@ -87,6 +91,74 @@ export default function HospitalitySecurity({
       ? 'Send verification challenge and require government ID at check-in.'
       : 'Guest verified against biometric record. Normal concierge workflow allowed.'
   ];
+
+
+  // The ensemble AI probability is the authoritative voice-authenticity result.
+  const decisionState = selected.alert_triggered
+  ? {
+      label: 'SECURITY ALERT',
+      shortLabel: 'LOCK ROOM FOLIO & VERIFY GUEST',
+      description:
+        'A security alert was triggered. Lock the room folio and verify the guest’s identity before authorizing any transaction.',
+      instruction:
+        'Lock the room folio and verify the guest’s identity before authorizing any transaction.',
+      tone: 'danger',
+    }
+  : aiProbability >= 0.80
+  ? {
+      label: 'LIKELY AI-GENERATED',
+      shortLabel: 'LOCK ROOM FOLIO & VERIFY GUEST',
+      description:
+        'A strong synthetic-voice signal was detected. Lock the room folio and verify the guest’s identity before authorizing any transaction.',
+      instruction:
+        'Lock the room folio and verify the guest’s identity before authorizing any transaction.',
+      tone: 'danger',
+    }
+  : aiProbability >= 0.50
+  ? {
+      label: 'INCONCLUSIVE',
+      shortLabel: 'VERIFY GUEST IDENTITY',
+      description:
+        'The voice evidence is mixed. Verify the guest’s identity before approving the requested change or transaction.',
+      instruction:
+        'Verify the guest’s identity before approving the requested change or transaction.',
+      tone: 'warning',
+    }
+  : {
+      label: 'LIKELY AUTHENTIC',
+      shortLabel: 'CONTINUE NORMAL WORKFLOW',
+      description:
+        'No strong synthetic-voice signal was detected. Continue the normal hospitality workflow.',
+      instruction:
+        'No security escalation required. Continue the normal hospitality workflow.',
+      tone: 'safe',
+    };
+
+  const decisionStyles = {
+    danger: {
+      container: 'border-rose-500/50 bg-rose-950/40',
+      icon: 'bg-rose-500/20 text-rose-300 border-rose-500/40',
+      title: 'text-rose-200',
+      probability: 'text-rose-300',
+      action: 'border-rose-400/40 bg-rose-500/20 text-rose-100',
+    },
+    warning: {
+      container: 'border-amber-500/50 bg-amber-950/40',
+      icon: 'bg-amber-500/20 text-amber-300 border-amber-500/40',
+      title: 'text-amber-200',
+      probability: 'text-amber-300',
+      action: 'border-amber-400/40 bg-amber-500/20 text-amber-100',
+    },
+    safe: {
+      container: 'border-emerald-500/50 bg-emerald-950/40',
+      icon: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40',
+      title: 'text-emerald-200',
+      probability: 'text-emerald-300',
+      action: 'border-emerald-400/40 bg-emerald-500/20 text-emerald-100',
+    },
+  };
+
+  const decisionStyle = decisionStyles[decisionState.tone];
 
   const showToast = (msg) => {
     setToastMsg(msg);
@@ -114,6 +186,23 @@ export default function HospitalitySecurity({
       showToast("Front Desk alerted for physical passport ID check!");
     }
   };
+
+  const handlePrimaryDecisionAction = async () => {
+    if (decisionState.tone === 'danger') {
+      await handleLockFolio();
+      await handleChallengeGuest();
+      return;
+    }
+
+    if (decisionState.tone === 'warning') {
+      await handleChallengeGuest();
+      return;
+    }
+
+    showToast("Continue normal hospitality workflow. No security escalation required.");
+  };
+
+
 
   const handleSimulateThreat = async () => {
     try {
@@ -210,6 +299,117 @@ export default function HospitalitySecurity({
         </div>
       )}
 
+      {hasAudioResult && (
+        <div className="mb-6">
+          {/* Primary Voice Security Decision */}
+          <div className={`rounded-2xl border p-6 shadow-2xl backdrop-blur-md ${decisionStyle.container}`}>
+            <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
+              <div className="flex items-start gap-4">
+                <div className={`flex size-14 shrink-0 items-center justify-center rounded-2xl border ${decisionStyle.icon}`}>
+                  {decisionState.tone === 'danger' ? (
+                    <ShieldAlert className="size-7" />
+                  ) : decisionState.tone === 'warning' ? (
+                    <AlertTriangle className="size-7" />
+                  ) : (
+                    <ShieldCheck className="size-7" />
+                  )}
+                </div>
+                <div>
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">
+                    Voice Security Decision
+                  </div>
+                  <div className={`mt-1 text-2xl font-black tracking-tight ${decisionStyle.title}`}>
+                    {decisionState.label}
+                  </div>
+                  <p className="mt-1 text-sm text-slate-300">
+                    {decisionState.description}
+                  </p>
+                </div>
+              </div>
+
+              <div className="text-left md:text-right">
+                <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                  AI Probability
+                </div>
+                <div className={`mt-1 text-4xl font-black font-mono ${decisionStyle.probability}`}>
+                  {(aiProbability * 100).toFixed(1)}%
+                </div>
+                <div className="mt-1 text-[10px] font-mono text-slate-400">
+                  50% XGBoost + 50% MMS-300M
+                </div>
+              </div>
+            </div>
+
+            <div className={`mt-5 flex flex-col gap-3 rounded-xl border p-4 ${decisionStyle.action}`}>
+              <div className="flex items-center gap-2">
+                <ArrowRight className="size-4 shrink-0" />
+                <span className="text-xs font-semibold uppercase tracking-wider">
+                  Recommended Staff Action
+                </span>
+              </div>
+              <div className="text-xl font-black tracking-tight">
+                {decisionState.shortLabel}
+              </div>
+              <p className="text-xs leading-relaxed opacity-90">
+                {decisionState.instruction}
+              </p>
+            </div>
+
+            <div className="mt-4 flex justify-end">
+              <button
+                onClick={handlePrimaryDecisionAction}
+                className={`inline-flex items-center gap-2 rounded-xl border px-5 py-3 text-sm font-bold transition-all active:scale-95 ${decisionStyle.action}`}
+              >
+                Take Action
+                <ArrowRight className="size-4" />
+              </button>
+            </div>
+
+            <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-3">
+              <div className="rounded-xl border border-white/10 bg-black/10 p-3">
+                <div className="text-[10px] uppercase tracking-wider text-slate-400">
+                  Acoustic Model
+                </div>
+                <div className="mt-1 text-lg font-bold font-mono text-white">
+                  {selected.xgb_probability !== undefined
+                    ? `${(selected.xgb_probability * 100).toFixed(1)}%`
+                    : '—'}
+                </div>
+                <div className="text-[10px] text-slate-500">
+                  XGBoost supporting signal
+                </div>
+              </div>
+
+              <div className="rounded-xl border border-white/10 bg-black/10 p-3">
+                <div className="text-[10px] uppercase tracking-wider text-slate-400">
+                  Neural Model
+                </div>
+                <div className="mt-1 text-lg font-bold font-mono text-white">
+                  {selected.dual_stream_probability !== undefined
+                    ? `${(selected.dual_stream_probability * 100).toFixed(1)}%`
+                    : '—'}
+                </div>
+                <div className="text-[10px] text-slate-500">
+                  MMS-300M supporting signal
+                </div>
+              </div>
+
+              <div className="rounded-xl border border-white/10 bg-black/10 p-3">
+                <div className="text-[10px] uppercase tracking-wider text-slate-400">
+                  Security Risk
+                </div>
+                <div className="mt-1 text-lg font-bold uppercase text-white">
+                  {riskLevel}
+                </div>
+                <div className="text-[10px] text-slate-500">
+                  Governance / transaction context
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Sector Live Audio Controller & 1-Click Samples */}
       <SectorAudioPlayer
         title="Concierge Audio Streamer & Room Folio Defense"
@@ -275,116 +475,12 @@ export default function HospitalitySecurity({
 
         {/* Center Column: Live Risk & Biometric Gauges */}
         <div className="space-y-4 lg:col-span-2">
-          {/* 4-Card Gauge Grid */}
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            {/* 1. Risk State Pill */}
-            <div className={`rounded-2xl border p-4 backdrop-blur-md transition-all ${
-              riskLevel === 'high'
-                ? 'border-rose-500/40 bg-rose-950/30 text-rose-200'
-                : riskLevel === 'medium'
-                ? 'border-amber-500/40 bg-amber-950/30 text-amber-200'
-                : 'border-emerald-500/40 bg-emerald-950/30 text-emerald-200'
-            }`}>
-              <div className="text-xs uppercase tracking-wider opacity-80">Guest Folio Gate</div>
-              <div className="mt-2 flex items-center gap-2 text-lg font-bold uppercase">
-                {riskLevel === 'high' ? (
-                  <>
-                    <XCircle className="size-5 text-rose-400" />
-                    Lock Folio
-                  </>
-                ) : riskLevel === 'medium' ? (
-                  <>
-                    <AlertTriangle className="size-5 text-amber-400" />
-                    Verify ID
-                  </>
-                ) : (
-                  <>
-                    <CheckCircle2 className="size-5 text-emerald-400" />
-                    Verified
-                  </>
-                )}
-              </div>
-              <div className="mt-1 text-xs opacity-75 font-mono">
-                Level: {riskLevel.toUpperCase()}
-              </div>
-            </div>
 
-            {/* 2. AI Clone Probability */}
-            <div className="rounded-2xl border border-white/10 bg-slate-900/60 p-4 backdrop-blur-md">
-              <div className="text-xs uppercase tracking-wider text-slate-400">Clone Probability</div>
-              <div className="mt-2 text-xl font-mono font-bold text-white">
-                {(aiProbability * 100).toFixed(1)}%
-              </div>
-              <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-white/10">
-                <div
-                  className={`h-full transition-all duration-500 ${
-                    aiProbability > 0.75
-                      ? 'bg-rose-500'
-                      : aiProbability > 0.40
-                      ? 'bg-amber-400'
-                      : 'bg-emerald-400'
-                  }`}
-                  style={{ width: `${Math.min(100, Math.max(0, aiProbability * 100))}%` }}
-                />
-              </div>
-              <div className="mt-1 text-[10px] text-slate-400 font-mono">P(synthetic acoustic)</div>
-            </div>
-
-            {/* 3. Speaker Biometric Match */}
-            <div className="rounded-2xl border border-white/10 bg-slate-900/60 p-4 backdrop-blur-md">
-              <div className="text-xs uppercase tracking-wider text-slate-400">Guest Biometric Match</div>
-              <div className="mt-2 text-xl font-mono font-bold text-white">
-                {speakerSimilarity !== null ? `${(speakerSimilarity * 100).toFixed(1)}%` : '97.1%'}
-              </div>
-              <div className="mt-1 flex items-center gap-1.5 text-xs text-slate-300">
-                <UserCheck className="size-3.5 text-amber-400" />
-                <span className="text-[11px]">
-                  {speakerMatch === true
-                    ? 'Matches In-House Guest'
-                    : speakerMatch === false
-                    ? 'Voiceprint Divergence'
-                    : 'ECAPA-TDNN Verified'}
-                </span>
-              </div>
-            </div>
-
-            {/* 4. Unified Composite Risk Score */}
-            <div className={`rounded-2xl border p-4 backdrop-blur-md transition-all ${
-              compositeRiskScore >= 0.75
-                ? 'border-rose-500/30 bg-rose-950/20'
-                : compositeRiskScore >= 0.40
-                ? 'border-amber-500/30 bg-amber-950/20'
-                : 'border-emerald-500/30 bg-emerald-950/20'
-            }`}>
-              <div className="flex items-center justify-between text-xs uppercase tracking-wider text-slate-300">
-                <span>Composite Risk</span>
-                <Activity className="size-3.5 text-cyan-400" />
-              </div>
-              <div className="mt-2 text-xl font-mono font-bold text-white">
-                {(compositeRiskScore * 100).toFixed(1)}%
-              </div>
-              <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-white/10">
-                <div
-                  className={`h-full transition-all duration-500 ${
-                    compositeRiskScore >= 0.75
-                      ? 'bg-rose-500'
-                      : compositeRiskScore >= 0.40
-                      ? 'bg-amber-400'
-                      : 'bg-emerald-400'
-                  }`}
-                  style={{ width: `${Math.min(100, Math.max(0, compositeRiskScore * 100))}%` }}
-                />
-              </div>
-              <div className="mt-1 text-[9px] text-slate-400 font-mono">
-                R = 50% AI + 30% Bio + 20% Folio
-              </div>
-            </div>
-          </div>
 
           {/* Decision & Action Workflow Panel */}
           <div className="rounded-2xl border border-white/10 bg-slate-900/60 p-5 shadow-xl backdrop-blur-md">
             <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-slate-300">
-              Hotel Concierge Automated Protocol
+              Operator Controls
             </h2>
 
             <div className="mb-4 rounded-xl border border-white/5 bg-white/[0.02] p-4">

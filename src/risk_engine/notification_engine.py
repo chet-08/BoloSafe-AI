@@ -21,6 +21,11 @@ class Scenario(str, Enum):
     PRIVILEGED_ACCESS = "privileged_access"
     ROUTINE_SUPPORT = "routine_support"
 
+    # Hospitality-specific security contexts.
+    GUEST_VERIFICATION = "guest_verification"
+    RESERVATION_CHANGE = "reservation_change"
+    VIP_BOOKING = "vip_booking"
+
 
 @dataclass(frozen=True)
 class NotificationPolicy:
@@ -92,6 +97,65 @@ POLICIES: dict[Scenario, NotificationPolicy] = {
         ),
         dispatch_channels=(
             "dashboard",
+        ),
+    ),
+
+    Scenario.GUEST_VERIFICATION: NotificationPolicy(
+        scenario=Scenario.GUEST_VERIFICATION,
+        threshold=0.80,
+        required_consecutive_flags=3,
+        title="Guest Voice Verification Warning",
+        message=(
+            "Synthetic voice risk has crossed the guest "
+            "verification protection threshold."
+        ),
+        recommended_actions=(
+            "Require front-desk identity verification",
+            "Do not authorize the requested folio action",
+        ),
+        dispatch_channels=(
+            "dashboard",
+            "webhook",
+        ),
+    ),
+
+    Scenario.RESERVATION_CHANGE: NotificationPolicy(
+        scenario=Scenario.RESERVATION_CHANGE,
+        threshold=0.75,
+        required_consecutive_flags=2,
+        title="Reservation Voice Impersonation Detected",
+        message=(
+            "Synthetic voice risk has crossed the reservation "
+            "change protection threshold."
+        ),
+        recommended_actions=(
+            "Require out-of-band guest verification",
+            "Pause the requested reservation change",
+            "Escalate to hotel security when required",
+        ),
+        dispatch_channels=(
+            "dashboard",
+            "webhook",
+        ),
+    ),
+
+    Scenario.VIP_BOOKING: NotificationPolicy(
+        scenario=Scenario.VIP_BOOKING,
+        threshold=0.75,
+        required_consecutive_flags=2,
+        title="VIP Booking Voice Impersonation Detected",
+        message=(
+            "Synthetic voice risk has crossed the VIP booking "
+            "protection threshold."
+        ),
+        recommended_actions=(
+            "Require front-desk identity verification",
+            "Pause high-value folio authorization",
+            "Escalate to hotel security when required",
+        ),
+        dispatch_channels=(
+            "dashboard",
+            "webhook",
         ),
     ),
 }

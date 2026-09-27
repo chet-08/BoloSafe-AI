@@ -9,6 +9,8 @@ from dotenv import load_dotenv
 load_dotenv()
 
 import asyncio
+import atexit
+from concurrent.futures import ThreadPoolExecutor
 import json
 import os
 import time
@@ -16,6 +18,8 @@ import tempfile
 
 import joblib
 import numpy as np
+import librosa
+import pandas as pd
 import soundfile as sf
 import librosa
 
@@ -95,6 +99,22 @@ EXPECTED_FEATURES = 58
 
 model = joblib.load(MODEL_PATH)
 
+# Single-sample real-time inference is slightly faster with one worker.
+# Avoids thread-pool overhead from n_jobs=-1.
+if hasattr(model, "calibrated_classifiers_"):
+    for calibrated in model.calibrated_classifiers_:
+        estimator = getattr(calibrated, "estimator", None)
+        if estimator is not None and hasattr(estimator, "set_params"):
+            estimator.set_params(n_jobs=1)
+
+if hasattr(model, "estimator"):
+    try:
+        model.estimator.set_params(n_jobs=1)
+    except Exception:
+        pass
+
+print("[xgboost] Real-time inference configured with n_jobs=1")
+
 # Supporting prosody model.
 # This NEVER replaces the primary XGBoost detector.
 PROSODY_MODEL_PATH = "reports/prosody_hgb_acoustic_calibrated.joblib"
@@ -119,13 +139,6 @@ except Exception as exc:
     print(f"[dual-stream] Model load deferred or unavailable: {exc}")
     dual_stream_classifier = None
 
-# Trilingual Dual-Stream Neural Acoustic Fusion Engine (MMS-300M + 58D DSP)
-try:
-    dual_stream_classifier = DualStreamFusionClassifier()
-    print("[dual-stream] Trilingual MMS-300M + 58D Acoustic Fusion model active.")
-except Exception as exc:
-    print(f"[dual-stream] Model load deferred or unavailable: {exc}")
-    dual_stream_classifier = None
 
 # One ProsodyBuffer per active stream.
 prosody_buffers: dict[str, ProsodyBuffer] = {}
@@ -301,6 +314,214 @@ client_stream_ids: dict[WebSocket, set[str]] = {}
 
 stream_owners: dict[str, int] = {}
 
+PRIMARY_INFERENCE_EXECUTOR = ThreadPoolExecutor(
+    max_workers=1,
+    thread_name_prefix="primary-inference",
+)
+
+DUAL_STREAM_EXECUTOR = ThreadPoolExecutor(
+    max_workers=1,
+    thread_name_prefix="dual-stream",
+)
+
+
+@atexit.register
+def _shutdown_primary_inference_executor() -> None:
+    PRIMARY_INFERENCE_EXECUTOR.shutdown(wait=False, cancel_futures=True)
+
+
+@atexit.register
+def _shutdown_dual_stream_executor() -> None:
+    DUAL_STREAM_EXECUTOR.shutdown(wait=False, cancel_futures=True)
+
+
+speaker_verification_results: dict[
+    str, tuple[float | None, bool | None]
+] = {}
+
+speaker_verification_tasks: dict[str, asyncio.Task] = {}
+
+prosody_analysis_tasks: dict[str, asyncio.Task] = {}
+
+prosody_analysis_results: dict[
+    str, tuple[float | None, str, dict]
+] = {}
+
+
+async def _run_prosody_analysis_background(
+    stream_id: str,
+    window_id: int,
+    audio_window: np.ndarray,
+    features: np.ndarray,
+) -> None:
+    """Run supporting prosody ML without blocking the primary detector."""
+
+    try:
+        prosody_f0 = await asyncio.to_thread(
+            extract_yin_pitch_stats,
+            audio_window,
+            sr=SAMPLE_RATE,
+        )
+
+        live_f0 = await asyncio.to_thread(
+            librosa.yin,
+            audio_window,
+            fmin=65.0,
+            fmax=400.0,
+            sr=SAMPLE_RATE,
+            frame_length=1024,
+            hop_length=512,
+        )
+
+        valid_f0 = live_f0[
+            np.isfinite(live_f0)
+            & (live_f0 > 0)
+        ]
+
+        pitch_range = (
+            float(np.max(valid_f0) - np.min(valid_f0))
+            if valid_f0.size >= 2
+            else 0.0
+        )
+
+        corrected_rate = await asyncio.to_thread(
+            calculate_corrected_pitch_change_rate,
+            audio_window,
+            SAMPLE_RATE,
+        )
+
+        spectral_centroid = await asyncio.to_thread(
+            librosa.feature.spectral_centroid,
+            y=audio_window,
+            sr=SAMPLE_RATE,
+            n_fft=1024,
+            hop_length=512,
+        )
+
+        spectral_bandwidth = await asyncio.to_thread(
+            librosa.feature.spectral_bandwidth,
+            y=audio_window,
+            sr=SAMPLE_RATE,
+            n_fft=1024,
+            hop_length=512,
+        )
+
+        centroid_values = spectral_centroid[0]
+        bandwidth_values = spectral_bandwidth[0]
+
+        centroid_valid = centroid_values[
+            np.isfinite(centroid_values)
+        ]
+
+        bandwidth_valid = bandwidth_values[
+            np.isfinite(bandwidth_values)
+        ]
+
+        centroid_mean = (
+            float(np.mean(centroid_valid))
+            if centroid_valid.size
+            else 0.0
+        )
+
+        centroid_std = (
+            float(np.std(centroid_valid))
+            if centroid_valid.size
+            else 0.0
+        )
+
+        bandwidth_mean = (
+            float(np.mean(bandwidth_valid))
+            if bandwidth_valid.size
+            else 0.0
+        )
+
+        bandwidth_std = (
+            float(np.std(bandwidth_valid))
+            if bandwidth_valid.size
+            else 0.0
+        )
+
+        prosody_input = pd.DataFrame([{
+            "f0_mean": (
+                float(features[56])
+                if np.isfinite(features[56])
+                else np.nan
+            ),
+            "f0_std": (
+                float(features[57])
+                if np.isfinite(features[57])
+                else np.nan
+            ),
+            "yin_f0_mean": prosody_f0["f0_mean"],
+            "yin_f0_std": prosody_f0["f0_std"],
+            "pitch_range": pitch_range,
+            "pitch_change_rate_corrected": corrected_rate,
+            "centroid_mean": centroid_mean,
+            "centroid_std": centroid_std,
+            "bandwidth_mean": bandwidth_mean,
+            "bandwidth_std": bandwidth_std,
+        }])
+
+        print(
+            "[prosody-ml] "
+            f"background analysis window={window_id}"
+        )
+
+        prosody_probability = float(
+            await asyncio.to_thread(
+                lambda: prosody_model.predict_proba(
+                    prosody_input
+                )[0, 1]
+            )
+        )
+
+        if prosody_probability >= 0.70:
+            signal = "SPOOF_SUPPORT"
+        elif prosody_probability < 0.30:
+            signal = "BONAFIDE_SUPPORT"
+        else:
+            signal = "INCONCLUSIVE"
+
+        result = {
+            "yin_analysis": {
+                "f0_mean": prosody_f0["f0_mean"],
+                "f0_std": prosody_f0["f0_std"],
+                "pitch_range": pitch_range,
+                "pitch_change_rate_corrected": corrected_rate,
+            },
+            "prosody_probability": prosody_probability,
+        }
+
+        prosody_analysis_results[stream_id] = (
+            prosody_probability,
+            signal,
+            result,
+        )
+
+        print(
+            "[prosody-ml] "
+            f"background probability={prosody_probability:.3f} "
+            f"signal={signal} "
+            f"window={window_id}"
+        )
+
+    except asyncio.CancelledError:
+        raise
+
+    except Exception as exc:
+        print(
+            "[prosody] "
+            f"Background analysis failed "
+            f"for window={window_id}: {exc}"
+        )
+
+    finally:
+        current_task = asyncio.current_task()
+        registered_task = prosody_analysis_tasks.get(stream_id)
+
+        if registered_task is current_task:
+            prosody_analysis_tasks.pop(stream_id, None)
+
 
 def acquire_stream(stream_id: str) -> None:
     """Register one active connection using a stream."""
@@ -328,6 +549,20 @@ def release_stream(stream_id: str) -> None:
                 f"[risk] Failed to remove stream "
                 f"{stream_id}: {exc}"
             )
+
+        # Cancel any outstanding background speaker verification.
+        speaker_verification_results.pop(stream_id, None)
+
+        task = speaker_verification_tasks.pop(stream_id, None)
+        if task is not None and not task.done():
+            task.cancel()
+
+        # Cancel any outstanding background prosody analysis.
+        prosody_analysis_results.pop(stream_id, None)
+
+        prosody_task = prosody_analysis_tasks.pop(stream_id, None)
+        if prosody_task is not None and not prosody_task.done():
+            prosody_task.cancel()
 
         # Clean up prosody state too.
         prosody_buffers.pop(stream_id, None)
@@ -376,7 +611,11 @@ async def detect_dual_stream_file(file: UploadFile = File(...)):
         
         # Test up to first 16,000 samples (1.0s window)
         chunk = audio[:16000] if len(audio) >= 16000 else np.pad(audio, (0, 16000 - len(audio)))
-        res = await asyncio.to_thread(dual_stream_classifier.predict, chunk)
+        res = await asyncio.get_running_loop().run_in_executor(
+            DUAL_STREAM_EXECUTOR,
+            dual_stream_classifier.predict,
+            chunk,
+        )
 
 
         # Test up to first 16,000 samples (1.0s window)
@@ -385,7 +624,8 @@ async def detect_dual_stream_file(file: UploadFile = File(...)):
             if len(audio) >= 16000
             else np.pad(audio, (0, 16000 - len(audio)))
         )
-        res = await asyncio.to_thread(
+        res = await asyncio.get_running_loop().run_in_executor(
+            DUAL_STREAM_EXECUTOR,
             dual_stream_classifier.predict,
             chunk,
         )
@@ -716,25 +956,11 @@ def process_audio_window(
     audio_window: np.ndarray,
 ) -> tuple[float, float, np.ndarray]:
     """
-    Extract the 58-D feature vector and run
-    the calibrated XGBoost model.
-
-    Returns:
-
-        ai_probability
-        latency_ms
-        features
-
-    The feature vector is returned so that prosody and
-    SHAP processing can reuse it without extracting
-    features a second time.
+    Extract the 58-D feature vector and run the calibrated XGBoost model.
+    Returns: ai_probability, latency_ms, features.
     """
 
-    start_time = time.perf_counter()
-
-    # ------------------------------------------------------------------------
-    # Validate audio window
-    # ------------------------------------------------------------------------
+    total_start = time.perf_counter()
 
     audio_window = np.asarray(
         audio_window,
@@ -742,115 +968,75 @@ def process_audio_window(
     ).reshape(-1)
 
     if len(audio_window) == 0:
-        raise ValueError(
-            "Received empty audio window"
-        )
+        raise ValueError("Received empty audio window")
 
-    if not np.all(
-        np.isfinite(audio_window)
-    ):
-        raise ValueError(
-            "Audio window contains NaN or Inf"
-        )
+    if not np.all(np.isfinite(audio_window)):
+        raise ValueError("Audio window contains NaN or Inf")
 
-    # ------------------------------------------------------------------------
-    # Basic audio diagnostics
-    # ------------------------------------------------------------------------
+    # Audio diagnostics
+    diagnostics_start = time.perf_counter()
 
-    audio_min = float(
-        np.min(audio_window)
-    )
-
-    audio_max = float(
-        np.max(audio_window)
-    )
-
+    audio_min = float(np.min(audio_window))
+    audio_max = float(np.max(audio_window))
     audio_rms = float(
-        np.sqrt(
-            np.mean(
-                np.square(audio_window)
-            )
-        )
+        np.sqrt(np.mean(np.square(audio_window)))
     )
+
+    diagnostics_ms = (
+        time.perf_counter() - diagnostics_start
+    ) * 1000.0
 
     print(
-        f"[features] "
-        f"samples={len(audio_window)} "
+        f"[features] samples={len(audio_window)} "
         f"min={audio_min:.4f} "
         f"max={audio_max:.4f} "
         f"rms={audio_rms:.5f}"
     )
 
-    # ------------------------------------------------------------------------
-    # Extract features ONCE
-    # ------------------------------------------------------------------------
+    # 58-D feature extraction
+    feature_start = time.perf_counter()
 
     raw_features = extract_features(
         audio_window
     )
 
-    # ------------------------------------------------------------------------
-    # Validate features
-    # ------------------------------------------------------------------------
-
     features = validate_features(
         raw_features
     )
 
-    # ------------------------------------------------------------------------
+    feature_ms = (
+        time.perf_counter() - feature_start
+    ) * 1000.0
+
     # Feature diagnostics
-    # ------------------------------------------------------------------------
+    feature_diag_start = time.perf_counter()
 
-    feature_min = float(
-        np.min(features)
-    )
+    feature_min = float(np.min(features))
+    feature_max = float(np.max(features))
+    feature_mean = float(np.mean(features))
+    feature_std = float(np.std(features))
 
-    feature_max = float(
-        np.max(features)
-    )
-
-    feature_mean = float(
-        np.mean(features)
-    )
-
-    feature_std = float(
-        np.std(features)
-    )
+    feature_diag_ms = (
+        time.perf_counter() - feature_diag_start
+    ) * 1000.0
 
     print(
-        f"[features] "
-        f"dim={features.shape[0]} "
+        f"[features] dim={features.shape[0]} "
         f"min={feature_min:.4f} "
         f"max={feature_max:.4f} "
         f"mean={feature_mean:.4f} "
         f"std={feature_std:.4f}"
     )
 
-    # ------------------------------------------------------------------------
-    # Check model dimensionality if available
-    # ------------------------------------------------------------------------
-
-    if hasattr(
-        model,
-        "n_features_in_",
-    ):
-
-        if model.n_features_in_ != (
-            EXPECTED_FEATURES
-        ):
+    if hasattr(model, "n_features_in_"):
+        if model.n_features_in_ != EXPECTED_FEATURES:
             raise ValueError(
-                "Model expects "
-                f"{model.n_features_in_} features "
-                f"but server expects "
-                f"{EXPECTED_FEATURES}"
+                f"Model expects {model.n_features_in_} features "
+                f"but server expects {EXPECTED_FEATURES}"
             )
 
-    # ------------------------------------------------------------------------
-    # Model inference
-    #
-    # If model is a Pipeline containing the scaler,
-    # predict_proba() automatically applies it.
-    # ------------------------------------------------------------------------
+    # XGBoost
+    xgb_start = time.perf_counter()
 
     probability_array = model.predict_proba(
         features.reshape(1, -1)
@@ -858,44 +1044,44 @@ def process_audio_window(
 
     if probability_array.shape[1] < 2:
         raise ValueError(
-            "Model does not provide binary "
-            "class probabilities"
+            "Model does not provide binary class probabilities"
         )
 
     ai_probability = float(
         probability_array[0, 1]
     )
 
-    # ------------------------------------------------------------------------
-    # Probability safety
-    # ------------------------------------------------------------------------
-
-    if not np.isfinite(
-        ai_probability
-    ):
+    if not np.isfinite(ai_probability):
         raise ValueError(
             "Model returned NaN/Inf probability"
         )
 
     ai_probability = float(
-        np.clip(
-            ai_probability,
-            0.0,
-            1.0,
-        )
+        np.clip(ai_probability, 0.0, 1.0)
     )
 
-    latency_ms = (
-        time.perf_counter()
-        - start_time
+    xgb_ms = (
+        time.perf_counter() - xgb_start
     ) * 1000.0
+
+    total_ms = (
+        time.perf_counter() - total_start
+    ) * 1000.0
+
+    print(
+        f"[latency] "
+        f"features={feature_ms:.2f}ms "
+        f"feature_diag={feature_diag_ms:.2f}ms "
+        f"xgb={xgb_ms:.2f}ms "
+        f"audio_diag={diagnostics_ms:.2f}ms "
+        f"total={total_ms:.2f}ms"
+    )
 
     return (
         ai_probability,
-        latency_ms,
+        total_ms,
         features,
     )
-
 
 def extract_prosody_features_only(
     audio_window: np.ndarray,
@@ -937,27 +1123,26 @@ def extract_prosody_features_only(
 # ============================================================================
 # STARTUP WARM-UP PASS
 #
-# Eliminates cold-start latency on window=1 by pre-compiling librosa FFT kernels,
-# Mel filterbanks, Chroma matrices, and XGBoost internal buffers at startup.
+# Exercise the real acoustic path once at startup so librosa pitch tracking,
+# MFCC/chroma transforms, VAD, and calibrated XGBoost are all warmed before
+# the first live audio window.
 # ============================================================================
 try:
-    _warmup_samples = np.zeros(16000, dtype=np.float32)
-    _, _warmup_lat, _ = process_audio_window(_warmup_samples)
-    print(f"[model] Acoustic pipeline warm-up finished ({_warmup_lat:.1f}ms) — ready for <{E2E_SLA_MS}ms SLA.")
-except Exception as _warmup_exc:
-    print(f"[model] Startup warm-up deferred: {_warmup_exc}")
+    _warmup_t = np.arange(16000, dtype=np.float32) / SAMPLE_RATE
 
+    # Speech-like deterministic signal with voiced and harmonic components.
+    _warmup_samples = (
+        0.10 * np.sin(2.0 * np.pi * 180.0 * _warmup_t)
+        + 0.05 * np.sin(2.0 * np.pi * 360.0 * _warmup_t)
+        + 0.025 * np.sin(2.0 * np.pi * 540.0 * _warmup_t)
+    ).astype(np.float32)
 
-# ============================================================================
-# STARTUP WARM-UP PASS
-#
-# Eliminates cold-start latency on window=1 by pre-compiling librosa FFT kernels,
-# Mel filterbanks, Chroma matrices, and XGBoost internal buffers at startup.
-# ============================================================================
-try:
-    _warmup_samples = np.zeros(16000, dtype=np.float32)
     _, _warmup_lat, _ = process_audio_window(_warmup_samples)
-    print(f"[model] Acoustic pipeline warm-up finished ({_warmup_lat:.1f}ms) — ready for <{E2E_SLA_MS}ms SLA.")
+
+    print(
+        f"[model] Acoustic pipeline warm-up finished "
+        f"({_warmup_lat:.1f}ms) — ready for <{E2E_SLA_MS}ms SLA."
+    )
 except Exception as _warmup_exc:
     print(f"[model] Startup warm-up deferred: {_warmup_exc}")
 
@@ -1219,22 +1404,20 @@ async def audio_websocket_endpoint(
             if "bytes" not in message:
                 continue
 
-            # Configure the default/requested context if the client
-            # starts streaming audio without an explicit session_context.
+            # Audio is only accepted after an explicit security context
+            # has been configured. This prevents a stream from being
+            # silently initialized with the default scenario.
             if not context_configured:
-                resolution = stream_manager.configure_stream(
-                    stream_id,
-                    requested_scenario,
-                    None,
-                    requested_sector,
+                await websocket.send_json(
+                    {
+                        "error": (
+                            "Session context required before audio "
+                            "streaming"
+                        ),
+                        "stream_id": stream_id,
+                    }
                 )
-
-                scenario = resolution.scenario.value
-                scenario_source = resolution.source
-                transaction_amount_inr = (
-                    resolution.transaction_amount_inr
-                )
-                context_configured = True
+                continue
 
             audio_bytes = message["bytes"]
 
@@ -1436,7 +1619,8 @@ async def audio_websocket_endpoint(
                             # We only need the validated features for
                             # full-stream prosody accumulation.
 
-                            features = await asyncio.to_thread(
+                            features = await asyncio.get_running_loop().run_in_executor(
+                                PRIMARY_INFERENCE_EXECUTOR,
                                 extract_prosody_features_only,
                                 audio_window,
                             )
@@ -1450,7 +1634,8 @@ async def audio_websocket_endpoint(
                                 ai_probability,
                                 latency_ms,
                                 features,
-                            ) = await asyncio.to_thread(
+                            ) = await asyncio.get_running_loop().run_in_executor(
+                                PRIMARY_INFERENCE_EXECUTOR,
                                 process_audio_window,
                                 audio_window,
                             )
@@ -1466,6 +1651,12 @@ async def audio_websocket_endpoint(
 
                         continue
 
+                    # Default dual-stream telemetry for this window.
+                    # The Feature 5 block below updates these values when
+                    # dual-stream inference actually runs.
+                    dual_stream_res = None
+                    dual_stream_ms = None
+
                     # --------------------------------------------------------
                     # SLA
                     # --------------------------------------------------------
@@ -1473,6 +1664,8 @@ async def audio_websocket_endpoint(
                     sla_breach = (
                         latency_ms > E2E_SLA_MS
                     )
+
+                    primary_xgb_ms = float(latency_ms)
 
                     if sla_breach:
 
@@ -1500,176 +1693,65 @@ async def audio_websocket_endpoint(
                     # --------------------------------------------------------
                     # Supporting Prosody ML Evidence
                     #
-                    # This is independent of the primary XGBoost detector.
-                    # It does NOT affect alert_triggered or hard-stop logic.
+                    # Run expensive YIN/spectral/prosody-model analysis in
+                    # the background. It is enrichment only and does not
+                    # affect the primary XGBoost/risk decision.
                     # --------------------------------------------------------
 
                     prosody_spoof_probability = None
                     prosody_signal = "UNAVAILABLE"
+                    yin_analysis = None
 
-                    try:
-                        prosody_f0 = await asyncio.to_thread(
-                            extract_yin_pitch_stats,
-                            audio_window,
-                            sr=SAMPLE_RATE,
+                    # Consume the latest completed background result.
+                    completed_prosody_result = (
+                        prosody_analysis_results.pop(
+                            stream_id,
+                            None,
                         )
+                    )
 
-                        duration_seconds = (
-                            len(audio_window) / SAMPLE_RATE
+                    if completed_prosody_result is not None:
+                        (
+                            prosody_spoof_probability,
+                            prosody_signal,
+                            completed_prosody_data,
+                        ) = completed_prosody_result
+
+                        yin_analysis = completed_prosody_data.get(
+                            "yin_analysis"
                         )
-
-                        # Conservative live approximation of pitch range
-                        # from the YIN F0 stream.
-                        import librosa
-
-                        live_f0 = await asyncio.to_thread(
-                            librosa.yin,
-                            audio_window,
-                            fmin=65.0,
-                            fmax=400.0,
-                            sr=SAMPLE_RATE,
-                            frame_length=1024,
-                            hop_length=512,
-                        )
-
-                        valid_f0 = live_f0[
-                            np.isfinite(live_f0)
-                            & (live_f0 > 0)
-                        ]
-
-                        pitch_range = (
-                            float(
-                                np.max(valid_f0)
-                                - np.min(valid_f0)
-                            )
-                            if valid_f0.size >= 2
-                            else 0.0
-                        )
-
-                        corrected_rate = (
-                            await asyncio.to_thread(
-                                calculate_corrected_pitch_change_rate,
-                                audio_window,
-                                SAMPLE_RATE,
-                            )
-                        )
-
-                        # Prosody + acoustic supporting model.
-                        #
-                        # The supporting model was retrained using
-                        # language-free prosody and spectral acoustic
-                        # features. No client-supplied language and no
-                        # automatic language classifier are used.
-                        #
-                        # Acoustic features use the same representation
-                        # as the production-compatible training dataset:
-                        # 16 kHz audio, n_fft=1024, hop_length=512.
-                        #
-                        # The trained sklearn model expects a 2D tabular
-                        # input with named feature columns.
-                        import librosa
-                        import pandas as pd
-
-                        spectral_centroid = librosa.feature.spectral_centroid(
-                            y=audio_window,
-                            sr=SAMPLE_RATE,
-                            n_fft=1024,
-                            hop_length=512,
-                        )[0]
-
-                        spectral_bandwidth = librosa.feature.spectral_bandwidth(
-                            y=audio_window,
-                            sr=SAMPLE_RATE,
-                            n_fft=1024,
-                            hop_length=512,
-                        )[0]
-
-                        centroid_valid = spectral_centroid[
-                            np.isfinite(spectral_centroid)
-                        ]
-
-                        bandwidth_valid = spectral_bandwidth[
-                            np.isfinite(spectral_bandwidth)
-                        ]
-
-                        centroid_mean = (
-                            float(np.mean(centroid_valid))
-                            if centroid_valid.size
-                            else 0.0
-                        )
-
-                        centroid_std = (
-                            float(np.std(centroid_valid))
-                            if centroid_valid.size
-                            else 0.0
-                        )
-
-                        bandwidth_mean = (
-                            float(np.mean(bandwidth_valid))
-                            if bandwidth_valid.size
-                            else 0.0
-                        )
-
-                        bandwidth_std = (
-                            float(np.std(bandwidth_valid))
-                            if bandwidth_valid.size
-                            else 0.0
-                        )
-
-                        prosody_input = pd.DataFrame([{
-                            "f0_mean": (
-                                float(features[56])
-                                if np.isfinite(features[56])
-                                else np.nan
-                            ),
-                            "f0_std": (
-                                float(features[57])
-                                if np.isfinite(features[57])
-                                else np.nan
-                            ),
-                            "yin_f0_mean": prosody_f0["f0_mean"],
-                            "yin_f0_std": prosody_f0["f0_std"],
-                            "pitch_range": pitch_range,
-                            "pitch_change_rate_corrected": corrected_rate,
-                            "centroid_mean": centroid_mean,
-                            "centroid_std": centroid_std,
-                            "bandwidth_mean": bandwidth_mean,
-                            "bandwidth_std": bandwidth_std,
-                        }])
 
                         print(
                             "[prosody-ml] "
-                            f"running prosody+acoustic model "
-                            f"window={window_id}"
+                            f"Consumed background result "
+                            f"window={window_id} "
+                            f"probability={prosody_spoof_probability:.3f} "
+                            f"signal={prosody_signal}"
                         )
 
-                        prosody_spoof_probability = float(
-                            prosody_model.predict_proba(
-                                prosody_input
-                            )[0, 1]
-                        )
+                    # Queue expensive supporting analysis only when no
+                    # previous job is already running for this stream.
+                    existing_prosody_task = (
+                        prosody_analysis_tasks.get(stream_id)
+                    )
 
-                        if prosody_spoof_probability >= 0.70:
-                            prosody_signal = "SPOOF_SUPPORT"
-                        elif prosody_spoof_probability is not None and prosody_spoof_probability < 0.30:
-                            prosody_signal = "BONAFIDE_SUPPORT"
-                        else:
-                            prosody_signal = "INCONCLUSIVE"
+                    if (
+                        existing_prosody_task is None
+                        or existing_prosody_task.done()
+                    ):
+                        prosody_audio = audio_window.copy()
+                        prosody_features = features.copy()
+                        prosody_window_id = window_id
 
-                        print(
-                            "[prosody-ml] "
-                            f"probability="
-                            f"{prosody_spoof_probability:.3f} "
-                            f"signal={prosody_signal} "
-                            f"window={window_id}"
-                        )
-
-                    except Exception as exc:
-                        print(
-                            f"[prosody] "
-                            f"ML inference failed "
-                            f"for window={window_id}: "
-                            f"{exc}"
+                        prosody_analysis_tasks[stream_id] = (
+                            asyncio.create_task(
+                                _run_prosody_analysis_background(
+                                    stream_id,
+                                    prosody_window_id,
+                                    prosody_audio,
+                                    prosody_features,
+                                )
+                            )
                         )
 
                     # --------------------------------------------------------
@@ -1698,67 +1780,167 @@ async def audio_websocket_endpoint(
 
                     # --------------------------------------------------------
                     # Feature 2: Speaker Verification
+                    #
+                    # ECAPA-TDNN is expensive (~23ms), so run it as background
+                    # enrichment. It must never block the primary acoustic path.
+                    # --------------------------------------------------------
+
+                    # --------------------------------------------------------
+                    # Feature 2: Speaker Verification
+                    #
+                    # ECAPA-TDNN is expensive (~23ms), so it runs as
+                    # background enrichment. Completed results are consumed
+                    # on the next available window and never block the
+                    # primary acoustic decision.
                     # --------------------------------------------------------
 
                     speaker_similarity = None
                     speaker_match = None
 
-                    if speaker_id is not None:
+                    # Consume a completed verification from an earlier
+                    # window, if one is available.
+                    completed_speaker_result = (
+                        speaker_verification_results.pop(
+                            stream_id,
+                            None,
+                        )
+                    )
 
+                    if completed_speaker_result is not None:
+                        (
+                            speaker_similarity,
+                            speaker_match,
+                        ) = completed_speaker_result
+
+                        print(
+                            "[speaker] "
+                            f"Consumed background verification "
+                            f"window={window_id} "
+                            f"similarity={speaker_similarity} "
+                            f"match={speaker_match}"
+                        )
+
+                    if speaker_id is not None:
                         try:
                             if speaker_verifier is None:
                                 from src.speaker_verifier import SpeakerVerifier
+
                                 speaker_verifier = SpeakerVerifier()
 
-                            live_embedding = await asyncio.to_thread(
-                                speaker_verifier.extract_embedding,
-                                audio_window,
+                            # Do not queue multiple ECAPA jobs for the same
+                            # stream. This prevents CPU contention/backlog.
+                            existing_task = (
+                                speaker_verification_tasks.get(stream_id)
                             )
 
-                            stream_sector = stream_manager.get_context(
-                                stream_id
-                            ).get("sector", "finance")
-
-                            if speaker_registry.is_enrolled(
-                                speaker_id,
-                                sector=stream_sector,
+                            if (
+                                existing_task is None
+                                or existing_task.done()
                             ):
+                                speaker_verifier_instance = speaker_verifier
+                                speaker_audio = audio_window.copy()
+                                speaker_id_for_task = speaker_id
+                                speaker_stream_id = stream_id
 
-                                try:
-
-                                    speaker_similarity = (
-                                        speaker_registry.verify(
-                                            speaker_id,
-                                            live_embedding,
-                                            sector=stream_sector,
+                                async def _verify_speaker_background(
+                                    verifier,
+                                    audio,
+                                    requested_speaker_id,
+                                    requested_stream_id,
+                                ):
+                                    try:
+                                        live_embedding = (
+                                            await asyncio.to_thread(
+                                                verifier.extract_embedding,
+                                                audio,
+                                            )
                                         )
-                                    )
 
-                                    speaker_match = (
-                                        speaker_registry.is_match(
-                                            speaker_id,
-                                            live_embedding,
-                                            sector=stream_sector,
+                                        stream_sector = (
+                                            stream_manager.get_context(
+                                                requested_stream_id
+                                            ).get(
+                                                "sector",
+                                                "finance",
+                                            )
                                         )
+
+                                        if speaker_registry.is_enrolled(
+                                            requested_speaker_id,
+                                            sector=stream_sector,
+                                        ):
+                                            try:
+                                                similarity = (
+                                                    speaker_registry.verify(
+                                                        requested_speaker_id,
+                                                        live_embedding,
+                                                        sector=stream_sector,
+                                                    )
+                                                )
+
+                                                match = (
+                                                    speaker_registry.is_match(
+                                                        requested_speaker_id,
+                                                        live_embedding,
+                                                        sector=stream_sector,
+                                                    )
+                                                )
+
+                                                speaker_verification_results[
+                                                    requested_stream_id
+                                                ] = (
+                                                    similarity,
+                                                    match,
+                                                )
+
+                                            except UnknownSpeakerError:
+                                                speaker_verification_results[
+                                                    requested_stream_id
+                                                ] = (None, None)
+
+                                        else:
+                                            speaker_registry.enroll(
+                                                requested_speaker_id,
+                                                live_embedding,
+                                                sector=stream_sector,
+                                            )
+
+                                            speaker_verification_results[
+                                                requested_stream_id
+                                            ] = (None, None)
+
+                                    except asyncio.CancelledError:
+                                        raise
+
+                                    except Exception as exc:
+                                        print(
+                                            "[speaker] "
+                                            "Background verification failed "
+                                            f"for speaker={requested_speaker_id}: "
+                                            f"{exc}"
+                                        )
+
+                                    finally:
+                                        speaker_verification_tasks.pop(
+                                            requested_stream_id,
+                                            None,
+                                        )
+
+                                speaker_verification_tasks[
+                                    stream_id
+                                ] = asyncio.create_task(
+                                    _verify_speaker_background(
+                                        speaker_verifier_instance,
+                                        speaker_audio,
+                                        speaker_id_for_task,
+                                        speaker_stream_id,
                                     )
-
-                                except UnknownSpeakerError:
-                                    pass
-
-                            else:
-
-                                # Auto-enroll first observed window into stream's sector partition
-                                speaker_registry.enroll(
-                                    speaker_id,
-                                    live_embedding,
-                                    sector=stream_sector,
                                 )
 
                         except Exception as exc:
-
                             print(
-                                f"[speaker] "
-                                f"Verification failed "
+                                "[speaker] "
+                                f"Failed to schedule verification "
                                 f"for speaker={speaker_id}: "
                                 f"{exc}"
                             )
@@ -1805,51 +1987,92 @@ async def audio_websocket_endpoint(
                     # --------------------------------------------------------
                     # Feature 5: Dual-Stream Trilingual Neural Inference
                     # --------------------------------------------------------
-                    dual_stream_res = None
-                    if dual_stream_classifier is not None:
-                        try:
-                            dual_stream_res = await asyncio.to_thread(
-                                dual_stream_classifier.predict,
-                                audio_window,
-                                sr=SAMPLE_RATE,
-                            )
-                        except Exception as exc:
-                            print(f"[dual-stream] Inference failed for window={window_id}: {exc}")
-
-                    # --------------------------------------------------------
-
-                    # Combined Ensemble Probability (XGBoost + Dual Neural)
-
-                    # Feature 5: Dual-Stream Trilingual Neural Verification
-                    # --------------------------------------------------------
-                    dual_stream_res = None
-                    if dual_stream_classifier is not None and (
-                        ai_probability >= 0.40 or window_id % 4 == 0
+                    # Dual-stream MMS-300M inference runs independently
+                    # from the primary XGBoost executor.
+                    if (
+                        dual_stream_classifier is not None
+                        and ai_probability is not None
                     ):
+                        dual_start = time.perf_counter()
+
                         try:
-                            dual_stream_res = await asyncio.to_thread(
-                                dual_stream_classifier.predict,
-                                audio_window,
-                                sr=SAMPLE_RATE,
+                            dual_stream_res = (
+                                await asyncio.get_running_loop().run_in_executor(
+                                    DUAL_STREAM_EXECUTOR,
+                                    dual_stream_classifier.predict,
+                                    audio_window,
+                                )
                             )
+
                         except Exception as exc:
                             print(
-                                f"[dual-stream] Inference failed "
-                                f"for window={window_id}: {exc}"
+                                f"[dual-stream] "
+                                f"Inference failed "
+                                f"for window={window_id}: "
+                                f"{exc}"
                             )
+                            dual_stream_res = None
+
+                        finally:
+                            dual_stream_ms = (
+                                time.perf_counter() - dual_start
+                            ) * 1000.0
+
+                    total_detection_ms = (
+                        primary_xgb_ms
+                        + (
+                            float(dual_stream_ms)
+                            if dual_stream_ms is not None
+                            else 0.0
+                        )
+                    )
 
                     # --------------------------------------------------------
                     # Canonical ModelPrediction
 
                     # --------------------------------------------------------
-                    xgb_prob = ai_probability
-                    if dual_stream_res is not None and "ai_probability" in dual_stream_res:
-                        dual_prob = float(dual_stream_res["ai_probability"])
+                    xgb_prob = float(
+                        np.clip(ai_probability, 0.0, 1.0)
+                    )
+
+                    dual_prob = None
+                    dual_valid = False
+
+                    if dual_stream_res is not None:
+                        raw_dual_prob = dual_stream_res.get(
+                            "ai_probability"
+                        )
+
+                        if raw_dual_prob is not None:
+                            try:
+                                candidate_dual = float(
+                                    raw_dual_prob
+                                )
+
+                                if np.isfinite(candidate_dual):
+                                    dual_prob = float(
+                                        np.clip(
+                                            candidate_dual,
+                                            0.0,
+                                            1.0,
+                                        )
+                                    )
+                                    dual_valid = True
+                            except (TypeError, ValueError):
+                                dual_prob = None
+
+                    if dual_valid:
                         ensemble_prob = float(
-                            np.clip(0.5 * xgb_prob + 0.5 * dual_prob, 0.0, 1.0)
+                            np.clip(
+                                0.5 * xgb_prob
+                                + 0.5 * dual_prob,
+                                0.0,
+                                1.0,
+                            )
                         )
                     else:
-                        dual_prob = None
+                        # Missing/failed dual inference must not
+                        # be treated as bona-fide evidence.
                         ensemble_prob = xgb_prob
 
                     # --------------------------------------------------------
@@ -1925,11 +2148,16 @@ async def audio_websocket_endpoint(
                     # Attach Sprint 1B diagnostics + notification telemetry
                     # --------------------------------------------------------
 
-                    yin_analysis = await asyncio.to_thread(
-                        extract_yin_pitch_stats,
-                        audio_window,
-                        sr=SAMPLE_RATE,
-                    )
+                    # YIN analysis is produced by the background
+                    # prosody worker. Do not recompute it on the
+                    # primary result path.
+                    if yin_analysis is None:
+                        yin_analysis = {
+                            "f0_mean": None,
+                            "f0_std": None,
+                            "pitch_range": 0.0,
+                            "pitch_change_rate_corrected": 0.0,
+                        }
 
                     result = result.model_copy(
                         update={
@@ -2044,6 +2272,15 @@ async def audio_websocket_endpoint(
                             "latency_ms": (
                                 latency_ms
                             ),
+                            "primary_xgb_ms": (
+                                primary_xgb_ms
+                            ),
+                            "dual_stream_ms": (
+                                dual_stream_ms
+                            ),
+                            "total_detection_ms": (
+                                total_detection_ms
+                            ),
                             "sla_breach": (
                                 sla_breach
                             ),
@@ -2145,7 +2382,7 @@ async def audio_websocket_endpoint(
                         f"[audio] "
                         f"stream={stream_id} "
                         f"window={window_id} "
-                        f"AI_ens={ensemble_prob:.3f} (xgb={xgb_prob:.3f}, dual={dual_prob if dual_prob is not None else 0.0:.3f}) "
+                        f"AI_ens={ensemble_prob:.3f} (xgb={xgb_prob:.3f}, dual={f'{dual_prob:.3f}' if dual_prob is not None else 'NA'}) "
                         f"rolling={result.rolling_score:.3f} "
                         f"flags={result.consecutive_flags} "
                         f"risk={result.risk_level.value} "
