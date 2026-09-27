@@ -477,6 +477,128 @@ export default function HospitalitySecurity({
         <div className="space-y-4 lg:col-span-2">
 
 
+          {/* Hospitality Risk & Biometric Gauges */}
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+
+            {/* 1. Guest Identity Gate */}
+            <div className={`rounded-2xl border p-4 backdrop-blur-md transition-all ${
+              riskLevel === 'high'
+                ? 'border-rose-500/40 bg-rose-950/30 text-rose-200'
+                : riskLevel === 'medium'
+                ? 'border-amber-500/40 bg-amber-950/30 text-amber-200'
+                : 'border-emerald-500/40 bg-emerald-950/30 text-emerald-200'
+            }`}>
+              <div className="text-xs uppercase tracking-wider opacity-80">
+                Guest Identity Gate
+              </div>
+              <div className="mt-2 flex items-center gap-2 text-lg font-bold uppercase">
+                {riskLevel === 'high' ? (
+                  <>
+                    <XCircle className="size-5 text-rose-400" />
+                    Security Alert
+                  </>
+                ) : riskLevel === 'medium' ? (
+                  <>
+                    <AlertTriangle className="size-5 text-amber-400" />
+                    Verify Guest
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle2 className="size-5 text-emerald-400" />
+                    Authentic
+                  </>
+                )}
+              </div>
+              <div className="mt-1 text-xs opacity-75 font-mono">
+                Level: {riskLevel.toUpperCase()}
+              </div>
+            </div>
+
+            {/* 2. Synthetic Voice Index */}
+            <div className="rounded-2xl border border-white/10 bg-slate-900/60 p-4 backdrop-blur-md">
+              <div className="text-xs uppercase tracking-wider text-slate-400">
+                Synthetic Voice Index
+              </div>
+              <div className="mt-2 text-xl font-mono font-bold text-white">
+                {(aiProbability * 100).toFixed(1)}%
+              </div>
+              <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-white/10">
+                <div
+                  className={`h-full transition-all duration-500 ${
+                    aiProbability > 0.75
+                      ? 'bg-rose-500'
+                      : aiProbability > 0.40
+                      ? 'bg-amber-400'
+                      : 'bg-emerald-400'
+                  }`}
+                  style={{
+                    width: `${Math.min(100, Math.max(0, aiProbability * 100))}%`
+                  }}
+                />
+              </div>
+              <div className="mt-1 text-[10px] text-slate-400 font-mono">
+                P(synthetic acoustic)
+              </div>
+            </div>
+
+            {/* 3. Guest Voice Match */}
+            <div className="rounded-2xl border border-white/10 bg-slate-900/60 p-4 backdrop-blur-md">
+              <div className="text-xs uppercase tracking-wider text-slate-400">
+                Guest Voice Match
+              </div>
+              <div className="mt-2 text-xl font-mono font-bold text-white">
+                {speakerSimilarity !== null
+                  ? `${(speakerSimilarity * 100).toFixed(1)}%`
+                  : '—'}
+              </div>
+              <div className="mt-1 flex items-center gap-1.5 text-xs text-slate-300">
+                <UserCheck className="size-3.5 text-violet-400" />
+                <span className="text-[11px]">
+                  {speakerMatch === true
+                    ? 'Matches Registered Guest'
+                    : speakerMatch === false
+                    ? 'Voice Does Not Match Guest'
+                    : 'ECAPA-TDNN Verified'}
+                </span>
+              </div>
+            </div>
+
+            {/* 4. Composite Risk */}
+            <div className={`rounded-2xl border p-4 backdrop-blur-md transition-all ${
+              compositeRiskScore >= 0.75
+                ? 'border-rose-500/30 bg-rose-950/20'
+                : compositeRiskScore >= 0.40
+                ? 'border-amber-500/30 bg-amber-950/20'
+                : 'border-emerald-500/30 bg-emerald-400/20'
+            }`}>
+              <div className="flex items-center justify-between text-xs uppercase tracking-wider text-slate-300">
+                <span>Composite Risk</span>
+                <Activity className="size-3.5 text-cyan-400" />
+              </div>
+              <div className="mt-2 text-xl font-mono font-bold text-white">
+                {(compositeRiskScore * 100).toFixed(1)}%
+              </div>
+              <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-white/10">
+                <div
+                  className={`h-full transition-all duration-500 ${
+                    compositeRiskScore >= 0.75
+                      ? 'bg-rose-500'
+                      : compositeRiskScore >= 0.40
+                      ? 'bg-amber-400'
+                      : 'bg-emerald-400'
+                  }`}
+                  style={{
+                    width: `${Math.min(100, Math.max(0, compositeRiskScore * 100))}%`
+                  }}
+                />
+              </div>
+              <div className="mt-1 text-[9px] text-slate-400 font-mono">
+                R = 50% AI + 30% Voice Match + 20% Transaction Context
+              </div>
+            </div>
+
+          </div>
+
           {/* Decision & Action Workflow Panel */}
           <div className="rounded-2xl border border-white/10 bg-slate-900/60 p-5 shadow-xl backdrop-blur-md">
             <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-slate-300">
