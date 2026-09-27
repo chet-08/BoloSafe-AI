@@ -33,6 +33,60 @@ def test_finance_governance():
     assert high["action"] == "hold_and_escalate"
 
 
+def test_finance_governance_consumes_risk_engine_and_composite():
+    # Case: AI prob = 37.2%, but ₹50L transaction yields composite risk = 53.6%
+    # Must trigger step_up_verification instead of erroneously returning ALLOW
+    rtgs_spoof = evaluate_sector_result(
+        {
+            "ai_probability": 0.372,
+            "speaker_similarity": None,
+            "speaker_match": None,
+            "risk_level": "LOW",
+            "rolling_score": 0.263,
+            "alert_triggered": False,
+        },
+        sector="finance",
+        scenario="high_value_transfer",
+        transaction_amount_inr=5_000_000.0,
+    )
+    assert rtgs_spoof["composite_risk_score"] >= 0.50
+    assert rtgs_spoof["risk_level"] == "medium"
+    assert rtgs_spoof["action"] == "step_up_verification"
+    assert rtgs_spoof["verification_required"] is True
+
+    # Case: RiskEngine triggers alert
+    alert_case = evaluate_sector_result(
+        {
+            "ai_probability": 0.35,
+            "speaker_similarity": 0.9,
+            "speaker_match": True,
+            "risk_level": "HIGH",
+            "alert_triggered": True,
+        },
+        sector="finance",
+        scenario="high_value_transfer",
+    )
+    assert alert_case["risk_level"] == "high"
+    assert alert_case["action"] == "hold_and_escalate"
+
+    # Case: RiskEngine indicates medium
+    medium_case = evaluate_sector_result(
+        {
+            "ai_probability": 0.25,
+            "speaker_similarity": 0.85,
+            "speaker_match": True,
+            "risk_level": "MEDIUM",
+            "rolling_score": 0.52,
+            "alert_triggered": False,
+        },
+        sector="finance",
+        scenario="high_value_transfer",
+        transaction_amount_inr=1000.0,
+    )
+    assert medium_case["risk_level"] == "medium"
+    assert medium_case["action"] == "step_up_verification"
+
+
 def test_retail_governance():
     # High risk clone
     high = evaluate_sector_result(
