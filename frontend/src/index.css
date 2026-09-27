@@ -14339,3 +14339,372 @@ body:has(.console-shell),
   width: 100% !important;
   min-height: 52px !important;
 }
+
+/* =========================================================
+   BOLOSAFE-AI — LANDING PAGE REDESIGN & POLISH SYSTEM
+   Strict adherence to color tokens, typography, readability,
+   and responsive component architectures.
+   ========================================================= */
+
+:root {
+  --bs-bg-primary: #050817;
+  --bs-bg-secondary: #080C1D;
+  --bs-bg-elevated: #0C1228;
+  --bs-border: rgba(120, 130, 255, 0.14);
+  --bs-border-bright: rgba(120, 130, 255, 0.32);
+  --bs-indigo-primary: #5B5BF7;
+  --bs-indigo-secondary: #7370FF;
+  --bs-violet-soft: #8A7CFF;
+  --bs-security-green: #00D9A5;
+  --bs-text-primary: #F7F8FF;
+  --bs-text-secondary: #A4ADCA;
+  --bs-text-muted: #66708F;
+}
+
+body {
+  font-family: 'Plus Jakarta Sans', Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+  background-color: #050817 !important;
+  color: #F7F8FF !important;
+}
+
+/* Section Spacing & Hierarchy Standard */
+.hero-main-stage {
+  padding-top: 48px !important;
+  padding-bottom: 96px !important;
+}
+
+.hero-main-stage h1 {
+  font-size: clamp(2.75rem, 5vw, 4.5rem) !important;
+  line-height: 1.05 !important;
+  letter-spacing: -0.04em !important;
+  font-weight: 800 !important;
+  color: #F7F8FF !important;
+  max-width: 640px !important;
+}
+
+.hero-main-stage h1 span {
+  color: #7370FF !important;
+}
+
+.hero-main-stage h1 + p {
+  font-size: 1.125rem !important;
+  line-height: 1.65 !important;
+  font-weight: 500 !important;
+  color: #F7F8FF !important;
+  max-width: 580px !important;
+  margin-top: 24px !important;
+}
+
+.hero-main-stage h1 + p + p {
+  font-size: 0.95rem !important;
+  line-height: 1.7 !important;
+  color: #A4ADCA !important;
+  max-width: 580px !important;
+  margin-top: 14px !important;
+}
+
+/* Hero Right Visual: High-End Cybersecurity Engine */
+.final-hero-visual {
+  position: relative !important;
+  width: 100% !important;
+  height: 680px !important;
+}
+
+.final-hero-card-head {
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.14em !important;
+  color: #8A7CFF !important;
+}
+
+.final-hero-card-head b {
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  padding: 3px 8px !important;
+  background: rgba(0, 217, 165, 0.1) !important;
+  border: 1px solid rgba(0, 217, 165, 0.3) !important;
+  color: #00D9A5 !important;
+  border-radius: 999px !important;
+}
+
+.final-hero-micro-labels {
+  font-size: 10px !important;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
+  color: #A4ADCA !important;
+  letter-spacing: 0.1em !important;
+}
+
+.final-hero-attack-label {
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.18em !important;
+  color: #8A7CFF !important;
+  margin-bottom: 12px !important;
+}
+
+.final-hero-attack-card {
+  height: 98px !important;
+  margin-bottom: 9px !important;
+  border: 1px solid rgba(120, 130, 255, 0.18) !important;
+  background: rgba(8, 12, 29, 0.85) !important;
+  backdrop-filter: blur(16px) !important;
+  border-radius: 14px !important;
+  transition: all 0.3s ease !important;
+}
+
+.final-hero-attack-card:hover {
+  border-color: var(--attack-color, #7370FF) !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), 0 0 20px color-mix(in srgb, var(--attack-color, #7370FF) 25%, transparent) !important;
+}
+
+.final-hero-attack-sector {
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.14em !important;
+  text-transform: uppercase !important;
+  color: var(--attack-color, #7370FF) !important;
+}
+
+.final-hero-attack-title {
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  color: #F7F8FF !important;
+  margin-top: 2px !important;
+}
+
+.final-hero-attack-action {
+  font-size: 11px !important;
+  color: #A4ADCA !important;
+  margin-top: 2px !important;
+}
+
+.final-hero-attack-meta {
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  font-size: 9px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.12em !important;
+  color: #00D9A5 !important;
+  margin-top: 4px !important;
+}
+
+.final-hero-attack-meta i {
+  display: inline-block !important;
+  width: 5px !important;
+  height: 5px !important;
+  border-radius: 50% !important;
+  background: #00D9A5 !important;
+  box-shadow: 0 0 6px #00D9A5 !important;
+}
+
+.final-hero-brand {
+  font-size: 15px !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.14em !important;
+  color: #F7F8FF !important;
+}
+
+.final-hero-neural {
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.22em !important;
+  color: #7370FF !important;
+}
+
+.final-hero-core-status {
+  font-size: 10px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.12em !important;
+  color: #00D9A5 !important;
+}
+
+.final-hero-panel-title {
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.16em !important;
+  color: #8A7CFF !important;
+}
+
+.final-hero-legend span {
+  font-size: 11px !important;
+  color: #A4ADCA !important;
+}
+
+.final-hero-risk-caption {
+  font-size: 11px !important;
+  color: #A4ADCA !important;
+}
+
+.final-hero-alert {
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  color: #F43F8A !important;
+  border: 1.5px solid rgba(244, 63, 138, 0.5) !important;
+  border-radius: 999px !important;
+  width: auto !important;
+  height: auto !important;
+  padding: 4px 10px !important;
+}
+
+/* Fix pipeline nodes — no overflowing, natural wrapping, generous height */
+.pipeline-node {
+  height: auto !important;
+  min-height: 180px !important;
+  max-height: none !important;
+  padding: 20px 18px !important;
+  background: #0C1228 !important;
+  border: 1px solid rgba(120, 130, 255, 0.14) !important;
+  border-radius: 16px !important;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.pipeline-node:hover,
+.pipeline-node.is-active {
+  border-color: rgba(115, 112, 255, 0.5) !important;
+  background: rgba(14, 22, 50, 0.95) !important;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4), 0 0 25px rgba(91, 91, 247, 0.2) !important;
+  transform: translateY(-4px) !important;
+}
+
+.pipeline-node__title {
+  font-size: 15px !important;
+  line-height: 1.25 !important;
+  font-weight: 700 !important;
+  color: #F7F8FF !important;
+  white-space: normal !important;
+  word-break: break-word !important;
+}
+
+.pipeline-node__subtitle {
+  font-size: 12px !important;
+  color: #A4ADCA !important;
+  line-height: 1.45 !important;
+  margin-top: 6px !important;
+}
+
+.pipeline-node__number {
+  font-size: 14px !important;
+  font-weight: 800 !important;
+  color: #7370FF !important;
+}
+
+/* Sector Reference Card improvements */
+.sector-reference-section {
+  padding: 96px 0 !important;
+  background: transparent !important;
+}
+
+.sector-reference-wrap {
+  width: 100% !important;
+  max-width: 1360px !important;
+  margin: 0 auto !important;
+  padding: 0 24px !important;
+  display: grid !important;
+  grid-template-columns: 360px minmax(0, 1fr) !important;
+  gap: 48px !important;
+  align-items: center !important;
+}
+
+@media (max-width: 1024px) {
+  .sector-reference-wrap {
+    grid-template-columns: 1fr !important;
+    gap: 36px !important;
+  }
+}
+
+.sector-reference-cards {
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap: 16px !important;
+}
+
+@media (max-width: 1100px) {
+  .sector-reference-cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .sector-reference-cards {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+.sector-reference-card {
+  height: 420px !important;
+  border-radius: 18px !important;
+  border: 1px solid rgba(120, 130, 255, 0.16) !important;
+  background: #080C1D !important;
+  transform: none !important;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.4) !important;
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.sector-reference-card:hover,
+.sector-reference-card.is-active {
+  border-color: var(--sector-accent, #7370FF) !important;
+  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.6), 0 0 30px color-mix(in srgb, var(--sector-accent, #7370FF) 28%, transparent) !important;
+  transform: translateY(-6px) !important;
+}
+
+.sector-reference-image-overlay {
+  background: linear-gradient(
+    180deg,
+    rgba(8, 12, 29, 0.25) 0%,
+    rgba(8, 12, 29, 0.65) 45%,
+    rgba(8, 12, 29, 0.96) 82%,
+    #080C1D 100%
+  ) !important;
+}
+
+.sector-reference-eyebrow {
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.18em !important;
+  color: #7370FF !important;
+}
+
+.sector-reference-name {
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.14em !important;
+  text-transform: uppercase !important;
+  color: var(--sector-accent, #7370FF) !important;
+}
+
+.sector-reference-title {
+  font-size: 18px !important;
+  font-weight: 800 !important;
+  color: #F7F8FF !important;
+  margin-top: 4px !important;
+}
+
+.sector-reference-description {
+  font-size: 13px !important;
+  line-height: 1.55 !important;
+  color: #A4ADCA !important;
+  margin-top: 8px !important;
+}
+
+.sector-reference-explore {
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  color: var(--sector-accent, #7370FF) !important;
+  margin-top: 14px !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+}
+
+/* Reduced motion accessibility */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
