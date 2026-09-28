@@ -106,40 +106,42 @@ export default function RetailSecurity({
           )
         : null;
 
-  const riskLevel =
-    governance.risk_level ||
-    (hasDetectionResult
-      ? aiProbability >= 0.75 || hasCrossSectorThreat
-        ? 'high'
-        : aiProbability >= 0.40
-          ? 'medium'
-          : 'low'
-      : 'pending');
+  const isSpoof =
+    hasDetectionResult &&
+    (governance.risk_level === 'high' ||
+      governance.risk_level === 'medium' ||
+      selected.alert_triggered === true ||
+      aiProbability >= 0.40 ||
+      hasCrossSectorThreat);
 
-  const action =
-    governance.action ||
-    (hasDetectionResult
-      ? riskLevel === 'high'
-        ? 'hold_and_escalate'
-        : riskLevel === 'medium'
-          ? 'step_up_verification'
-          : 'allow'
-      : 'pending');
+  const isGenuine =
+    hasDetectionResult && !isSpoof && (governance.risk_level === 'low' || aiProbability < 0.40);
 
-  const recommendedActions =
-    governance.recommended_actions ||
-    (hasDetectionResult
-      ? [
-          riskLevel === 'high'
-            ? 'Place requested order modification on hold immediately.'
-            : riskLevel === 'medium'
-              ? 'Trigger secondary OTP challenge to registered mobile.'
-              : 'Caller authenticated. Normal retail workflow permitted.',
-        ]
-      : [
-          'Run a live retail voice scenario or start the microphone.',
-          'Governance actions will appear after detection is evaluated.',
-        ]);
+  const riskLevel = hasDetectionResult
+    ? (governance.risk_level || (aiProbability >= 0.75 || hasCrossSectorThreat ? 'high' : aiProbability >= 0.40 ? 'medium' : 'low'))
+    : 'standby';
+
+  const action = hasDetectionResult
+    ? (governance.action || (riskLevel === 'high' ? 'hold_and_escalate' : riskLevel === 'medium' ? 'step_up_verification' : 'allow'))
+    : 'standby';
+
+  const recommendedActions = !hasDetectionResult
+    ? [
+        'Run an inquiry or address reroute scenario from the library above.',
+        'Retail OMS order freeze and SMS OTP step-up actions will execute dynamically upon detection.'
+      ]
+    : isSpoof
+    ? [
+        'OMS Dispatch Hold: Immediately halt shipment #BLS-4489-IND in Delhivery logistics OMS.',
+        'Out-of-Band Challenge: Send secondary SMS OTP challenge to registered mobile (+91 98765-XXXXX).',
+        'Fraud Escalation: Flag account RET-IN-90824 for review by E-Commerce Fraud Prevention team.',
+        'Block Destination: Blacklist redirect delivery address in logistics carrier system.'
+      ]
+    : [
+        'Customer voice authentic. Identity verified against account voice history.',
+        'Order address reroute approved. Delhivery logistics fulfillment dispatch cleared.',
+        'No secondary SMS OTP challenge required.'
+      ];
 
   const showToast = (msg) => {
     setToastMsg(msg);
@@ -419,46 +421,42 @@ export default function RetailSecurity({
         <GovernanceDecisionCard
           tone={
             !hasDetectionResult
-              ? 'verify'
-              : action === 'allow'
-                ? 'allow'
-                : action === 'step_up_verification'
-                  ? 'verify'
-                  : action === 'hold_and_escalate'
-                    ? 'escalate'
-                    : riskLevel === 'high'
-                      ? 'hold'
-                      : 'verify'
+              ? 'pending'
+              : isSpoof
+              ? 'escalate'
+              : 'allow'
           }
           title={
             !hasDetectionResult
-              ? 'Waiting for live detection'
-              : riskLevel === 'high'
-                ? 'Hold the order and escalate the caller'
-                : riskLevel === 'medium'
-                  ? 'Step-up customer verification required'
-                  : 'Retail workflow may proceed'
+              ? 'Awaiting Customer Voice Stream'
+              : isSpoof
+              ? 'CRITICAL: Synthetic Voice Clone Detected — Shipment Halted'
+              : 'Customer Authenticated — Order Modification Approved'
           }
           reason={
             !hasDetectionResult
-              ? 'Run a retail voice scenario or start the microphone. No governance decision is made until live detection returns.'
-              : governance.reason ||
-                (riskLevel === 'high'
-                  ? 'High voice-impersonation risk detected during a sensitive retail interaction.'
-                  : riskLevel === 'medium'
-                    ? 'Additional customer verification is required before the requested action is completed.'
-                    : 'Customer voice and workflow context remain within the configured retail risk policy.')
+              ? 'Select a retail scenario above or start microphone stream to evaluate customer order modification request and voice authenticity.'
+              : isSpoof
+              ? (governance.reason || 'Adversarial voice spoof detected on high-value order reroute. Caller attempting unauthorized address divert.')
+              : (governance.reason || 'Customer voice matches registered account profile. Acoustic signals verified authentic with no cloning artifacts.')
           }
           recommendations={recommendedActions}
           actions={
             <>
+              {isGenuine && (
+                <div className="flex items-center gap-1.5 rounded-lg border border-[#70B88A]/30 bg-[#70B88A]/20 px-3.5 py-2 text-xs font-bold text-[#70B88A]">
+                  <CheckCircle2 size={14} />
+                  Order Cleared & Dispatch Approved ✓
+                </div>
+              )}
+
               <button
                 type="button"
                 onClick={handleHoldOrder}
-                disabled={!hasDetectionResult}
+                disabled={!hasDetectionResult || orderHold || isGenuine}
                 className={[
                   'rounded-lg border px-3 py-2 text-xs font-semibold transition-colors',
-                  !hasDetectionResult
+                  !hasDetectionResult || isGenuine
                     ? 'border-[#292E46] bg-[#121526] text-[#858BA3] cursor-not-allowed opacity-45'
                     : orderHold
                       ? 'border-[#D96A78]/25 bg-[#D96A78]/10 text-[#D96A78]'
@@ -474,7 +472,7 @@ export default function RetailSecurity({
               <button
                 type="button"
                 onClick={handleTriggerOtp}
-                disabled={!hasDetectionResult}
+                disabled={!hasDetectionResult || isGenuine}
                 className="rounded-lg border border-[#5863D6]/35 bg-[#5863D6]/15 px-3 py-2 text-xs font-semibold text-[#7079E0] hover:bg-[#5863D6]/25 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 <span className="flex items-center gap-2">
@@ -493,7 +491,7 @@ export default function RetailSecurity({
                   setEscalated(true)
                   showToast('Escalated to Fraud Supervisor.')
                 }}
-                disabled={escalated || !hasDetectionResult}
+                disabled={escalated || !hasDetectionResult || isGenuine}
                 className="rounded-lg border border-[#292E46] bg-[#121526] px-3 py-2 text-xs font-semibold text-[#F4F5FA] hover:bg-[#1C2033] disabled:cursor-not-allowed disabled:opacity-40"
               >
                 <span className="flex items-center gap-2">
@@ -529,64 +527,40 @@ export default function RetailSecurity({
         <SecurityActivityTimeline
           steps={[
             {
-              label: 'Security context',
-              value: `${governance.scenario || 'Order Modification'} · #BLS-4489-IND`,
-              tone: 'ready',
-              status: 'READY',
+              label: 'Retail context',
+              value: hasDetectionResult
+                ? `${governance.scenario || 'Order Modification'} · #BLS-4489-IND`
+                : 'Order #BLS-4489-IND · Address Reroute (₹48,990)',
+              tone: isSpoof ? 'detected' : 'ready',
+              status: !hasDetectionResult ? 'STANDBY' : isSpoof ? 'SUSPICIOUS' : 'VERIFIED',
             },
             {
               label: 'AI detection',
-              value: hasDetectionResult
-                ? `${(aiProbability * 100).toFixed(1)}% synthetic probability`
-                : 'Awaiting live audio',
-              tone: !hasDetectionResult
-                ? 'pending'
-                : aiProbability >= 0.4
-                  ? 'detected'
-                  : 'ready',
-              status: !hasDetectionResult
-                ? 'WAITING'
-                : aiProbability >= 0.4
-                  ? 'HIGH'
-                  : 'READY',
+              value: !hasDetectionResult
+                ? 'Awaiting audio ingestion'
+                : `${(aiProbability * 100).toFixed(1)}% synthetic probability ${isSpoof ? '(AI Clone)' : '(Bonafide)'}`,
+              tone: !hasDetectionResult ? 'pending' : isSpoof ? 'detected' : 'ready',
+              status: !hasDetectionResult ? 'WAITING' : isSpoof ? 'CRITICAL' : 'AUTHENTIC',
             },
             {
               label: 'Governance',
               value: !hasDetectionResult
-                ? 'No decision yet'
-                : riskLevel === 'high'
-                  ? 'Hold & Escalate'
-                  : riskLevel === 'medium'
-                    ? 'Step-up Verification'
-                    : 'Allow',
-              tone: !hasDetectionResult
-                ? 'pending'
-                : riskLevel === 'low'
-                  ? 'ready'
-                  : 'decided',
-              status: !hasDetectionResult ? 'WAITING' : 'DECIDED',
+                ? 'Awaiting policy evaluation'
+                : isSpoof
+                ? 'Hold Order · OMS Shipment Blocked'
+                : 'Allow · Dispatch Approved',
+              tone: !hasDetectionResult ? 'pending' : isSpoof ? 'decided' : 'ready',
+              status: !hasDetectionResult ? 'PENDING' : isSpoof ? 'INTERCEPTED' : 'CLEARED',
             },
             {
               label: 'Identity',
               value: !hasDetectionResult
-                ? 'Verification not evaluated'
-                : speakerMatch === false
-                  ? 'Customer voice mismatch'
-                  : stepUpStatus === 'verified'
-                    ? 'OTP + voice verified'
-                    : 'Customer verification available',
-              tone: !hasDetectionResult
-                ? 'pending'
-                : speakerMatch === false
-                  ? 'detected'
-                  : 'identity',
-              status: !hasDetectionResult
-                ? 'WAITING'
-                : speakerMatch === false
-                  ? 'REVIEW'
-                  : stepUpStatus === 'verified'
-                    ? 'VERIFIED'
-                    : 'AVAILABLE',
+                ? 'Awaiting caller voiceprint'
+                : isSpoof
+                ? 'Voiceprint Mismatch / Cloned Voice'
+                : 'Customer Voice Confirmed',
+              tone: !hasDetectionResult ? 'pending' : isSpoof ? 'detected' : 'identity',
+              status: !hasDetectionResult ? 'STANDBY' : isSpoof ? 'FAILED' : 'VERIFIED',
             },
           ]}
         />

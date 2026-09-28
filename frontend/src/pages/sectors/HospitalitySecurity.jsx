@@ -14,12 +14,18 @@ import {
   FileCheck,
   BellRing,
   Lock,
-  Activity
+  Activity,
+  Clock
 } from 'lucide-react';
 import SectorAudioPlayer from '../../components/SectorAudioPlayer';
 import EnterpriseWebhookDrawer from '../../components/EnterpriseWebhookDrawer';
-import GuidedUserFlowBar from '../../components/GuidedUserFlowBar';
 import { lockRoomFolio, challengeGuest, simulateThreat } from '../../utils/sectorApi';
+import SecurityPageShell from '../../components/security/SecurityPageShell';
+import DetectionMetricGrid from '../../components/security/DetectionMetricGrid';
+import LiveDetectionPanel from '../../components/security/LiveDetectionPanel';
+import SectorContextCard from '../../components/security/SectorContextCard';
+import GovernanceDecisionCard from '../../components/security/GovernanceDecisionCard';
+import SecurityActivityTimeline from '../../components/security/SecurityActivityTimeline';
 
 export default function HospitalitySecurity({
   selected = {},
@@ -78,61 +84,78 @@ export default function HospitalitySecurity({
     ? governance.composite_risk_score
     : Math.min(1.0, Math.max(0.0, (aiProbability * 0.50) + ((1.0 - (speakerSimilarity ?? 0.5)) * 0.30) + 0.20));
 
-  const riskLevel = governance.risk_level || (aiProbability >= 0.75 || hasCrossSectorThreat ? 'high' : aiProbability >= 0.40 ? 'medium' : 'low');
-  const action = governance.action || (riskLevel === 'high' ? 'lock_folio_and_escalate' : riskLevel === 'medium' ? 'require_front_desk_id' : 'allow');
+  const hasDetectionResult =
+    selected?.ai_probability != null ||
+    selected?.rolling_score != null ||
+    governance?.action != null ||
+    governance?.risk_level != null;
+
   const hasAudioResult =
-    selected.ai_probability !== undefined &&
-    selected.ai_probability !== null;
+    selected?.ai_probability != null ||
+    selected?.rolling_score != null ||
+    selected?.audio_features != null ||
+    selected?.risk_score != null ||
+    hasDetectionResult;
 
-  const recommendedActions = governance.recommended_actions || [
-    riskLevel === 'high'
-      ? 'Immediately lock room folio and halt phone-authorized charges.'
-      : riskLevel === 'medium'
-      ? 'Send verification challenge and require government ID at check-in.'
-      : 'Guest verified against biometric record. Normal concierge workflow allowed.'
-  ];
+  const isSpoof =
+    hasDetectionResult &&
+    (governance.risk_level === 'high' ||
+      governance.risk_level === 'medium' ||
+      selected.alert_triggered === true ||
+      aiProbability >= 0.40 ||
+      hasCrossSectorThreat);
 
+  const isGenuine =
+    hasDetectionResult && !isSpoof && (governance.risk_level === 'low' || aiProbability < 0.40);
 
-  // The ensemble AI probability is the authoritative voice-authenticity result.
-  const decisionState = selected.alert_triggered
-  ? {
-      label: 'SECURITY ALERT',
-      shortLabel: 'LOCK ROOM FOLIO & VERIFY GUEST',
-      description:
-        'A security alert was triggered. Lock the room folio and verify the guest’s identity before authorizing any transaction.',
-      instruction:
-        'Lock the room folio and verify the guest’s identity before authorizing any transaction.',
-      tone: 'danger',
-    }
-  : aiProbability >= 0.80
-  ? {
-      label: 'LIKELY AI-GENERATED',
-      shortLabel: 'LOCK ROOM FOLIO & VERIFY GUEST',
-      description:
-        'A strong synthetic-voice signal was detected. Lock the room folio and verify the guest’s identity before authorizing any transaction.',
-      instruction:
-        'Lock the room folio and verify the guest’s identity before authorizing any transaction.',
-      tone: 'danger',
-    }
-  : aiProbability >= 0.50
-  ? {
-      label: 'INCONCLUSIVE',
-      shortLabel: 'VERIFY GUEST IDENTITY',
-      description:
-        'The voice evidence is mixed. Verify the guest’s identity before approving the requested change or transaction.',
-      instruction:
-        'Verify the guest’s identity before approving the requested change or transaction.',
-      tone: 'warning',
-    }
-  : {
-      label: 'LIKELY AUTHENTIC',
-      shortLabel: 'CONTINUE NORMAL WORKFLOW',
-      description:
-        'No strong synthetic-voice signal was detected. Continue the normal hospitality workflow.',
-      instruction:
-        'No security escalation required. Continue the normal hospitality workflow.',
-      tone: 'safe',
-    };
+  const riskLevel = hasDetectionResult
+    ? (governance.risk_level || (aiProbability >= 0.75 || hasCrossSectorThreat ? 'high' : aiProbability >= 0.40 ? 'medium' : 'low'))
+    : 'standby';
+
+  const action = hasDetectionResult
+    ? (governance.action || (riskLevel === 'high' ? 'lock_folio_and_escalate' : riskLevel === 'medium' ? 'require_front_desk_id' : 'allow'))
+    : 'standby';
+
+  const recommendedActions = !hasDetectionResult
+    ? [
+        'Run a bonafide or cloned reservation scenario above.',
+        'Opera PMS folio locking and front desk challenge will trigger based on live voice analysis.'
+      ]
+    : isSpoof
+    ? [
+        'Immediately lock room folio and halt phone-authorized charges.',
+        'Send verification challenge and require government ID at check-in.',
+        'Alert Duty Manager to inspect Suite 1402 reservation.'
+      ]
+    : [
+        'Guest verified against biometric record. Normal concierge workflow allowed.',
+        'Room 1402 folio billing authorized.',
+        'No front-desk step-up ID required.'
+      ];
+
+  const decisionState = !hasDetectionResult
+    ? {
+        label: 'AWAITING AUDIO ANALYSIS',
+        shortLabel: 'STANDBY — AWAITING GUEST VOICE',
+        description: 'Select a guest voice scenario from the library above or start the microphone to evaluate voice authenticity against Opera PMS.',
+        instruction: 'Select a scenario above to test guest verification and PMS folio controls.',
+        tone: 'pending',
+      }
+    : isSpoof
+    ? {
+        label: 'CRITICAL SECURITY ALERT',
+        shortLabel: 'LOCK ROOM FOLIO & VERIFY GUEST',
+        description: 'A synthetic voice cloning attack was detected on Suite 1402. Lock the room folio and challenge the caller with in-person front desk ID verification.',
+        instruction: 'Lock the room folio immediately and require physical government ID challenge before authorizing any room charges.',
+        tone: 'danger',
+      }
+    : {
+        label: 'GUEST AUTHENTICATED',
+        shortLabel: 'CONTINUE NORMAL WORKFLOW',
+        description: 'Guest voice verified against registered reservation profile. Acoustic signals verified authentic with no cloning artifacts.',
+        instruction: 'No security escalation required. Continue normal hospitality concierge and room folio workflow.',
+        tone: 'safe',
+      };
 
   const decisionStyles = {
     danger: {
@@ -143,11 +166,11 @@ export default function HospitalitySecurity({
       action: 'border-rose-400/40 bg-rose-500/20 text-rose-100',
     },
     warning: {
-      container: 'border-amber-500/50 bg-amber-950/40',
-      icon: 'bg-amber-500/20 text-amber-300 border-amber-500/40',
-      title: 'text-amber-200',
-      probability: 'text-amber-300',
-      action: 'border-amber-400/40 bg-amber-500/20 text-amber-100',
+      container: 'border-indigo-500/50 bg-indigo-950/40',
+      icon: 'bg-indigo-500/20 text-indigo-300 border-indigo-500/40',
+      title: 'text-indigo-200',
+      probability: 'text-indigo-300',
+      action: 'border-indigo-400/40 bg-indigo-500/20 text-indigo-100',
     },
     safe: {
       container: 'border-emerald-500/50 bg-emerald-950/40',
@@ -156,9 +179,16 @@ export default function HospitalitySecurity({
       probability: 'text-emerald-300',
       action: 'border-emerald-400/40 bg-emerald-500/20 text-emerald-100',
     },
+    pending: {
+      container: 'border-slate-700/60 bg-slate-900/40',
+      icon: 'bg-slate-700/20 text-slate-400 border-slate-700/40',
+      title: 'text-slate-300',
+      probability: 'text-slate-400',
+      action: 'border-slate-600/40 bg-slate-700/20 text-slate-300',
+    },
   };
 
-  const decisionStyle = decisionStyles[decisionState.tone];
+  const decisionStyle = decisionStyles[decisionState.tone] || decisionStyles.pending;
 
   const showToast = (msg) => {
     setToastMsg(msg);
@@ -216,469 +246,377 @@ export default function HospitalitySecurity({
   };
 
   return (
-    <div className="space-y-6">
-      {/* Toast Notification */}
+    <div className="space-y-5">
+
       {toastMsg && (
-        <div className="fixed top-6 right-6 z-50 flex items-center gap-2 rounded-xl border border-amber-400/40 bg-amber-950/90 px-4 py-3 text-xs font-mono text-amber-200 shadow-2xl backdrop-blur-xl animate-in slide-in-from-top-4">
-          <CheckCircle2 className="size-4 text-amber-400 shrink-0" />
-          <span>{toastMsg}</span>
-        </div>
-      )}
-
-      {/* Guided Hackathon Stepper */}
-      <GuidedUserFlowBar
-        currentSector="hospitality"
-        hasAudioPlaying={isStreaming}
-        hasResults={aiProbability > 0}
-        hasActionTaken={folioLocked || deskChallengeSent}
-        onOpenWebhook={() => setShowWebhook(true)}
-      />
-
-      {/* Top Header Card */}
-      <div className="relative overflow-hidden rounded-2xl border border-amber-400/20 bg-gradient-to-r from-amber-950/40 via-yellow-950/30 to-slate-900/50 p-6 shadow-2xl backdrop-blur-xl">
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div className="flex items-center gap-4">
-            <div className="flex size-12 items-center justify-center rounded-xl border border-amber-400/30 bg-amber-500/20 text-amber-300 shadow-[0_0_20px_rgba(245,158,11,0.25)]">
-              <Hotel className="size-6" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-xl font-bold tracking-tight text-white md:text-2xl">
-                  Hospitality & Guest Voice Identity Protection
-                </h1>
-                <span className="rounded-full border border-amber-400/30 bg-amber-400/10 px-2.5 py-0.5 text-xs font-semibold text-amber-300">
-                  Tertiary Sector · Hospitality & Travel
-                </span>
-              </div>
-              <p className="mt-1 text-xs text-slate-400">
-                Guards hotel front desks, luxury suites, and VIP guest folios against cloned voice impersonation and booking takeover.
-              </p>
-            </div>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="flex items-center gap-1.5 rounded-xl border border-amber-400/20 bg-amber-950/40 px-3 py-1.5 text-xs font-mono text-amber-300">
-              <Lock className="size-3.5 text-amber-400" />
-              <span>DPDP Act 2023 · Ephemeral RAM (0 Bytes Disk)</span>
-            </div>
-            <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-mono">
-              <span className={`size-2 rounded-full ${isConnected ? 'bg-emerald-400 animate-pulse' : 'bg-rose-400'}`} />
-              <span className="text-slate-300">{isConnected ? 'PMS OPERA GATEWAY LIVE' : 'OFFLINE'}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Cross-Sector Threat Intelligence Alert Banner */}
-      {hasCrossSectorThreat && (
-        <div className="relative overflow-hidden rounded-2xl border border-rose-500/50 bg-gradient-to-r from-rose-950/80 via-red-950/60 to-slate-900/80 p-4 shadow-[0_0_30px_rgba(244,63,94,0.3)] backdrop-blur-xl animate-pulse">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="flex size-10 items-center justify-center rounded-xl bg-rose-500/20 text-rose-300 border border-rose-500/40">
-                <ShieldAlert className="size-6" />
-              </div>
-              <div>
-                <div className="flex items-center gap-2 font-bold text-rose-200 text-sm">
-                  <span>🚨 CROSS-SECTOR THREAT INTELLIGENCE ALERT</span>
-                  <span className="rounded-full bg-rose-500/20 px-2 py-0.5 text-[10px] uppercase font-mono tracking-wider text-rose-300 border border-rose-500/30">
-                    Cross-Sector Impersonator
-                  </span>
-                </div>
-                <p className="mt-0.5 text-xs text-rose-300/90 font-mono">
-                  Caller voice acoustic signature previously flagged in: <strong className="text-white">{threatOrigin}</strong>. Prevent luxury charge exploitation.
-                </p>
-              </div>
-            </div>
-            <button
-              onClick={() => setSimulatedThreat(false)}
-              className="text-xs text-rose-400 hover:text-white font-mono underline ml-4"
-            >
-              Dismiss
-            </button>
+        <div className="fixed right-6 top-6 z-50 rounded-xl border border-indigo-400/20 bg-slate-950/90 px-4 py-3 text-xs font-semibold text-slate-200 shadow-xl backdrop-blur-md">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 size={15} className="text-indigo-400" />
+            {toastMsg}
           </div>
         </div>
       )}
 
-      {hasAudioResult && (
-        <div className="mb-6">
-          {/* Primary Voice Security Decision */}
-          <div className={`rounded-2xl border p-6 shadow-2xl backdrop-blur-md ${decisionStyle.container}`}>
-            <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
-              <div className="flex items-start gap-4">
-                <div className={`flex size-14 shrink-0 items-center justify-center rounded-2xl border ${decisionStyle.icon}`}>
-                  {decisionState.tone === 'danger' ? (
-                    <ShieldAlert className="size-7" />
-                  ) : decisionState.tone === 'warning' ? (
-                    <AlertTriangle className="size-7" />
-                  ) : (
-                    <ShieldCheck className="size-7" />
-                  )}
-                </div>
-                <div>
-                  <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">
-                    Voice Security Decision
-                  </div>
-                  <div className={`mt-1 text-2xl font-black tracking-tight ${decisionStyle.title}`}>
-                    {decisionState.label}
-                  </div>
-                  <p className="mt-1 text-sm text-slate-300">
-                    {decisionState.description}
-                  </p>
-                </div>
-              </div>
+      <SecurityPageShell
+        eyebrow="Hospitality Security"
+        title="Hospitality & Guest Voice Identity Protection"
+        description="Guards hotel folio, luxury travel, and VIP guest voice identities against social-engineering and booking takeover."
+        status={isConnected ? "LIVE" : "OFFLINE"}
+        statusTone={isConnected ? "active" : "medium"}
+        critical={
+          riskLevel === "high" || hasCrossSectorThreat
+            ? {
+                label: hasCrossSectorThreat
+                  ? "Cross-sector threat detected"
+                  : "Critical detection",
+                title: hasCrossSectorThreat
+                  ? "Coordinated hospitality voice attack detected"
+                  : "Synthetic guest voice detected",
+                description:
+                  hasCrossSectorThreat
+                    ? `Voice signature associated with ${threatOrigin}.`
+                    : governance.reason ||
+                      "High synthetic-voice probability detected during a guest folio interaction.",
+                actions: hasCrossSectorThreat ? (
+                  <button
+                    type="button"
+                    onClick={() => setSimulatedThreat(false)}
+                    className="rounded-lg border border-rose-500/25 bg-rose-500/10 px-3 py-2 text-xs font-semibold text-rose-300"
+                  >
+                    Dismiss
+                  </button>
+                ) : null,
+              }
+            : null
+        }
+      >
 
-              <div className="text-left md:text-right">
-                <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-                  AI Probability
-                </div>
-                <div className={`mt-1 text-4xl font-black font-mono ${decisionStyle.probability}`}>
-                  {(aiProbability * 100).toFixed(1)}%
-                </div>
-                <div className="mt-1 text-[10px] font-mono text-slate-400">
-                  50% XGBoost + 50% MMS-300M
-                </div>
-              </div>
-            </div>
-
-            <div className={`mt-5 flex flex-col gap-3 rounded-xl border p-4 ${decisionStyle.action}`}>
-              <div className="flex items-center gap-2">
-                <ArrowRight className="size-4 shrink-0" />
-                <span className="text-xs font-semibold uppercase tracking-wider">
-                  Recommended Staff Action
-                </span>
-              </div>
-              <div className="text-xl font-black tracking-tight">
-                {decisionState.shortLabel}
-              </div>
-              <p className="text-xs leading-relaxed opacity-90">
-                {decisionState.instruction}
-              </p>
-            </div>
-
-            <div className="mt-4 flex justify-end">
-              <button
-                onClick={handlePrimaryDecisionAction}
-                className={`inline-flex items-center gap-2 rounded-xl border px-5 py-3 text-sm font-bold transition-all active:scale-95 ${decisionStyle.action}`}
-              >
-                Take Action
-                <ArrowRight className="size-4" />
-              </button>
-            </div>
-
-            <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-3">
-              <div className="rounded-xl border border-white/10 bg-black/10 p-3">
-                <div className="text-[10px] uppercase tracking-wider text-slate-400">
-                  Acoustic Model
-                </div>
-                <div className="mt-1 text-lg font-bold font-mono text-white">
-                  {selected.xgb_probability !== undefined
-                    ? `${(selected.xgb_probability * 100).toFixed(1)}%`
-                    : '—'}
-                </div>
-                <div className="text-[10px] text-slate-500">
-                  XGBoost supporting signal
-                </div>
-              </div>
-
-              <div className="rounded-xl border border-white/10 bg-black/10 p-3">
-                <div className="text-[10px] uppercase tracking-wider text-slate-400">
-                  Neural Model
-                </div>
-                <div className="mt-1 text-lg font-bold font-mono text-white">
-                  {selected.dual_stream_probability !== undefined
-                    ? `${(selected.dual_stream_probability * 100).toFixed(1)}%`
-                    : '—'}
-                </div>
-                <div className="text-[10px] text-slate-500">
-                  MMS-300M supporting signal
-                </div>
-              </div>
-
-              <div className="rounded-xl border border-white/10 bg-black/10 p-3">
-                <div className="text-[10px] uppercase tracking-wider text-slate-400">
-                  Security Risk
-                </div>
-                <div className="mt-1 text-lg font-bold uppercase text-white">
-                  {riskLevel}
-                </div>
-                <div className="text-[10px] text-slate-500">
-                  Governance / transaction context
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Sector Live Audio Controller & 1-Click Samples */}
-      <SectorAudioPlayer
-        title="Concierge Audio Streamer & Room Folio Defense"
-        sector="hospitality"
-        scenario={governance.scenario || "vip_booking"}
-        samples={samples}
-        onPlaySample={(url, scn) => streamAudioFromUrl?.(url, 'hospitality', scn || 'vip_booking')}
-        onStartMic={startMicrophoneStream}
-        onStopMic={stopMicrophoneStream}
-        onFileUpload={handleFileUpload}
-        isStreaming={isStreaming}
-        micStatus={micStatus}
-        micLevel={micLevel}
-        accentColor="amber"
-      />
-
-      {/* Main Grid */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        {/* Left Column: Simulated Hotel Folio Context */}
-        <div className="rounded-2xl border border-white/10 bg-slate-900/60 p-5 shadow-xl backdrop-blur-md">
-          <h2 className="mb-4 flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-slate-300">
-            <Hotel className="size-4 text-amber-400" />
-            Guest In-House Folio Record
-          </h2>
-
-          <div className="space-y-3 font-mono text-xs">
-            <div className="flex items-center justify-between rounded-lg border border-white/5 bg-white/[0.02] p-2.5">
-              <span className="text-slate-400">Guest Name</span>
-              <span className="font-semibold text-white">S. Ramachandran</span>
-            </div>
-            <div className="flex items-center justify-between rounded-lg border border-white/5 bg-white/[0.02] p-2.5">
-              <span className="text-slate-400">Room / Suite</span>
-              <span className="font-semibold text-amber-300">Presidential Suite #1402</span>
-            </div>
-            <div className="flex items-center justify-between rounded-lg border border-white/5 bg-white/[0.02] p-2.5">
-              <span className="text-slate-400">Tenant Store</span>
-              <span className="font-semibold text-amber-300">Biometric [hospitality_isolated]</span>
-            </div>
-            <div className="flex items-center justify-between rounded-lg border border-white/5 bg-white/[0.02] p-2.5">
-              <span className="text-slate-400">Folio Credit Line</span>
-              <span className="font-semibold text-emerald-400">₹ 2,00,000.00 Limit</span>
-            </div>
-            <div className="flex items-center justify-between rounded-lg border border-white/5 bg-white/[0.02] p-2.5">
-              <span className="text-slate-400">Inbound Call Type</span>
-              <span className="font-semibold text-cyan-300">In-Room PBX Telephone Order</span>
-            </div>
-            <div className="flex items-center justify-between rounded-lg border border-white/5 bg-white/[0.02] p-2.5">
-              <span className="text-slate-400">Pending Request</span>
-              <span className="font-semibold text-rose-300">Chauffeured Luxury Car + Room Charge</span>
-            </div>
-          </div>
-
-          <div className="mt-5 rounded-xl border border-amber-500/20 bg-amber-500/10 p-3 text-xs text-amber-200">
-            <div className="flex items-center gap-2 font-bold">
-              <AlertTriangle className="size-4 shrink-0 text-amber-400" />
-              PCI-DSS & Folio Safeguard
-            </div>
-            <p className="mt-1 text-[11px] leading-relaxed text-amber-300/80">
-              Unattended phone requests exceeding ₹20,000 charged to room folios require front-desk physical keycard verification.
-            </p>
-          </div>
-        </div>
-
-        {/* Center Column: Live Risk & Biometric Gauges */}
-        <div className="space-y-4 lg:col-span-2">
-
-
-          {/* Hospitality Risk & Biometric Gauges */}
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-
-            {/* 1. Guest Identity Gate */}
-            <div className={`rounded-2xl border p-4 backdrop-blur-md transition-all ${
-              riskLevel === 'high'
-                ? 'border-rose-500/40 bg-rose-950/30 text-rose-200'
-                : riskLevel === 'medium'
-                ? 'border-amber-500/40 bg-amber-950/30 text-amber-200'
-                : 'border-emerald-500/40 bg-emerald-950/30 text-emerald-200'
-            }`}>
-              <div className="text-xs uppercase tracking-wider opacity-80">
-                Guest Identity Gate
-              </div>
-              <div className="mt-2 flex items-center gap-2 text-lg font-bold uppercase">
-                {riskLevel === 'high' ? (
-                  <>
-                    <XCircle className="size-5 text-rose-400" />
-                    Security Alert
-                  </>
-                ) : riskLevel === 'medium' ? (
-                  <>
-                    <AlertTriangle className="size-5 text-amber-400" />
-                    Verify Guest
-                  </>
-                ) : (
-                  <>
-                    <CheckCircle2 className="size-5 text-emerald-400" />
-                    Authentic
-                  </>
-                )}
-              </div>
-              <div className="mt-1 text-xs opacity-75 font-mono">
-                Level: {riskLevel.toUpperCase()}
-              </div>
-            </div>
-
-            {/* 2. Synthetic Voice Index */}
-            <div className="rounded-2xl border border-white/10 bg-slate-900/60 p-4 backdrop-blur-md">
-              <div className="text-xs uppercase tracking-wider text-slate-400">
-                Synthetic Voice Index
-              </div>
-              <div className="mt-2 text-xl font-mono font-bold text-white">
-                {(aiProbability * 100).toFixed(1)}%
-              </div>
-              <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-white/10">
-                <div
-                  className={`h-full transition-all duration-500 ${
-                    aiProbability > 0.75
-                      ? 'bg-rose-500'
-                      : aiProbability > 0.40
-                      ? 'bg-amber-400'
-                      : 'bg-emerald-400'
-                  }`}
-                  style={{
-                    width: `${Math.min(100, Math.max(0, aiProbability * 100))}%`
-                  }}
-                />
-              </div>
-              <div className="mt-1 text-[10px] text-slate-400 font-mono">
-                P(synthetic acoustic)
-              </div>
-            </div>
-
-            {/* 3. Guest Voice Match */}
-            <div className="rounded-2xl border border-white/10 bg-slate-900/60 p-4 backdrop-blur-md">
-              <div className="text-xs uppercase tracking-wider text-slate-400">
-                Guest Voice Match
-              </div>
-              <div className="mt-2 text-xl font-mono font-bold text-white">
-                {speakerSimilarity !== null
+        <DetectionMetricGrid
+          metrics={[
+            {
+              id: "synthetic-voice",
+              label: "Synthetic Voice Probability",
+              value: hasDetectionResult
+                ? `${(aiProbability * 100).toFixed(1)}%`
+                : "WAITING",
+              icon: "risk",
+              tone: !hasDetectionResult
+                ? "neutral"
+                : aiProbability >= 0.75
+                  ? "high"
+                  : aiProbability >= 0.4
+                    ? "medium"
+                    : "low",
+              progress: hasDetectionResult ? aiProbability * 100 : undefined,
+              helper: hasDetectionResult
+                ? "AI acoustic detection"
+                : "Awaiting live audio analysis",
+            },
+            {
+              id: "speaker-match",
+              label: "Guest Voice Match",
+              value:
+                hasDetectionResult && speakerSimilarity !== null
                   ? `${(speakerSimilarity * 100).toFixed(1)}%`
-                  : '—'}
-              </div>
-              <div className="mt-1 flex items-center gap-1.5 text-xs text-slate-300">
-                <UserCheck className="size-3.5 text-violet-400" />
-                <span className="text-[11px]">
-                  {speakerMatch === true
-                    ? 'Matches Registered Guest'
-                    : speakerMatch === false
-                    ? 'Voice Does Not Match Guest'
-                    : 'ECAPA-TDNN Verified'}
-                </span>
-              </div>
-            </div>
+                  : "WAITING",
+              icon: "speaker",
+              tone:
+                hasDetectionResult && speakerMatch === false
+                  ? "high"
+                  : "neutral",
+              progress:
+                hasDetectionResult && speakerSimilarity !== null
+                  ? speakerSimilarity * 100
+                  : undefined,
+              helper: !hasDetectionResult
+                ? "Awaiting guest voice verification"
+                : speakerMatch === true
+                  ? "Matches registered guest"
+                  : speakerMatch === false
+                    ? "Voiceprint mismatch"
+                    : "Voice verification",
+            },
+            {
+              id: "composite-risk",
+              label: "Composite Risk",
+              value: hasDetectionResult
+                ? `${(compositeRiskScore * 100).toFixed(1)}%`
+                : "WAITING",
+              icon: "composite",
+              tone: !hasDetectionResult
+                ? "neutral"
+                : compositeRiskScore >= 0.75
+                  ? "high"
+                  : compositeRiskScore >= 0.4
+                    ? "medium"
+                    : "low",
+              progress:
+                hasDetectionResult
+                  ? compositeRiskScore * 100
+                  : undefined,
+              helper: hasDetectionResult
+                ? "AI + voice match + guest context"
+                : "Awaiting complete risk evaluation",
+            },
+            {
+              id: "identity-gate",
+              label: "Guest Identity Gate",
+              value: !hasDetectionResult
+                ? "NOT EVALUATED"
+                : riskLevel === "high"
+                  ? "SECURITY ALERT"
+                  : riskLevel === "medium"
+                    ? "VERIFY GUEST"
+                    : "AUTHORIZED",
+              icon: "authenticity",
+              tone: !hasDetectionResult
+                ? "neutral"
+                : riskLevel === "high"
+                  ? "high"
+                  : riskLevel === "medium"
+                    ? "medium"
+                    : "low",
+              helper: !hasDetectionResult
+                ? "Policy state · WAITING"
+                : `Policy state · ${riskLevel.toUpperCase()}`,
+            },
+          ]}
+        />
 
-            {/* 4. Composite Risk */}
-            <div className={`rounded-2xl border p-4 backdrop-blur-md transition-all ${
-              compositeRiskScore >= 0.75
-                ? 'border-rose-500/30 bg-rose-950/20'
-                : compositeRiskScore >= 0.40
-                ? 'border-amber-500/30 bg-amber-950/20'
-                : 'border-emerald-500/30 bg-emerald-400/20'
-            }`}>
-              <div className="flex items-center justify-between text-xs uppercase tracking-wider text-slate-300">
-                <span>Composite Risk</span>
-                <Activity className="size-3.5 text-cyan-400" />
-              </div>
-              <div className="mt-2 text-xl font-mono font-bold text-white">
-                {(compositeRiskScore * 100).toFixed(1)}%
-              </div>
-              <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-white/10">
-                <div
-                  className={`h-full transition-all duration-500 ${
-                    compositeRiskScore >= 0.75
-                      ? 'bg-rose-500'
-                      : compositeRiskScore >= 0.40
-                      ? 'bg-amber-400'
-                      : 'bg-emerald-400'
-                  }`}
-                  style={{
-                    width: `${Math.min(100, Math.max(0, compositeRiskScore * 100))}%`
-                  }}
-                />
-              </div>
-              <div className="mt-1 text-[9px] text-slate-400 font-mono">
-                R = 50% AI + 30% Voice Match + 20% Transaction Context
-              </div>
-            </div>
+        <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1.35fr_0.85fr]">
 
-          </div>
+          <LiveDetectionPanel
+            title="Live hospitality voice detection"
+            description="Real-time audio ingestion and hotel guest verification"
+            isLive={isStreaming}
+          >
+            <SectorAudioPlayer
+              title="Concierge Audio Streamer & Room Folio Defense"
+              sector="hospitality"
+              scenario={governance.scenario || "vip_booking"}
+              samples={samples}
+              onPlaySample={(url, scn) =>
+                streamAudioFromUrl?.(
+                  url,
+                  "hospitality",
+                  scn || "vip_booking"
+                )
+              }
+              onStartMic={startMicrophoneStream}
+              onStopMic={stopMicrophoneStream}
+              onFileUpload={handleFileUpload}
+              isStreaming={isStreaming}
+              micStatus={micStatus}
+              micLevel={micLevel}
+            />
+          </LiveDetectionPanel>
 
-          {/* Decision & Action Workflow Panel */}
-          <div className="rounded-2xl border border-white/10 bg-slate-900/60 p-5 shadow-xl backdrop-blur-md">
-            <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-slate-300">
-              Operator Controls
-            </h2>
+          <SectorContextCard
+            title="Guest & folio protection"
+            description="Hotel guest and room-folio context interpreted alongside voice risk."
+            rows={[
+              {
+                label: "Guest",
+                value: "S. Ramachandran",
+              },
+              {
+                label: "Room / Suite",
+                value: "Presidential Suite #1402",
+              },
+              {
+                label: "Folio Credit Line",
+                value: "₹2,00,000.00 Limit",
+                tone: "warning",
+              },
+              {
+                label: "Channel",
+                value: "In-Room PBX Telephone Order",
+              },
+              {
+                label: "Pending Request",
+                value: "Chauffeured Luxury Car + Room Charge",
+                tone: "danger",
+              },
+              {
+                label: "Tenant",
+                value: "hospitality_isolated",
+              },
+            ]}
+            callout={{
+              title: "PCI-DSS & Folio Safeguard",
+              description:
+                "Unattended phone requests exceeding ₹20,000 charged to room folios require front-desk physical keycard verification.",
+            }}
+          />
 
-            <div className="mb-4 rounded-xl border border-white/5 bg-white/[0.02] p-4">
-              <div className="text-xs text-slate-400">PMS Security Directive:</div>
-              <div className="mt-1 text-sm font-medium text-slate-200">
-                {governance.reason || (riskLevel === 'high' ? 'High voice-AI spoof risk detected on room folio order.' : 'Guest voice biometric profile verified against reservation record.')}
-              </div>
-              
-              <div className="mt-3 space-y-1.5">
-                <div className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Mandatory Next Steps:</div>
-                {recommendedActions.map((rec, i) => (
-                  <div key={i} className="flex items-start gap-2 text-xs text-slate-300">
-                    <ArrowRight className="size-3.5 mt-0.5 shrink-0 text-amber-400" />
-                    <span>{rec}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
+        </div>
 
-            {/* Operator Actions - Connected to Backend REST Endpoints */}
-            <div className="flex flex-wrap items-center gap-3 pt-2">
+        <GovernanceDecisionCard
+          tone={
+            !hasDetectionResult
+              ? "pending"
+              : isSpoof
+                ? "escalate"
+                : "allow"
+          }
+          title={
+            !hasDetectionResult
+              ? "Awaiting Live Voice Analysis"
+              : isSpoof
+                ? "CRITICAL: Synthetic Guest Voice Detected — Room Folio Protected"
+                : "Guest Authenticated — Concierge Workflow Cleared"
+          }
+          reason={
+            !hasDetectionResult
+              ? "Select a hospitality scenario from the library or start the microphone to evaluate guest voice authenticity."
+              : isSpoof
+                ? (
+                    governance.reason ||
+                    "Synthetic guest voice detected during a high-value room-folio request."
+                  )
+                : (
+                    governance.reason ||
+                    "Guest voice authenticity verified against the hospitality identity profile."
+                  )
+          }
+          recommendations={recommendedActions}
+          actions={
+            <>
               <button
                 onClick={handleLockFolio}
-                className={`flex items-center gap-2 rounded-xl border px-4 py-2.5 text-xs font-semibold transition-all active:scale-95 ${
-                  folioLocked
-                    ? 'border-rose-400/50 bg-rose-500/30 text-rose-200'
-                    : 'border-rose-500/30 bg-rose-500/10 text-rose-300 hover:bg-rose-500/20'
-                }`}
+                disabled={!hasDetectionResult || folioLocked || isGenuine}
+                className="rounded-lg border border-rose-500/30 bg-rose-500/10 px-3 py-2 text-xs font-semibold text-rose-300 disabled:cursor-not-allowed disabled:opacity-40"
               >
-                <KeyRound className="size-4" />
-                {folioLocked ? 'Room Folio Locked in Opera PMS ✓' : 'Lock Room Folio Billing'}
+                <span className="flex items-center gap-2">
+                  <KeyRound className="size-4" />
+                  {folioLocked
+                    ? "Room Folio Locked ✓"
+                    : "Lock Room Folio Billing"}
+                </span>
               </button>
 
               <button
                 onClick={handleChallengeGuest}
-                className="flex items-center gap-2 rounded-xl border border-amber-400/40 bg-amber-500/20 px-4 py-2.5 text-xs font-semibold text-amber-200 transition-all hover:bg-amber-500/30 active:scale-95"
+                disabled={!hasDetectionResult || isGenuine}
+                className="rounded-lg border border-indigo-400/30 bg-indigo-500/10 px-3 py-2 text-xs font-semibold text-indigo-200 disabled:cursor-not-allowed disabled:opacity-40"
               >
-                <FileCheck className="size-4" />
-                {deskChallengeSent ? 'Front Desk Challenge Flagged ✓' : 'Require In-Person Front Desk ID'}
+                <span className="flex items-center gap-2">
+                  <FileCheck className="size-4" />
+                  {deskChallengeSent
+                    ? "Front Desk Challenge Flagged ✓"
+                    : "Require In-Person Front Desk ID"}
+                </span>
               </button>
 
               <button
                 onClick={() => {
-                  setAlertSent(true);
-                  showToast("Duty Manager dispatched to Suite 1402!");
+                  setAlertSent(true)
+                  showToast("Duty Manager dispatched to Suite 1402!")
                 }}
-                disabled={alertSent}
-                className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-xs font-semibold text-slate-200 transition-all hover:bg-white/10 active:scale-95 disabled:opacity-50"
+                disabled={!hasDetectionResult || alertSent || isGenuine}
+                className="rounded-lg border border-indigo-400/20 bg-slate-900/50 px-3 py-2 text-xs font-semibold text-slate-200 disabled:cursor-not-allowed disabled:opacity-40"
               >
-                <BellRing className="size-4 text-amber-400" />
-                {alertSent ? 'Duty Manager Alerted ✓' : 'Alert Duty Manager'}
+                <span className="flex items-center gap-2">
+                  <BellRing className="size-4 text-indigo-400" />
+                  {alertSent ? "Duty Manager Alerted ✓" : "Alert Duty Manager"}
+                </span>
               </button>
 
               <button
                 onClick={() => setShowWebhook(true)}
-                className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-xs font-mono font-semibold text-slate-300 hover:bg-white/10 hover:text-white transition-all active:scale-95"
+                className="rounded-lg border border-indigo-400/15 bg-slate-900/50 px-3 py-2 text-xs font-semibold text-slate-300"
               >
-                <span>&lt;/&gt;</span>
                 Inspect Oracle Opera PMS Webhook
               </button>
 
               <button
                 onClick={handleSimulateThreat}
-                className={`flex items-center gap-2 rounded-xl border px-4 py-2.5 text-xs font-semibold transition-all active:scale-95 ${
-                  hasCrossSectorThreat
-                    ? 'border-rose-500/40 bg-rose-500/20 text-rose-200'
-                    : 'border-white/10 bg-white/5 text-slate-300 hover:bg-white/10'
-                }`}
+                className="rounded-lg border border-rose-500/25 bg-rose-500/10 px-3 py-2 text-xs font-semibold text-rose-300"
               >
-                <ShieldAlert className="size-4 text-rose-400" />
-                {hasCrossSectorThreat ? 'Cross-Sector Threat Active' : 'Simulate Cross-Sector Attacker'}
+                <span className="flex items-center gap-2">
+                  <ShieldAlert className="size-4" />
+                  {hasCrossSectorThreat
+                    ? "Cross-Sector Threat Active"
+                    : "Simulate Cross-Sector Attacker"}
+                </span>
               </button>
-            </div>
-          </div>
-        </div>
-      </div>
+            </>
+          }
+        />
+
+        <SecurityActivityTimeline
+          steps={[
+            {
+              label: "Security context",
+              value: hasDetectionResult
+                ? `${governance.scenario || "Guest Verification"} · Suite #1402`
+                : "Session Standby · High-Value Guest Request",
+              tone: !hasDetectionResult
+                ? "pending"
+                : isSpoof
+                  ? "detected"
+                  : "ready",
+              status: !hasDetectionResult
+                ? "STANDBY"
+                : isSpoof
+                  ? "THREAT"
+                  : "VERIFIED",
+            },
+            {
+              label: "AI detection",
+              value: !hasDetectionResult
+                ? "Awaiting audio ingestion"
+                : `${(aiProbability * 100).toFixed(1)}% synthetic probability`,
+              tone: !hasDetectionResult
+                ? "pending"
+                : isSpoof
+                  ? "detected"
+                  : "ready",
+              status: !hasDetectionResult
+                ? "WAITING"
+                : isSpoof
+                  ? "CRITICAL"
+                  : "AUTHENTIC",
+            },
+            {
+              label: "Governance",
+              value: !hasDetectionResult
+                ? "Awaiting policy evaluation"
+                : isSpoof
+                  ? "Lock Folio · Front Desk Verification"
+                  : "Allow · Concierge Workflow Cleared",
+              tone: !hasDetectionResult
+                ? "pending"
+                : isSpoof
+                  ? "detected"
+                  : "ready",
+              status: !hasDetectionResult
+                ? "PENDING"
+                : isSpoof
+                  ? "ESCALATED"
+                  : "CLEARED",
+            },
+            {
+              label: "Identity",
+              value: !hasDetectionResult
+                ? "Awaiting guest voiceprint"
+                : isSpoof
+                  ? "Guest voice mismatch"
+                  : "Registered guest voice confirmed",
+              tone: !hasDetectionResult
+                ? "pending"
+                : isSpoof
+                  ? "detected"
+                  : "ready",
+              status: !hasDetectionResult
+                ? "STANDBY"
+                : isSpoof
+                  ? "MISMATCH"
+                  : "MATCHED",
+            },
+          ]}
+        />
+      </SecurityPageShell>
 
       <EnterpriseWebhookDrawer
         isOpen={showWebhook}
@@ -689,8 +627,12 @@ export default function HospitalitySecurity({
         action={action}
         aiProbability={aiProbability}
         speakerMatch={speakerMatch}
-        metadata={{ room: "1402", guest: "S. Ramachandran", compositeRisk: compositeRiskScore }}
+        metadata={{
+          room: "1402",
+          guest: "S. Ramachandran",
+          compositeRisk: compositeRiskScore,
+        }}
       />
     </div>
-  );
+  )
 }

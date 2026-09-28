@@ -240,6 +240,25 @@ function MainApp() {
     selectedScenarioRef.current = selectedScenario
   }, [selectedScenario])
 
+  // Automatically sync sector context when navigating to sector pages from sidebar
+  useEffect(() => {
+    const sectorPages = ['finance', 'retail', 'hospitality', 'entertainment']
+    if (sectorPages.includes(activePage)) {
+      setSelectedSector(activePage)
+      selectedSectorRef.current = activePage
+
+      const defaultScenarios = {
+        finance: 'high_value_transfer',
+        retail: 'address_change',
+        hospitality: 'guest_verification',
+        entertainment: 'dubbing_verification',
+      }
+      const nextScenario = defaultScenarios[activePage] || 'routine_support'
+      setSelectedScenario(nextScenario)
+      selectedScenarioRef.current = nextScenario
+    }
+  }, [activePage])
+
   // Authoritative context for the currently configured security session.
   // Routing must never be driven by stale results from another session.
   const activeSessionRef = useRef(null)
@@ -439,6 +458,12 @@ function MainApp() {
           return
         }
 
+        if (data.type === 'audio_end_ack') {
+          console.log('Audio stream completed successfully:', data.stream_id)
+          setMicStatus('Analysis Complete')
+          return
+        }
+
         if (data.type === 'session_context_ack') {
           console.log('Session context acknowledged:', data)
 
@@ -515,6 +540,13 @@ function MainApp() {
             fileIntervalRef.current = null
           }
 
+          if (filePlaybackRef.current) {
+            try {
+              filePlaybackRef.current.pause()
+            } catch (e) {}
+          }
+
+          setIsFilePlaying(false)
           setMicLevel(0)
           setMicStatus('ALERT: Synthetic Voice Clone Detected')
 
@@ -547,15 +579,17 @@ function MainApp() {
 
         // Never allow a result from another sector to populate
         // the currently active sector session.
-        const resultSector =
-          data.governance_decision?.sector || data.sector
+        const resultSector = (
+          data.governance_decision?.sector || data.sector || ''
+        ).toLowerCase()
+        const activeSector = (activeSession?.sector || '').toLowerCase()
 
         // Every live detection result must carry an explicit sector.
         // Never allow an untagged result to enter a sector session.
-        if (activeSession?.sector && !resultSector) {
+        if (activeSector && !resultSector) {
           console.warn(
             'Ignoring untagged result for sector session:',
-            activeSession.sector
+            activeSector
           )
           return
         }
@@ -563,14 +597,14 @@ function MainApp() {
         // Never allow a result from another sector to populate
         // the currently active sector session.
         if (
-          activeSession?.sector &&
-          resultSector !== activeSession.sector
+          activeSector &&
+          resultSector !== activeSector
         ) {
           console.warn(
             'Ignoring cross-sector result:',
             resultSector,
             'expected:',
-            activeSession.sector
+            activeSector
           )
           return
         }
@@ -810,9 +844,34 @@ function MainApp() {
 
 
   const startMicrophoneStream = async () => {
-    if (!contextConfigured) {
-      setMicStatus('Configure Security Context First')
-      return
+    const currentSector = selectedSectorRef.current || 'finance'
+    const currentScenario = selectedScenarioRef.current || 'routine_support'
+
+    // Auto-configure security context if not already configured for this sector
+    if (!contextConfigured || activeSessionRef.current?.sector !== currentSector) {
+      const ws = wsRef.current || (await waitForRiskWebSocket())
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        const payload = {
+          type: 'session_context',
+          sector: currentSector,
+          scenario: currentScenario,
+          transaction_amount_inr:
+            currentSector === 'finance'
+              ? Number(transactionAmountRef.current) || 525000
+              : null,
+        }
+        ws.send(JSON.stringify(payload))
+        activeSessionRef.current = {
+          streamId: uniqueStreamIdRef.current,
+          sector: currentSector,
+          scenario: currentScenario,
+        }
+        setActiveStreamId(uniqueStreamIdRef.current)
+        setContextConfigured(true)
+      } else {
+        setMicStatus('Risk WebSocket Not Connected')
+        return
+      }
     }
 
     try {
@@ -1030,12 +1089,30 @@ function MainApp() {
         )
       }
 
+      const sector =
+        ['finance', 'retail', 'hospitality', 'entertainment'].includes(activePage)
+          ? activePage
+          : selectedSectorRef.current || 'finance'
+
+      const defaultScenarios = {
+        finance: 'high_value_transfer',
+        retail: 'order_modification',
+        hospitality: 'guest_verification',
+        entertainment: 'dubbing_verification',
+      }
+      const scenario =
+        selectedScenarioRef.current && selectedScenarioRef.current !== 'routine_support'
+          ? selectedScenarioRef.current
+          : defaultScenarios[sector] || 'routine_support'
+
       const contextPayload = {
         type: 'session_context',
-        sector: selectedSectorRef.current,
-        scenario: selectedScenarioRef.current,
+        sector,
+        scenario,
         transaction_amount_inr:
-          Number.parseFloat(transactionAmountRef.current) || 0,
+          sector === 'finance'
+            ? Number.parseFloat(transactionAmountRef.current) || 525000
+            : null,
       }
 
       const contextAck = new Promise((resolve, reject) => {
@@ -1070,11 +1147,11 @@ function MainApp() {
 
       const acknowledgedSector =
         acknowledgedContext.sector ||
-        selectedSectorRef.current
+        sector
 
       const acknowledgedScenario =
         acknowledgedContext.scenario ||
-        selectedScenarioRef.current
+        scenario
 
       activeSessionRef.current = {
         streamId: acknowledgedStreamId,
@@ -1268,6 +1345,15 @@ function MainApp() {
       fileIntervalRef.current = null
     }
 
+    if (filePlaybackRef.current) {
+      try {
+        filePlaybackRef.current.pause()
+        filePlaybackRef.current.currentTime = 0
+      } catch (e) {}
+      filePlaybackRef.current = null
+    }
+
+    setIsFilePlaying(false)
     fileStreamActiveRef.current = false
 
     setMicLevel(0)
@@ -1351,16 +1437,7 @@ function MainApp() {
         )
       }
 
-      if (filePlaybackRef.current) {
-        filePlaybackRef.current.pause()
-        filePlaybackRef.current.currentTime = 0
-        filePlaybackRef.current = null
-      }
-
       // 1. Configure the sector-bound security context.
-      // Wait for the backend acknowledgement before sending any
-      // audio so the detector can never initialize with a default
-      // scenario such as routine_support.
       const contextPayload = {
         type: 'session_context',
         sector: sector,
@@ -1401,17 +1478,31 @@ function MainApp() {
       selectedScenarioRef.current = scenario
       setContextConfigured(true)
 
+      // Set activeSessionRef so that incoming live detection results
+      // are matched and routed to this sector page
+      activeSessionRef.current = {
+        streamId: uniqueStreamIdRef.current,
+        sector: sector,
+        scenario: scenario,
+      }
+      setActiveStreamId(uniqueStreamIdRef.current)
+
       const fileDisplayName = url.split('/').pop()
       setFileName(fileDisplayName)
       setInputMode('file')
       setMicStatus(`Streaming ${sector.toUpperCase()}: ${fileDisplayName}`)
 
       const playbackAudio = new Audio(url)
+      playbackAudio.preload = 'auto'
+      playbackAudio.volume = 1.0
+
       playbackAudio.onplay = () => setIsFilePlaying(true)
       playbackAudio.onpause = () => setIsFilePlaying(false)
       playbackAudio.onended = () => {
         setIsFilePlaying(false)
+        setMicLevel(0)
       }
+
       filePlaybackRef.current = playbackAudio
 
       const response = await fetch(url)
@@ -1429,7 +1520,7 @@ function MainApp() {
       try {
         await playbackAudio.play()
       } catch (playbackError) {
-        console.warn('Audio playback error:', playbackError)
+        console.warn('Scenario audio playback could not start:', playbackError)
       }
 
       const chunkSize = 8000
@@ -1462,24 +1553,18 @@ function MainApp() {
             )
           })
 
-          // Close this sample's WebSocket so the backend releases
-          // the stream. The connection effect will reconnect with
-          // a fresh stream ID for the next sample.
-          if (ws.readyState === WebSocket.OPEN) {
-            ws.close()
-          }
-
           return
         }
 
-        const chunk = pcm16.subarray(offset, offset + chunkSize)
-        ws.send(chunk)
+        const end = Math.min(offset + chunkSize, pcm16.length)
+        const chunk = pcm16.slice(offset, end)
+        ws.send(chunk.buffer)
 
         const chunkRms = calculateRMS(
-          resampled.subarray(offset, Math.min(offset + chunkSize, resampled.length))
+          resampled.subarray(offset, end)
         )
         setMicLevel(Math.min(Math.round(chunkRms * 200), 100))
-        offset += chunkSize
+        offset = end
       }, 500)
 
     } catch (error) {

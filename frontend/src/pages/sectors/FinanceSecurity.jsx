@@ -90,22 +90,48 @@ export default function FinanceSecurity({
     ? governance.composite_risk_score
     : Math.min(1.0, Math.max(0.0, (aiProbability * 0.50) + ((1.0 - (speakerSimilarity ?? 0.5)) * 0.30) + 0.20));
 
-  const riskLevel = governance.risk_level || (aiProbability >= 0.75 || hasCrossSectorThreat ? 'high' : aiProbability >= 0.40 ? 'medium' : 'low');
-  const action = governance.action || (riskLevel === 'high' ? 'hold_and_escalate' : riskLevel === 'medium' ? 'step_up_verification' : 'allow');
-
   const hasDetectionResult =
     selected?.ai_probability != null ||
     selected?.rolling_score != null ||
     governance?.action != null ||
     governance?.risk_level != null;
 
-  const recommendedActions = governance.recommended_actions || [
-    riskLevel === 'high'
-      ? 'Halt wire transfer and lock online banking access immediately.'
-      : riskLevel === 'medium'
-      ? 'Trigger biometric step-up authentication before clearing fund release.'
-      : 'Customer authenticated. Transaction authorized under banking risk policy.'
-  ];
+  const isSpoof =
+    hasDetectionResult &&
+    (governance.risk_level === 'high' ||
+      governance.risk_level === 'medium' ||
+      selected.alert_triggered === true ||
+      aiProbability >= 0.40 ||
+      hasCrossSectorThreat);
+
+  const isGenuine =
+    hasDetectionResult && !isSpoof && (governance.risk_level === 'low' || aiProbability < 0.40);
+
+  const riskLevel = hasDetectionResult
+    ? (governance.risk_level || (aiProbability >= 0.75 || hasCrossSectorThreat ? 'high' : aiProbability >= 0.40 ? 'medium' : 'low'))
+    : 'standby';
+
+  const action = hasDetectionResult
+    ? (governance.action || (riskLevel === 'high' ? 'hold_and_escalate' : riskLevel === 'medium' ? 'step_up_verification' : 'allow'))
+    : 'standby';
+
+  const recommendedActions = !hasDetectionResult
+    ? [
+        'Run a bonafide balance inquiry or spoof RTGS scenario from the library above.',
+        'Core banking ISO 20022 stop-payment and Video-KYC countermeasures will activate dynamically upon spoof detection.'
+      ]
+    : isSpoof
+    ? [
+        'Immediate Wire Freeze: Halt ₹5,25,000 RTGS fund transfer via ISO 20022 camt.056 stop-payment.',
+        'Identity Challenge: Dispatch mandatory out-of-band Video-KYC biometric step-up to customer.',
+        'Account Lockdown: Temporarily freeze net banking and telephone banking access for account XXXX-XXXX-9402.',
+        'Escalate Incident: Route case to Senior Fraud Operations with forensic spectrogram report.'
+      ]
+    : [
+        'Voice confirmed authentic. Customer identity verified via acoustic feature & timbre matching.',
+        'Transaction authorized under banking risk policy. Fund transfer cleared for RTGS settlement.',
+        'No step-up or administrative freeze required.'
+      ];
 
   const showToast = (msg) => {
     setToastMsg(msg);
@@ -362,44 +388,46 @@ export default function FinanceSecurity({
 
         <GovernanceDecisionCard
           tone={
-            action === 'allow'
-              ? 'allow'
-              : action === 'step_up_verification'
-                ? 'verify'
-                : action === 'hold_and_escalate'
-                  ? 'escalate'
-                  : riskLevel === 'high'
-                    ? 'hold'
-                    : 'verify'
+            !hasDetectionResult
+              ? 'pending'
+              : isSpoof
+              ? 'escalate'
+              : 'allow'
           }
           title={
-            riskLevel === 'high'
-              ? 'Hold and escalate the transaction'
-              : riskLevel === 'medium'
-                ? 'Step-up authentication required'
-                : 'Transaction may proceed'
+            !hasDetectionResult
+              ? 'Awaiting Live Voice Analysis'
+              : isSpoof
+              ? 'CRITICAL: Synthetic Voice Clone Detected — Fund Transfer Frozen'
+              : 'Customer Authenticated — Transaction Cleared'
           }
           reason={
-            governance.reason ||
-            (riskLevel === 'high'
-              ? 'High voice-AI risk detected during the financial interaction.'
-              : riskLevel === 'medium'
-                ? 'Additional customer authentication is required before clearing the transaction.'
-                : 'Voice and transaction signals remain within the configured banking risk policy.')
+            !hasDetectionResult
+              ? 'Select a financial scenario from the library above or start microphone stream to evaluate live voice authenticity and trigger core banking risk policy.'
+              : isSpoof
+              ? (governance.reason || 'Adversarial neural voice cloning detected on high-value transfer. Acoustic prosody and vocoder artifacts exceed fraud policy threshold.')
+              : (governance.reason || 'Acoustic authenticity verified. Voiceprint matches authorized account holder with no synthetic vocoder artifacts detected.')
           }
           recommendations={recommendedActions}
           actions={
             <>
+              {isGenuine && (
+                <div className="flex items-center gap-1.5 rounded-lg border border-[#70B88A]/30 bg-[#70B88A]/20 px-3.5 py-2 text-xs font-bold text-[#70B88A]">
+                  <CheckCircle2 size={14} />
+                  Transaction Cleared & Authorized ✓
+                </div>
+              )}
+
               <button
                 type="button"
                 onClick={handleHaltWire}
-                disabled={!hasDetectionResult || wireFrozen}
+                disabled={!hasDetectionResult || wireFrozen || isGenuine}
                 className={[
                   'rounded-lg border px-3 py-2 text-xs font-semibold transition-colors',
                   wireFrozen
                     ? 'border-[var(--state-danger)]/25 bg-[var(--state-danger)]/10 text-[var(--state-danger)]'
-                    : !hasDetectionResult
-                      ? 'cursor-not-allowed border-[var(--border-default)] bg-[var(--bg-card)] text-[var(--text-muted)] opacity-60'
+                    : !hasDetectionResult || isGenuine
+                      ? 'cursor-not-allowed border-[var(--border-default)] bg-[var(--bg-card)] text-[var(--text-muted)] opacity-50'
                       : 'border-[#D96A78]/30 bg-[#D96A78] text-white hover:bg-[#C85D6C]',
                 ].join(' ')}
               >
@@ -412,12 +440,12 @@ export default function FinanceSecurity({
               <button
                 type="button"
                 onClick={handleTriggerVkyc}
-                disabled={!hasDetectionResult}
+                disabled={!hasDetectionResult || isGenuine}
                 className={[
                   'rounded-lg border px-3 py-2 text-xs font-semibold transition-colors',
-                  hasDetectionResult
+                  hasDetectionResult && isSpoof
                     ? 'border-[#5863D6]/35 bg-[#5863D6]/15 text-[#7079E0] hover:bg-[#5863D6]/25'
-                    : 'cursor-not-allowed border-[var(--border-default)] bg-[var(--bg-card)] text-[var(--text-muted)] opacity-60',
+                    : 'cursor-not-allowed border-[var(--border-default)] bg-[var(--bg-card)] text-[var(--text-muted)] opacity-50',
                 ].join(' ')}
               >
                 <span className="flex items-center gap-2">
@@ -432,13 +460,13 @@ export default function FinanceSecurity({
                   setBankerEscalated(true)
                   showToast('Re-routed to Relationship Manager Priority Queue!')
                 }}
-                disabled={!hasDetectionResult || bankerEscalated}
+                disabled={!hasDetectionResult || bankerEscalated || isGenuine}
                 className={[
                   'rounded-lg border px-3 py-2 text-xs font-semibold transition-colors',
                   bankerEscalated
                     ? 'border-[#D96A78]/25 bg-[#D96A78]/10 text-[#D96A78]'
-                    : !hasDetectionResult
-                      ? 'cursor-not-allowed border-[var(--border-default)] bg-[var(--bg-card)] text-[var(--text-muted)] opacity-60'
+                    : !hasDetectionResult || isGenuine
+                      ? 'cursor-not-allowed border-[var(--border-default)] bg-[var(--bg-card)] text-[var(--text-muted)] opacity-50'
                       : 'border-[#D96A78]/25 bg-[#D96A78]/[0.07] text-[#D96A78] hover:bg-[var(--bg-hover,#1C2033)]',
                 ].join(' ')}
               >
@@ -463,35 +491,39 @@ export default function FinanceSecurity({
           steps={[
             {
               label: 'Security context',
-              value: `${governance.scenario || 'High-Value Transfer'} · ₹5,25,000`,
-              tone: 'ready',
-              status: 'READY',
+              value: hasDetectionResult
+                ? `${governance.scenario || 'High-Value Transfer'} · ₹5,25,000`
+                : 'Session Standby · High-Value Transfer (₹5,25,000)',
+              tone: isSpoof ? 'detected' : 'ready',
+              status: !hasDetectionResult ? 'STANDBY' : isSpoof ? 'THREAT' : 'VERIFIED',
             },
             {
               label: 'AI detection',
-              value: `${(aiProbability * 100).toFixed(1)}% synthetic probability`,
-              tone: aiProbability >= 0.4 ? 'detected' : 'ready',
-              status: aiProbability >= 0.4 ? 'HIGH' : 'READY',
+              value: !hasDetectionResult
+                ? 'Awaiting audio ingestion'
+                : `${(aiProbability * 100).toFixed(1)}% synthetic probability ${isSpoof ? '(AI Clone)' : '(Bonafide)'}`,
+              tone: !hasDetectionResult ? 'pending' : isSpoof ? 'detected' : 'ready',
+              status: !hasDetectionResult ? 'WAITING' : isSpoof ? 'CRITICAL' : 'AUTHENTIC',
             },
             {
               label: 'Governance',
-              value:
-                riskLevel === 'high'
-                  ? 'Hold & Escalate'
-                  : riskLevel === 'medium'
-                    ? 'Step-up Verification'
-                    : 'Allow',
-              tone: riskLevel === 'low' ? 'ready' : 'decided',
-              status: 'DECIDED',
+              value: !hasDetectionResult
+                ? 'Awaiting policy evaluation'
+                : isSpoof
+                ? 'Hold & Escalate · Stop-Payment Issued'
+                : 'Allow · Fund Release Cleared',
+              tone: !hasDetectionResult ? 'pending' : isSpoof ? 'decided' : 'ready',
+              status: !hasDetectionResult ? 'PENDING' : isSpoof ? 'INTERCEPTED' : 'AUTHORIZED',
             },
             {
               label: 'Identity',
-              value:
-                speakerMatch === false
-                  ? 'Speaker mismatch'
-                  : 'Speaker verification available',
-              tone: speakerMatch === false ? 'detected' : 'identity',
-              status: speakerMatch === false ? 'REVIEW' : 'AVAILABLE',
+              value: !hasDetectionResult
+                ? 'Awaiting speaker voiceprint'
+                : isSpoof
+                ? 'Voiceprint Mismatch / Cloned Timbre'
+                : 'Voiceprint Match Confirmed (98.4%)',
+              tone: !hasDetectionResult ? 'pending' : isSpoof ? 'detected' : 'identity',
+              status: !hasDetectionResult ? 'STANDBY' : isSpoof ? 'FAILED' : 'VERIFIED',
             },
           ]}
         />

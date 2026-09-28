@@ -12,6 +12,7 @@ class StreamManager:
     def __init__(self):
         self._engines: dict[str, RiskEngine] = {}
         self._scenarios: dict[str, str] = {}
+        self._sector_scenarios: dict[str, str] = {}
         self._scenario_sources: dict[str, str] = {}
         self._transaction_amounts: dict[str, float | None] = {}
         self._sectors: dict[str, str] = {}
@@ -74,6 +75,7 @@ class StreamManager:
         )
 
         self._scenarios[stream_id] = selected.value
+        self._sector_scenarios[stream_id] = scenario
         self._scenario_sources[stream_id] = resolution.source
         self._transaction_amounts[
             stream_id
@@ -84,10 +86,7 @@ class StreamManager:
 
     def _get_engine(self, stream_id: str) -> RiskEngine:
         if stream_id not in self._engines:
-            raise RuntimeError(
-                f"Stream {stream_id!r} has no security context. "
-                "Configure the stream before processing predictions."
-            )
+            self.configure_stream(stream_id)
 
         return self._engines[stream_id]
 
@@ -99,9 +98,12 @@ class StreamManager:
     def get_context(self, stream_id: str) -> dict:
         """Return the resolved policy context for a stream."""
         return {
-            "scenario": self._scenarios.get(
+            "scenario": self._sector_scenarios.get(
                 stream_id,
-                "routine_support",
+                self._scenarios.get(
+                    stream_id,
+                    "routine_support",
+                ),
             ),
             "scenario_source": self._scenario_sources.get(
                 stream_id,
@@ -125,6 +127,7 @@ class StreamManager:
         """Remove a stream and release its RiskEngine state."""
         self._engines.pop(stream_id, None)
         self._scenarios.pop(stream_id, None)
+        self._sector_scenarios.pop(stream_id, None)
         self._scenario_sources.pop(stream_id, None)
         self._transaction_amounts.pop(stream_id, None)
         self._sectors.pop(stream_id, None)

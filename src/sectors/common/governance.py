@@ -26,6 +26,9 @@ from src.sectors.entertainment.router import evaluate_entertainment_result
 # Maps external dataset or scenario slugs to valid sector schema literals
 SCENARIO_MAPPING: dict[str, dict[str, str]] = {
     "finance": {
+        "high_value_transfer": "high_value_transfer",
+        "account_recovery": "account_recovery",
+        "customer_verification": "customer_verification",
         "fin_rtgs_transfer": "high_value_transfer",
         "fin_high_value_wire": "high_value_transfer",
         "fin_beneficiary_add": "account_recovery",
@@ -33,6 +36,9 @@ SCENARIO_MAPPING: dict[str, dict[str, str]] = {
         "default": "high_value_transfer",
     },
     "retail": {
+        "order_modification": "order_modification",
+        "customer_care": "customer_care",
+        "account_assistance": "account_assistance",
         "ret_address_divert": "order_modification",
         "ret_fake_return": "customer_care",
         "ret_account_takeover": "account_assistance",
@@ -40,12 +46,18 @@ SCENARIO_MAPPING: dict[str, dict[str, str]] = {
         "default": "customer_care",
     },
     "hospitality": {
+        "guest_verification": "guest_verification",
+        "vip_booking": "vip_booking",
+        "reservation_change": "reservation_change",
         "hosp_vip_suite_charge": "vip_booking",
         "hosp_reservation_cancel": "reservation_change",
         "hosp_concierge_request": "guest_verification",
         "default": "guest_verification",
     },
     "entertainment": {
+        "dubbing_verification": "dubbing_verification",
+        "voice_authenticity": "voice_authenticity",
+        "speaker_comparison": "speaker_comparison",
         "ent_voice_actor_clone": "speaker_comparison",
         "ent_dubbing_stem_audit": "dubbing_verification",
         "ent_podcast_screening": "voice_authenticity",
@@ -189,13 +201,24 @@ def calculate_composite_risk(
     return round(max(0.0, min(1.0, raw_score)), 3)
 
 
+VALID_SECTOR_SCENARIOS: dict[str, set[str]] = {
+    "finance": {"high_value_transfer", "account_recovery", "customer_verification"},
+    "retail": {"order_modification", "customer_care", "account_assistance"},
+    "hospitality": {"reservation_change", "guest_verification", "vip_booking"},
+    "entertainment": {"voice_authenticity", "speaker_comparison", "dubbing_verification"},
+}
+
+
 def _resolve_scenario(sector: str, scenario: str) -> str:
     """Normalize and resolve scenario slug to valid sector enum literal."""
     norm_sector = sector.lower().strip()
     mapping = SCENARIO_MAPPING.get(norm_sector, {})
     if scenario in mapping:
         return mapping[scenario]
-    return scenario
+    valid = VALID_SECTOR_SCENARIOS.get(norm_sector, set())
+    if scenario in valid:
+        return scenario
+    return mapping.get("default", "default")
 
 
 def evaluate_sector_result(
@@ -292,6 +315,7 @@ def evaluate_sector_result(
         )
 
     decision_dict = decision.model_dump()
+    decision_dict["sector"] = norm_sector
     decision_dict["composite_risk_score"] = composite_risk
 
     if threat_info["is_cross_sector_threat"]:
