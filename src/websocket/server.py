@@ -40,6 +40,7 @@ from src.adversarial.router import router as adversarial_router
 from src.sectors.api import router as sector_api_router
 from src.config import VAD_FRAME_SAMPLES, SAMPLE_RATE
 from src.features import extract_features
+from src.fusion import fuse_acoustic_probabilities
 from src.yin_analyzer import extract_yin_pitch_stats
 from src.models.fused_acoustic_model import DualStreamFusionClassifier
 from src.risk_engine.schemas import ModelPrediction, ProsodyAnalysis
@@ -2061,19 +2062,24 @@ async def audio_websocket_endpoint(
                             except (TypeError, ValueError):
                                 dual_prob = None
 
+                    # XGB-canonical ensemble. When the calibrated XGB has
+                    # already crossed the HIGH_ENTER boundary, trust the
+                    # canonical model and do not let the bimodal dual
+                    # stream suppress detection of out-of-distribution
+                    # spoofs (edge-TTS Hindi / Tamil sector demos).
+                    # Otherwise fall back to the 0.5/0.5 average, which
+                    # preserves the temporal anti-correlation between
+                    # the two models that protects bonafide samples
+                    # from XGB overconfidence.
                     if dual_valid:
-                        ensemble_prob = float(
-                            np.clip(
-                                0.5 * xgb_prob
-                                + 0.5 * dual_prob,
-                                0.0,
-                                1.0,
-                            )
+                        ensemble_prob = fuse_acoustic_probabilities(
+                            xgb_probability=xgb_prob,
+                            dual_probability=dual_prob,
                         )
                     else:
                         # Missing/failed dual inference must not
                         # be treated as bona-fide evidence.
-                        ensemble_prob = xgb_prob
+                        ensemble_prob = float(np.clip(xgb_prob, 0.0, 1.0))
 
                     # --------------------------------------------------------
                     # Canonical ModelPrediction (Driven by Ensemble)

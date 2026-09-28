@@ -56,3 +56,4 @@ data/*.wav
 !data/sectors/**
 !frontend/public/sector_audio/
 !frontend/public/sector_audio/**
+.venv311/
