@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useSecurity } from '../../context/SecurityContext';
 import {
   Hotel,
   ShieldAlert,
@@ -38,6 +39,8 @@ export default function HospitalitySecurity({
   micLevel = 0,
   isStreaming = false
 }) {
+  const { setEscalatedIncident } = useSecurity();
+
   const [folioLocked, setFolioLocked] = useState(false);
   const [deskChallengeSent, setDeskChallengeSent] = useState(false);
   const [alertSent, setAlertSent] = useState(false);
@@ -217,10 +220,36 @@ export default function HospitalitySecurity({
     }
   };
 
+  const handleMediumRiskAction = () => {
+    setAlertSent(true);
+
+    setEscalatedIncident({
+      ...selected,
+      sector: 'hospitality',
+      action_state: 'DUTY_MANAGER_ALERTED',
+      protection_state: 'MONITORING',
+      escalation_state: 'ALERTED',
+      action_detail: 'Duty Manager notified',
+    });
+
+    showToast("Duty Manager Alerted — Suite 1402");
+  };
+
   const handlePrimaryDecisionAction = async () => {
     if (decisionState.tone === 'danger') {
       await handleLockFolio();
       await handleChallengeGuest();
+
+      setEscalatedIncident({
+        ...selected,
+        sector: 'hospitality',
+        action_state: 'FOLIO_LOCKED',
+        protection_state: 'LATCHED',
+        escalation_state: 'CONTAINMENT_ACTIVE',
+        action_detail:
+          'Room 1402 folio locked · Front Desk ID verification required',
+      });
+
       return;
     }
 
@@ -264,11 +293,16 @@ export default function HospitalitySecurity({
         status={isConnected ? "LIVE" : "OFFLINE"}
         statusTone={isConnected ? "active" : "medium"}
         critical={
-          riskLevel === "high" || hasCrossSectorThreat
+          riskLevel === "high" ||
+          riskLevel === "medium" ||
+          hasCrossSectorThreat
             ? {
                 label: hasCrossSectorThreat
                   ? "Cross-sector threat detected"
-                  : "Critical detection",
+                  : riskLevel === "high"
+                    ? "Critical detection"
+                    : "Security warning",
+                tone: riskLevel === "medium" ? "medium" : "high",
                 title: hasCrossSectorThreat
                   ? "Coordinated hospitality voice attack detected"
                   : "Synthetic guest voice detected",
@@ -276,16 +310,41 @@ export default function HospitalitySecurity({
                   hasCrossSectorThreat
                     ? `Voice signature associated with ${threatOrigin}.`
                     : governance.reason ||
-                      "High synthetic-voice probability detected during a guest folio interaction.",
-                actions: hasCrossSectorThreat ? (
-                  <button
-                    type="button"
-                    onClick={() => setSimulatedThreat(false)}
-                    className="rounded-lg border border-rose-500/25 bg-rose-500/10 px-3 py-2 text-xs font-semibold text-rose-300"
-                  >
-                    Dismiss
-                  </button>
-                ) : null,
+                      (riskLevel === "high"
+                        ? "High synthetic-voice probability detected during a guest folio interaction."
+                        : "Medium synthetic-voice probability detected during a guest service request. Duty Manager notification is required."),
+                actions: (
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={
+                        riskLevel === "medium"
+                          ? handleMediumRiskAction
+                          : handlePrimaryDecisionAction
+                      }
+                      disabled={riskLevel === "medium" && alertSent}
+                      className={
+                        riskLevel === "medium"
+                          ? "rounded-lg border border-amber-400/30 bg-amber-400/10 px-3 py-2 text-xs font-semibold text-amber-200 transition hover:bg-amber-400/20 disabled:cursor-not-allowed disabled:opacity-50"
+                          : "rounded-lg border border-rose-400/30 bg-rose-500/15 px-3 py-2 text-xs font-semibold text-rose-200 transition hover:bg-rose-500/25"
+                      }
+                    >
+                      {riskLevel === "medium" && alertSent
+                        ? "Duty Manager Alerted ✓"
+                        : "Take Action"}
+                    </button>
+
+                    {hasCrossSectorThreat && (
+                      <button
+                        type="button"
+                        onClick={() => setSimulatedThreat(false)}
+                        className="rounded-lg border border-rose-500/25 bg-rose-500/10 px-3 py-2 text-xs font-semibold text-rose-300"
+                      >
+                        Dismiss
+                      </button>
+                    )}
+                  </div>
+                ),
               }
             : null
         }
