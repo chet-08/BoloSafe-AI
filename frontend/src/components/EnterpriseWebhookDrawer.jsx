@@ -130,54 +130,55 @@ export default function EnterpriseWebhookDrawer({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-md animate-in fade-in duration-200">
-      <div className="relative w-full max-w-2xl overflow-hidden rounded-2xl border border-white/20 bg-[#070b14] shadow-2xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-md animate-in fade-in duration-200">
+      <div className="relative w-full max-w-2xl overflow-hidden rounded-2xl border border-[var(--border-default)] bg-[var(--bg-surface)] shadow-[var(--shadow-panel)]">
+
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-white/10 bg-white/[0.03] px-6 py-4">
+        <div className="flex items-center justify-between border-b border-[var(--border-default)] bg-[var(--bg-card)] px-6 py-4">
           <div className="flex items-center gap-3">
-            <div className="flex size-9 items-center justify-center rounded-lg border border-cyan-400/30 bg-cyan-500/20 text-cyan-300">
+            <div className="flex size-9 items-center justify-center rounded-lg border border-[var(--accent-primary)]/30 bg-[var(--accent-primary-muted)] text-[var(--accent-primary-soft)]">
               <Terminal className="size-5" />
             </div>
             <div>
-              <h3 className="text-sm font-bold text-white flex items-center gap-2">
+              <h3 className="text-sm font-bold text-[var(--text-primary)] flex items-center gap-2">
                 Enterprise Webhook Actuator
-                <span className="rounded-full border border-emerald-400/40 bg-emerald-400/10 px-2 py-0.5 text-[10px] font-mono text-emerald-300">
+                <span className="rounded-full border border-[var(--status-success)]/35 bg-[var(--status-success)]/10 px-2 py-0.5 text-[10px] font-mono text-[var(--status-success)]">
                   {dispatchStatus === 'delivered' ? 'DELIVERED (HTTP 200)' : 'READY TO EMIT'}
                 </span>
               </h3>
-              <p className="text-[11px] text-slate-400 font-mono">
-                Target: <span className="text-cyan-300">{payloads.target_system}</span>
+              <p className="text-[11px] text-[var(--text-muted)] font-mono">
+                Target: <span className="text-[var(--accent-primary-soft)]">{payloads.target_system}</span>
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="rounded-lg p-1.5 text-slate-400 hover:bg-white/10 hover:text-white transition-colors"
+            className="rounded-lg p-1.5 text-[var(--text-muted)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)] transition-colors"
           >
             <X className="size-5" />
           </button>
         </div>
 
         {/* Endpoint Banner */}
-        <div className="border-b border-white/5 bg-[#03060c] px-6 py-2.5 font-mono text-xs flex items-center justify-between">
-          <div className="flex items-center gap-2 truncate text-slate-300">
-            <span className="font-bold text-emerald-400">POST</span>
-            <span className="text-slate-400 truncate">{payloads.endpoint_url}</span>
+        <div className="border-b border-[var(--border-default)] bg-[var(--bg-page)] px-6 py-2.5 font-mono text-xs flex items-center justify-between">
+          <div className="flex items-center gap-2 truncate text-[var(--text-secondary)]">
+            <span className="font-bold text-[var(--status-success)]">POST</span>
+            <span className="text-[var(--text-muted)] truncate">{payloads.endpoint_url}</span>
           </div>
           <div className="flex items-center gap-2">
             <button
               onClick={handleLiveDispatch}
               disabled={dispatchStatus === 'dispatching'}
-              className="flex items-center gap-1.5 rounded-lg border border-cyan-400/40 bg-cyan-500/20 px-2.5 py-1 text-[11px] font-semibold text-cyan-200 hover:bg-cyan-500/30 transition-all active:scale-95 disabled:opacity-50"
+              className="flex items-center gap-1.5 rounded-lg border border-[var(--accent-primary)]/35 bg-[var(--accent-primary-muted)] px-2.5 py-1 text-[11px] font-semibold text-[var(--accent-primary-soft)] hover:bg-[var(--accent-primary)]/20 transition-all active:scale-95 disabled:opacity-50"
             >
-              <Zap className="size-3 text-cyan-400" />
+              <Zap className="size-3 text-[var(--accent-primary-soft)]" />
               {dispatchStatus === 'dispatching' ? 'Emitting...' : dispatchStatus === 'delivered' ? 'Dispatched Again' : 'Dispatch Test Webhook'}
             </button>
             <button
               onClick={handleCopy}
-              className="flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] text-slate-300 hover:bg-white/10 hover:text-white transition-all"
+              className="flex items-center gap-1.5 rounded-lg border border-[var(--border-default)] bg-[var(--bg-hover)] px-2.5 py-1 text-[11px] text-[var(--text-secondary)] hover:bg-[var(--border-default)] hover:text-[var(--text-primary)] transition-all"
             >
-              {copied ? <CheckCircle2 className="size-3 text-emerald-400" /> : <Copy className="size-3" />}
+              {copied ? <CheckCircle2 className="size-3 text-[var(--status-success)]" /> : <Copy className="size-3" />}
               {copied ? "Copied" : "Copy JSON"}
             </button>
           </div>
@@ -185,26 +186,26 @@ export default function EnterpriseWebhookDrawer({
 
         {/* Code Content */}
         <div className="p-6">
-          <div className="rounded-xl border border-white/10 bg-black/60 p-4 font-mono text-xs text-cyan-300 overflow-x-auto max-h-[340px] leading-relaxed shadow-inner">
+          <div className="rounded-xl border border-[var(--code-border)] bg-[var(--code-bg)] p-4 font-mono text-xs text-[var(--code-text)] overflow-x-auto max-h-[340px] leading-relaxed shadow-inner">
             <pre>{jsonString}</pre>
           </div>
 
-          <div className="mt-4 flex items-center justify-between text-xs text-slate-400">
+          <div className="mt-4 flex items-center justify-between text-xs text-[var(--text-muted)]">
             <div className="flex items-center gap-2">
-              <ShieldCheck className="size-4 text-emerald-400" />
+              <ShieldCheck className="size-4 text-[var(--status-success)]" />
               <span>Cryptographically signed by BoloSafe-AI Risk Governance Core</span>
             </div>
-            <span className="font-mono text-slate-500">
+            <span className="font-mono text-[var(--text-subtle)]">
               {dispatchLatency ? `Delivered in ${dispatchLatency}ms` : 'Latency: ~4.2ms'}
             </span>
           </div>
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between border-t border-white/10 bg-white/[0.02] px-6 py-3">
-          <div className="text-xs text-slate-400">
+        <div className="flex items-center justify-between border-t border-[var(--border-default)] bg-[var(--bg-card)] px-6 py-3">
+          <div className="text-xs text-[var(--text-muted)]">
             {dispatchStatus === 'delivered' && (
-              <span className="text-emerald-400 font-mono flex items-center gap-1.5">
+              <span className="text-[var(--status-success)] font-mono flex items-center gap-1.5">
                 <CheckCircle2 className="size-3.5" />
                 Live Webhook Handshake Complete (HTTP 200 OK)
               </span>
@@ -212,7 +213,7 @@ export default function EnterpriseWebhookDrawer({
           </div>
           <button
             onClick={onClose}
-            className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-xs font-semibold text-slate-300 hover:bg-white/10 transition-colors"
+            className="rounded-xl border border-[var(--border-default)] bg-[var(--bg-hover)] px-4 py-2 text-xs font-semibold text-[var(--text-secondary)] hover:bg-[var(--border-default)] hover:text-[var(--text-primary)] transition-colors"
           >
             Close Inspector
           </button>

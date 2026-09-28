@@ -155,46 +155,43 @@ export default function AdversarialRobustness() {
   const curve = results?.curve_data
 
   return (
-    <div className="relative mx-auto max-w-5xl space-y-7 text-slate-100 adversarial-modern-shell">
+    <div className="relative mx-auto max-w-5xl space-y-7 adversarial-modern-shell">
 
       {/* =====================================================
-          AURORA BACKGROUND GLOW
+          AURORA BACKGROUND GLOW — dark mode only via low opacity
       ===================================================== */}
-
-      <div className="pointer-events-none absolute -left-32 top-0 h-80 w-80 rounded-full bg-cyan-400/[0.035] blur-3xl" />
-      <div className="pointer-events-none absolute -right-32 top-24 h-96 w-96 rounded-full bg-violet-500/[0.045] blur-3xl" />
-      <div className="pointer-events-none absolute left-1/2 top-[35%] h-72 w-72 -translate-x-1/2 rounded-full bg-fuchsia-500/[0.02] blur-3xl" />
+      <div className="pointer-events-none absolute -left-32 top-0 h-80 w-80 rounded-full bg-[var(--accent-primary)]/[0.04] blur-3xl" />
+      <div className="pointer-events-none absolute -right-32 top-24 h-96 w-96 rounded-full bg-[var(--accent-primary)]/[0.03] blur-3xl" />
 
       {/* =====================================================
           HEADER
       ===================================================== */}
 
-      <div className="relative flex flex-col gap-4 border-b border-white/10 pb-5 sm:flex-row sm:items-start sm:justify-between">
+      <div className="relative flex flex-col gap-4 border-b border-[var(--border-default)] pb-5 sm:flex-row sm:items-start sm:justify-between">
 
         <div>
           <div className="mb-2 flex items-center gap-2">
-            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-cyan-300 shadow-[0_0_10px_rgba(34,211,238,0.75)]" />
+            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[var(--accent-primary-soft)]" />
 
-            <p className="text-[11px] font-bold font-mono uppercase tracking-[0.18em] text-cyan-300">
+            <p className="text-[11px] font-bold font-mono uppercase tracking-[0.18em] text-[var(--accent-primary-soft)]">
               Adversarial Security Lab
             </p>
           </div>
 
-          <h1 className="flex items-center gap-2.5 bg-gradient-to-r from-white via-cyan-100 to-violet-200 bg-clip-text text-2xl font-black tracking-tight text-transparent md:text-3xl">
-            <ShieldAlert className="shrink-0 text-cyan-300" size={25} />
-            Adversarial Attack & Defense Studio
+          <h1 className="flex items-center gap-2.5 text-2xl font-black tracking-tight text-[var(--text-primary)] md:text-3xl">
+            <ShieldAlert className="shrink-0 text-[var(--accent-primary-soft)]" size={25} />
+            Adversarial Attack &amp; Defense Studio
           </h1>
 
-          <p className="mt-2 max-w-3xl text-[13px] leading-5 text-slate-500">
-            Red-team BoloSafe-AI under real-world telecom codecs, noise & pitch
+          <p className="mt-2 max-w-3xl text-[13px] leading-5 text-[var(--text-muted)]">
+            Red-team BoloSafe-AI under real-world telecom codecs, noise &amp; pitch
             attacks — and defend in real time.
           </p>
         </div>
 
         {/* SHIELD STATUS */}
-
         <div className="flex items-center gap-2">
-          <span className="inline-flex items-center gap-2 rounded-full border border-emerald-400/25 bg-emerald-400/[0.07] px-3.5 py-2 text-[11px] font-semibold text-emerald-300 shadow-[0_0_18px_rgba(52,211,153,0.05)]">
+          <span className="inline-flex items-center gap-2 rounded-full border border-[var(--status-success)]/25 bg-[var(--status-success)]/[0.07] px-3.5 py-2 text-[11px] font-semibold text-[var(--status-success)]">
             <ShieldCheck className="size-3.5" />
             Active Purifier Shield Ready
           </span>
@@ -205,10 +202,10 @@ export default function AdversarialRobustness() {
           CONTROL STUDIO
       ===================================================== */}
 
-      <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.025] p-6 shadow-[0_20px_60px_rgba(0,0,0,0.18)] backdrop-blur-sm">
+      <div className="relative overflow-hidden rounded-2xl border border-[var(--border-default)] bg-[var(--bg-card)] p-6 shadow-[var(--shadow-panel)]">
 
-        {/* Aurora top line */}
-        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-cyan-300/60 to-transparent" />
+        {/* Accent top line */}
+        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[var(--accent-primary)]/40 to-transparent" />
 
         <div className="space-y-7">
 
@@ -217,107 +214,99 @@ export default function AdversarialRobustness() {
           ================================================= */}
 
           <div>
-            <label className="mb-3 block text-[12px] font-bold font-mono uppercase tracking-[0.14em] text-slate-400">
+            <label className="mb-3 block text-[12px] font-bold font-mono uppercase tracking-[0.14em] text-[var(--text-muted)]">
               1. Select Audio Source
             </label>
 
             <div className="grid grid-cols-3 gap-3">
 
               {/* Dataset */}
-
               <button
                 onClick={() => setSourceType('dataset')}
                 className={`group relative flex items-center justify-center gap-2 overflow-hidden rounded-xl border px-4 py-3 text-[12px] font-bold transition-all cursor-pointer ${
                   sourceType === 'dataset'
-                    ? 'border-cyan-300/35 bg-gradient-to-r from-cyan-400/[0.13] via-violet-500/[0.08] to-transparent text-cyan-200 shadow-[0_0_24px_rgba(34,211,238,0.07)]'
-                    : 'border-white/10 bg-white/[0.025] text-slate-400 hover:border-white/20 hover:bg-white/[0.045] hover:text-white'
+                    ? 'border-[var(--accent-primary)]/40 bg-[var(--accent-primary-muted)] text-[var(--accent-primary-soft)]'
+                    : 'border-[var(--border-default)] bg-[var(--bg-hover)] text-[var(--text-muted)] hover:border-[var(--accent-primary)]/25 hover:text-[var(--text-primary)]'
                 }`}
               >
                 {sourceType === 'dataset' && (
-                  <span className="absolute inset-y-0 left-0 w-0.5 bg-gradient-to-b from-cyan-300 via-violet-400 to-fuchsia-400" />
+                  <span className="absolute inset-y-0 left-0 w-0.5 bg-[var(--accent-primary)]" />
                 )}
 
                 <Database
                   size={16}
                   className={
                     sourceType === 'dataset'
-                      ? 'text-cyan-300'
-                      : 'text-slate-500 group-hover:text-violet-300'
+                      ? 'text-[var(--accent-primary-soft)]'
+                      : 'text-[var(--text-muted)] group-hover:text-[var(--text-primary)]'
                   }
                 />
-
                 <span>Dataset Library</span>
               </button>
 
               {/* Upload */}
-
               <button
                 onClick={() => setSourceType('upload')}
                 className={`group relative flex items-center justify-center gap-2 overflow-hidden rounded-xl border px-4 py-3 text-[12px] font-bold transition-all cursor-pointer ${
                   sourceType === 'upload'
-                    ? 'border-cyan-300/35 bg-gradient-to-r from-cyan-400/[0.13] via-violet-500/[0.08] to-transparent text-cyan-200 shadow-[0_0_24px_rgba(34,211,238,0.07)]'
-                    : 'border-white/10 bg-white/[0.025] text-slate-400 hover:border-white/20 hover:bg-white/[0.045] hover:text-white'
+                    ? 'border-[var(--accent-primary)]/40 bg-[var(--accent-primary-muted)] text-[var(--accent-primary-soft)]'
+                    : 'border-[var(--border-default)] bg-[var(--bg-hover)] text-[var(--text-muted)] hover:border-[var(--accent-primary)]/25 hover:text-[var(--text-primary)]'
                 }`}
               >
                 {sourceType === 'upload' && (
-                  <span className="absolute inset-y-0 left-0 w-0.5 bg-gradient-to-b from-cyan-300 via-violet-400 to-fuchsia-400" />
+                  <span className="absolute inset-y-0 left-0 w-0.5 bg-[var(--accent-primary)]" />
                 )}
 
                 <Upload
                   size={16}
                   className={
                     sourceType === 'upload'
-                      ? 'text-cyan-300'
-                      : 'text-slate-500 group-hover:text-violet-300'
+                      ? 'text-[var(--accent-primary-soft)]'
+                      : 'text-[var(--text-muted)] group-hover:text-[var(--text-primary)]'
                   }
                 />
-
                 <span>Upload Audio</span>
               </button>
 
               {/* Mic */}
-
               <button
                 onClick={() => setSourceType('mic')}
                 className={`group relative flex items-center justify-center gap-2 overflow-hidden rounded-xl border px-4 py-3 text-[12px] font-bold transition-all cursor-pointer ${
                   sourceType === 'mic'
-                    ? 'border-cyan-300/35 bg-gradient-to-r from-cyan-400/[0.13] via-violet-500/[0.08] to-transparent text-cyan-200 shadow-[0_0_24px_rgba(34,211,238,0.07)]'
-                    : 'border-white/10 bg-white/[0.025] text-slate-400 hover:border-white/20 hover:bg-white/[0.045] hover:text-white'
+                    ? 'border-[var(--accent-primary)]/40 bg-[var(--accent-primary-muted)] text-[var(--accent-primary-soft)]'
+                    : 'border-[var(--border-default)] bg-[var(--bg-hover)] text-[var(--text-muted)] hover:border-[var(--accent-primary)]/25 hover:text-[var(--text-primary)]'
                 }`}
               >
                 {sourceType === 'mic' && (
-                  <span className="absolute inset-y-0 left-0 w-0.5 bg-gradient-to-b from-cyan-300 via-violet-400 to-fuchsia-400" />
+                  <span className="absolute inset-y-0 left-0 w-0.5 bg-[var(--accent-primary)]" />
                 )}
 
                 <Mic
                   size={16}
                   className={
                     sourceType === 'mic'
-                      ? 'text-cyan-300'
-                      : 'text-slate-500 group-hover:text-violet-300'
+                      ? 'text-[var(--accent-primary-soft)]'
+                      : 'text-[var(--text-muted)] group-hover:text-[var(--text-primary)]'
                   }
                 />
-
                 <span>Live Mic Recording</span>
               </button>
             </div>
 
             {/* SOURCE DETAILS */}
-
-            <div className="mt-3 rounded-xl border border-white/[0.08] bg-black/20 p-4">
+            <div className="mt-3 rounded-xl border border-[var(--border-default)] bg-[var(--bg-surface)] p-4">
 
               {sourceType === 'dataset' && (
                 <div className="flex items-center gap-3">
-                  <span className="shrink-0 text-[12px] text-slate-500 font-mono">
+                  <span className="shrink-0 text-[12px] text-[var(--text-muted)] font-mono">
                     Sample:
                   </span>
-
                   <select
                     value={selectedDatasetPath}
                     onChange={(e) =>
                       setSelectedDatasetPath(e.target.value)
                     }
-                    className="flex-1 rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-[12px] text-slate-200 outline-none transition focus:border-cyan-300/50 focus:ring-1 focus:ring-cyan-300/10 font-mono"
+                    className="flex-1 rounded-lg border border-[var(--border-default)] bg-[var(--bg-card)] px-3 py-2 text-[12px] text-[var(--text-primary)] outline-none transition focus:border-[var(--accent-primary)] font-mono"
                   >
                     {datasetSamples.map((s) => (
                       <option key={s.id} value={s.id}>
@@ -336,18 +325,17 @@ export default function AdversarialRobustness() {
                     onChange={(e) =>
                       setUploadedFile(e.target.files[0])
                     }
-                    className="text-[12px] text-slate-300 file:mr-4 file:cursor-pointer file:rounded-lg file:border-0 file:bg-cyan-300/10 file:px-3 file:py-2 file:text-[11px] file:font-semibold file:text-cyan-300 hover:file:bg-cyan-300/20"
+                    className="text-[12px] text-[var(--text-secondary)] file:mr-4 file:cursor-pointer file:rounded-lg file:border-0 file:bg-[var(--accent-primary-muted)] file:px-3 file:py-2 file:text-[11px] file:font-semibold file:text-[var(--accent-primary-soft)] hover:file:bg-[var(--accent-primary)]/20"
                   />
                 </div>
               )}
 
               {sourceType === 'mic' && (
                 <div className="flex flex-wrap items-center gap-4">
-
                   {!isRecording ? (
                     <button
                       onClick={startRecording}
-                      className="flex cursor-pointer items-center gap-2 rounded-lg border border-cyan-300/20 bg-cyan-300/10 px-4 py-2 text-[12px] font-bold text-cyan-200 transition hover:border-cyan-300/35 hover:bg-cyan-300/15"
+                      className="flex cursor-pointer items-center gap-2 rounded-lg border border-[var(--accent-primary)]/25 bg-[var(--accent-primary-muted)] px-4 py-2 text-[12px] font-bold text-[var(--accent-primary-soft)] transition hover:border-[var(--accent-primary)]/40 hover:bg-[var(--accent-primary)]/15"
                     >
                       <Mic size={14} />
                       Start Mic Recording
@@ -355,15 +343,15 @@ export default function AdversarialRobustness() {
                   ) : (
                     <button
                       onClick={stopRecording}
-                      className="flex cursor-pointer items-center gap-2 rounded-lg border border-red-400/30 bg-red-500/10 px-4 py-2 text-[12px] font-bold text-red-300 shadow-[0_0_18px_rgba(239,68,68,0.08)] animate-pulse transition hover:bg-red-500/15"
+                      className="flex cursor-pointer items-center gap-2 rounded-lg border border-[var(--status-danger)]/30 bg-[var(--status-danger)]/10 px-4 py-2 text-[12px] font-bold text-[var(--status-danger)] animate-pulse transition hover:bg-[var(--status-danger)]/15"
                     >
-                      <span className="h-2 w-2 rounded-full bg-red-400 shadow-[0_0_8px_rgba(248,113,113,0.8)]" />
+                      <span className="h-2 w-2 rounded-full bg-[var(--status-danger)]" />
                       Stop Recording
                     </button>
                   )}
 
                   {recordedBlob && (
-                    <span className="flex items-center gap-2 text-[12px] font-mono text-emerald-300">
+                    <span className="flex items-center gap-2 text-[12px] font-mono text-[var(--status-success)]">
                       <ShieldCheck size={14} />
                       Audio captured — ready to test
                     </span>
@@ -377,19 +365,18 @@ export default function AdversarialRobustness() {
               2. ATTACK & DEFENSE CONTROLS
           ================================================= */}
 
-          <div className="grid grid-cols-1 gap-4 border-t border-white/[0.06] pt-6 md:grid-cols-3">
+          <div className="grid grid-cols-1 gap-4 border-t border-[var(--border-default)] pt-6 md:grid-cols-3">
 
             {/* Attack Type */}
-
             <div>
-              <label className="mb-2 block text-[12px] font-bold font-mono uppercase tracking-[0.12em] text-slate-400">
+              <label className="mb-2 block text-[12px] font-bold font-mono uppercase tracking-[0.12em] text-[var(--text-muted)]">
                 Adversarial Attack
               </label>
 
               <select
                 value={attackType}
                 onChange={(e) => setAttackType(e.target.value)}
-                className="w-full rounded-xl border border-white/10 bg-black/25 px-3.5 py-2.5 text-[12px] text-slate-200 outline-none transition focus:border-cyan-300/50 focus:ring-1 focus:ring-cyan-300/10 font-mono"
+                className="w-full rounded-xl border border-[var(--border-default)] bg-[var(--bg-surface)] px-3.5 py-2.5 text-[12px] text-[var(--text-primary)] outline-none transition focus:border-[var(--accent-primary)] font-mono"
               >
                 <option value="opus">
                   Opus VoIP Compression (WhatsApp/Cellular)
@@ -410,14 +397,12 @@ export default function AdversarialRobustness() {
             </div>
 
             {/* Intensity */}
-
             <div>
               <div className="mb-2 flex items-center justify-between">
-                <label className="text-[12px] font-bold font-mono uppercase tracking-[0.12em] text-slate-400">
+                <label className="text-[12px] font-bold font-mono uppercase tracking-[0.12em] text-[var(--text-muted)]">
                   Attack Intensity
                 </label>
-
-                <span className="rounded-md border border-cyan-300/15 bg-cyan-300/[0.06] px-2 py-0.5 text-[11px] font-mono text-cyan-300">
+                <span className="rounded-md border border-[var(--accent-primary)]/20 bg-[var(--accent-primary-muted)] px-2 py-0.5 text-[11px] font-mono text-[var(--accent-primary-soft)]">
                   Level {intensity}/4
                 </span>
               </div>
@@ -430,19 +415,18 @@ export default function AdversarialRobustness() {
                 onChange={(e) =>
                   setIntensity(Number(e.target.value))
                 }
-                className="h-2 w-full cursor-pointer appearance-none rounded-lg bg-white/[0.06] accent-cyan-300"
+                className="h-2 w-full cursor-pointer appearance-none rounded-lg bg-[var(--bg-hover)] accent-[var(--accent-primary)]"
               />
 
-              <div className="mt-2 flex justify-between text-[10px] font-mono text-slate-600">
+              <div className="mt-2 flex justify-between text-[10px] font-mono text-[var(--text-subtle)]">
                 <span>LOW</span>
                 <span>HIGH</span>
               </div>
             </div>
 
             {/* Defense */}
-
             <div>
-              <label className="mb-2 block text-[12px] font-bold font-mono uppercase tracking-[0.12em] text-slate-400">
+              <label className="mb-2 block text-[12px] font-bold font-mono uppercase tracking-[0.12em] text-[var(--text-muted)]">
                 Defense Shield
               </label>
 
@@ -450,12 +434,12 @@ export default function AdversarialRobustness() {
                 onClick={() => setEnableDefense(!enableDefense)}
                 className={`relative flex w-full cursor-pointer items-center justify-between overflow-hidden rounded-xl border px-3.5 py-2.5 text-[12px] font-bold transition-all ${
                   enableDefense
-                    ? 'border-emerald-400/25 bg-emerald-400/[0.06] text-emerald-300 shadow-[0_0_18px_rgba(52,211,153,0.04)]'
-                    : 'border-white/10 bg-white/[0.025] text-slate-500'
+                    ? 'border-[var(--status-success)]/25 bg-[var(--status-success)]/[0.06] text-[var(--status-success)]'
+                    : 'border-[var(--border-default)] bg-[var(--bg-hover)] text-[var(--text-muted)]'
                 }`}
               >
                 {enableDefense && (
-                  <span className="absolute inset-y-0 left-0 w-0.5 bg-emerald-400" />
+                  <span className="absolute inset-y-0 left-0 w-0.5 bg-[var(--status-success)]" />
                 )}
 
                 <span className="flex items-center gap-2">
@@ -468,8 +452,8 @@ export default function AdversarialRobustness() {
                 <span
                   className={`size-2 rounded-full ${
                     enableDefense
-                      ? 'animate-pulse bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.7)]'
-                      : 'bg-slate-700'
+                      ? 'animate-pulse bg-[var(--status-success)]'
+                      : 'bg-[var(--border-strong)]'
                   }`}
                 />
               </button>
@@ -483,22 +467,20 @@ export default function AdversarialRobustness() {
           <button
             onClick={runAnalysis}
             disabled={isProcessing}
-            className="group relative flex w-full cursor-pointer items-center justify-center gap-2 overflow-hidden rounded-xl border border-cyan-300/20 bg-gradient-to-r from-cyan-300/90 via-green-400/90 to-cyan-400/80 py-3.5 text-[12px] font-bold tracking-[0.08em] text-slate-950 shadow-[0_0_28px_rgba(34,211,238,0.12)] transition-all hover:shadow-[0_0_36px_rgba(139,92,246,0.18)] disabled:cursor-not-allowed disabled:opacity-50 font-mono"
+            className="group relative flex w-full cursor-pointer items-center justify-center gap-2 overflow-hidden rounded-xl bg-[var(--accent-primary)] px-4 py-3.5 text-[12px] font-bold tracking-[0.08em] text-white shadow-[var(--shadow-card)] transition-all hover:bg-[var(--accent-primary-soft)] disabled:cursor-not-allowed disabled:opacity-50 font-mono"
           >
-            <span className="absolute inset-0 bg-gradient-to-r from-white/10 via-transparent to-white/10 opacity-0 transition-opacity group-hover:opacity-100" />
-
             {isProcessing ? (
               <>
                 <RefreshCw className="relative size-4 animate-spin" />
                 <span className="relative">
-                  Running DSP Defense Pipeline & Plotting Response Curves...
+                  Running DSP Defense Pipeline &amp; Plotting Response Curves...
                 </span>
               </>
             ) : (
               <>
                 <Flame className="relative size-4" />
                 <span className="relative">
-                  Run Adversarial Attack & Defense Test
+                  Run Adversarial Attack &amp; Defense Test
                 </span>
               </>
             )}
@@ -518,29 +500,28 @@ export default function AdversarialRobustness() {
             {/* =================================================
                 CLEAN AUDIO
             ================================================= */}
+            <div className="relative overflow-hidden rounded-2xl border border-[var(--border-default)] bg-[var(--bg-card)] p-5 shadow-[var(--shadow-card)]">
 
-            <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.025] p-5 shadow-[0_15px_45px_rgba(0,0,0,0.14)] backdrop-blur-sm">
-
-              <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-cyan-300/60 via-violet-400/40 to-transparent" />
+              <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-[var(--accent-primary)]/40 via-[var(--accent-primary-soft)]/30 to-transparent" />
 
               <div className="flex items-center justify-between">
-                <span className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-400 font-mono">
+                <span className="text-[11px] font-bold uppercase tracking-[0.12em] text-[var(--text-muted)] font-mono">
                   1. Original Clean
                 </span>
 
-                <span className="rounded-md border border-white/10 bg-black/20 px-2 py-1 text-[10px] text-slate-400 font-mono">
+                <span className="rounded-md border border-[var(--border-default)] bg-[var(--bg-hover)] px-2 py-1 text-[10px] text-[var(--text-muted)] font-mono">
                   Baseline
                 </span>
               </div>
 
               <div className="mt-4">
-                <p className="text-3xl font-black text-white font-mono">
+                <p className="text-3xl font-black text-[var(--text-primary)] font-mono">
                   {(results.clean.ai_probability * 100).toFixed(1)}%
                 </p>
 
-                <p className="mt-1.5 text-[12px] text-slate-500">
+                <p className="mt-1.5 text-[12px] text-[var(--text-muted)]">
                   Risk:{' '}
-                  <span className="text-slate-300">
+                  <span className="text-[var(--text-primary)]">
                     {results.clean.risk_level}
                   </span>
                 </p>
@@ -548,77 +529,69 @@ export default function AdversarialRobustness() {
 
               <button
                 onClick={() =>
-                  togglePlayAudio(
-                    results.clean.preview_url,
-                    'clean'
-                  )
+                  togglePlayAudio(results.clean.preview_url, 'clean')
                 }
-                className="mt-4 flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg border border-cyan-300/10 bg-black/25 py-2.5 text-[11px] font-bold text-cyan-300 transition hover:border-cyan-300/25 hover:bg-cyan-300/[0.06] font-mono"
+                className="mt-4 flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg border border-[var(--accent-primary)]/15 bg-[var(--accent-primary-muted)] py-2.5 text-[11px] font-bold text-[var(--accent-primary-soft)] transition hover:border-[var(--accent-primary)]/30 hover:bg-[var(--accent-primary)]/15 font-mono"
               >
                 {currentlyPlaying === 'clean' ? (
                   <Pause size={14} />
                 ) : (
                   <Play size={14} />
                 )}
-
-                {currentlyPlaying === 'clean'
-                  ? 'Pause Original'
-                  : 'Listen to Original'}
+                {currentlyPlaying === 'clean' ? 'Pause Original' : 'Listen to Original'}
               </button>
             </div>
 
             {/* =================================================
                 ATTACKED AUDIO
             ================================================= */}
-
             <div
               className={`relative overflow-hidden rounded-2xl border p-5 transition-all ${
                 results.attacked.evasion_detected
-                  ? 'border-red-400/35 bg-red-500/[0.055] shadow-[0_0_28px_rgba(239,68,68,0.08)]'
-                  : 'border-white/10 bg-white/[0.025]'
+                  ? 'border-[var(--status-danger)]/35 bg-[var(--status-danger)]/[0.055] shadow-[0_0_28px_rgba(212,85,103,0.08)]'
+                  : 'border-[var(--border-default)] bg-[var(--bg-card)]'
               }`}
             >
-
               {results.attacked.evasion_detected && (
-                <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-red-400 to-transparent" />
+                <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[var(--status-danger)] to-transparent" />
               )}
 
               <div className="flex items-center justify-between gap-2">
                 <span
                   className={`text-[11px] font-bold uppercase tracking-[0.12em] font-mono ${
                     results.attacked.evasion_detected
-                      ? 'text-red-300'
-                      : 'text-slate-400'
+                      ? 'text-[var(--status-danger)]'
+                      : 'text-[var(--text-muted)]'
                   }`}
                 >
                   2. Attacked Audio
                 </span>
 
                 {results.attacked.evasion_detected && (
-                  <span className="animate-pulse rounded-md border border-red-400/25 bg-red-500/10 px-2 py-1 text-[10px] font-bold text-red-300 font-mono">
+                  <span className="animate-pulse rounded-md border border-[var(--status-danger)]/25 bg-[var(--status-danger)]/10 px-2 py-1 text-[10px] font-bold text-[var(--status-danger)] font-mono">
                     🚨 EVADED!
                   </span>
                 )}
               </div>
 
               <div className="mt-4">
-                <p className="text-3xl font-black text-white font-mono">
+                <p className="text-3xl font-black text-[var(--text-primary)] font-mono">
                   {(results.attacked.ai_probability * 100).toFixed(1)}%
                 </p>
 
                 <p
                   className={`mt-1.5 text-[12px] ${
                     results.attacked.evasion_detected
-                      ? 'text-red-300'
-                      : 'text-slate-500'
+                      ? 'text-[var(--status-danger)]'
+                      : 'text-[var(--text-muted)]'
                   }`}
                 >
                   Risk:{' '}
                   <span
                     className={
                       results.attacked.evasion_detected
-                        ? 'text-red-200'
-                        : 'text-slate-300'
+                        ? 'text-[var(--status-danger)]'
+                        : 'text-[var(--text-primary)]'
                     }
                   >
                     {results.attacked.risk_level}
@@ -628,79 +601,56 @@ export default function AdversarialRobustness() {
 
               <button
                 onClick={() =>
-                  togglePlayAudio(
-                    results.attacked.preview_url,
-                    'attacked'
-                  )
+                  togglePlayAudio(results.attacked.preview_url, 'attacked')
                 }
                 className={`mt-4 flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg border py-2.5 text-[11px] font-bold transition font-mono ${
                   results.attacked.evasion_detected
-                    ? 'border-red-400/15 bg-black/20 text-red-300 hover:border-red-400/30 hover:bg-red-500/[0.06]'
-                    : 'border-white/10 bg-black/20 text-slate-300 hover:border-white/20 hover:bg-white/[0.04]'
+                    ? 'border-[var(--status-danger)]/20 bg-[var(--status-danger)]/[0.05] text-[var(--status-danger)] hover:bg-[var(--status-danger)]/10'
+                    : 'border-[var(--border-default)] bg-[var(--bg-hover)] text-[var(--text-secondary)] hover:bg-[var(--bg-card)]'
                 }`}
               >
-                {currentlyPlaying === 'attacked' ? (
-                  <Pause size={14} />
-                ) : (
-                  <Play size={14} />
-                )}
-
-                {currentlyPlaying === 'attacked'
-                  ? 'Pause Attacked'
-                  : 'Listen to Attacked'}
+                {currentlyPlaying === 'attacked' ? <Pause size={14} /> : <Play size={14} />}
+                {currentlyPlaying === 'attacked' ? 'Pause Attacked' : 'Listen to Attacked'}
               </button>
             </div>
 
             {/* =================================================
                 DEFENDED AUDIO
             ================================================= */}
+            <div className="relative overflow-hidden rounded-2xl border border-[var(--status-success)]/20 bg-[var(--status-success)]/[0.04] p-5">
 
-            <div className="relative overflow-hidden rounded-2xl border border-emerald-400/20 bg-emerald-400/[0.025] p-5 shadow-[0_0_28px_rgba(52,211,153,0.05)]">
-
-              <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-400/60 to-transparent" />
+              <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[var(--status-success)]/50 to-transparent" />
 
               <div className="flex items-center justify-between">
-                <span className="text-[11px] font-bold uppercase tracking-[0.12em] text-emerald-300 font-mono">
+                <span className="text-[11px] font-bold uppercase tracking-[0.12em] text-[var(--status-success)] font-mono">
                   3. Defended Audio
                 </span>
 
-                <span className="rounded-md border border-emerald-400/20 bg-emerald-400/[0.07] px-2 py-1 text-[10px] font-bold text-emerald-300 font-mono">
+                <span className="rounded-md border border-[var(--status-success)]/20 bg-[var(--status-success)]/[0.07] px-2 py-1 text-[10px] font-bold text-[var(--status-success)] font-mono">
                   🛡️ RESTORED
                 </span>
               </div>
 
               <div className="mt-4">
-                <p className="text-3xl font-black text-white font-mono">
+                <p className="text-3xl font-black text-[var(--text-primary)] font-mono">
                   {(results.defended.ai_probability * 100).toFixed(1)}%
                 </p>
 
-                <p className="mt-1.5 text-[12px] text-emerald-300">
+                <p className="mt-1.5 text-[12px] text-[var(--status-success)]">
                   Recovery:{' '}
-                  {results.defended.recovery_delta_percent > 0
-                    ? '+'
-                    : ''}
+                  {results.defended.recovery_delta_percent > 0 ? '+' : ''}
                   {results.defended.recovery_delta_percent}%
                 </p>
               </div>
 
               <button
                 onClick={() =>
-                  togglePlayAudio(
-                    results.defended.preview_url,
-                    'defended'
-                  )
+                  togglePlayAudio(results.defended.preview_url, 'defended')
                 }
-                className="mt-4 flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg border border-emerald-400/15 bg-black/20 py-2.5 text-[11px] font-bold text-emerald-300 transition hover:border-emerald-400/30 hover:bg-emerald-400/[0.06] font-mono"
+                className="mt-4 flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg border border-[var(--status-success)]/15 bg-[var(--status-success)]/[0.05] py-2.5 text-[11px] font-bold text-[var(--status-success)] transition hover:bg-[var(--status-success)]/[0.10] font-mono"
               >
-                {currentlyPlaying === 'defended' ? (
-                  <Pause size={14} />
-                ) : (
-                  <Play size={14} />
-                )}
-
-                {currentlyPlaying === 'defended'
-                  ? 'Pause Defended'
-                  : 'Listen to Defended'}
+                {currentlyPlaying === 'defended' ? <Pause size={14} /> : <Play size={14} />}
+                {currentlyPlaying === 'defended' ? 'Pause Defended' : 'Listen to Defended'}
               </button>
             </div>
           </div>
@@ -709,36 +659,27 @@ export default function AdversarialRobustness() {
               DEFENSE TELEMETRY
           ================================================= */}
 
-          <div className="relative flex flex-wrap items-center justify-between gap-4 overflow-hidden rounded-xl border border-white/10 bg-black/20 p-4 font-mono text-[11px]">
+          <div className="relative flex flex-wrap items-center justify-between gap-4 overflow-hidden rounded-xl border border-[var(--border-default)] bg-[var(--bg-hover)] p-4 font-mono text-[11px]">
 
-            <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-violet-400/30 to-transparent" />
+            <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[var(--accent-primary)]/20 to-transparent" />
 
             <div>
-              <span className="text-slate-500">
-                Attack Signature:{' '}
-              </span>
-
-              <span className="font-bold text-slate-200">
+              <span className="text-[var(--text-muted)]">Attack Signature: </span>
+              <span className="font-bold text-[var(--text-primary)]">
                 {results.defended.attack_detected}
               </span>
             </div>
 
             <div>
-              <span className="text-slate-500">
-                Defense Algorithm:{' '}
-              </span>
-
-              <span className="font-bold text-emerald-300">
+              <span className="text-[var(--text-muted)]">Defense Algorithm: </span>
+              <span className="font-bold text-[var(--status-success)]">
                 {results.defended.defense_applied}
               </span>
             </div>
 
             <div>
-              <span className="text-slate-500">
-                Purification Latency:{' '}
-              </span>
-
-              <span className="font-bold text-cyan-300">
+              <span className="text-[var(--text-muted)]">Purification Latency: </span>
+              <span className="font-bold text-[var(--accent-primary-soft)]">
                 {results.defended.defense_latency_ms} ms
               </span>
             </div>
@@ -750,29 +691,23 @@ export default function AdversarialRobustness() {
           LIVE DYNAMIC 3-CURVE RESPONSE GRAPH
       ===================================================== */}
 
-      <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.025] p-6 shadow-[0_20px_60px_rgba(0,0,0,0.18)] backdrop-blur-sm">
+      <div className="relative overflow-hidden rounded-2xl border border-[var(--border-default)] bg-[var(--bg-card)] p-6 shadow-[var(--shadow-panel)]">
 
-        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-violet-400/50 to-transparent" />
+        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[var(--accent-primary)]/30 to-transparent" />
 
         {/* GRAPH HEADER */}
-
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-
           <div>
             <div className="flex items-center gap-2">
-              <span className="flex size-7 items-center justify-center rounded-lg border border-violet-400/15 bg-violet-400/[0.06]">
-                <TrendingDown
-                  size={15}
-                  className="text-violet-300"
-                />
+              <span className="flex size-7 items-center justify-center rounded-lg border border-[var(--accent-primary)]/20 bg-[var(--accent-primary-muted)]">
+                <TrendingDown size={15} className="text-[var(--accent-primary-soft)]" />
               </span>
-
-              <h2 className="text-[13px] font-bold text-white">
+              <h2 className="text-[13px] font-bold text-[var(--text-primary)]">
                 Live Attack Dip vs. Defense Restoration Curve
               </h2>
             </div>
 
-            <p className="mt-1.5 text-[12px] leading-5 text-slate-500">
+            <p className="mt-1.5 text-[12px] leading-5 text-[var(--text-muted)]">
               Dynamically generated from real model evaluations on this
               specific audio file across 5 intensity levels
             </p>
@@ -783,28 +718,25 @@ export default function AdversarialRobustness() {
             LEGEND
         ================================================= */}
 
-        <div className="my-4 flex flex-wrap items-center justify-center gap-x-7 gap-y-2 border-y border-white/[0.07] py-3 font-mono text-[11px]">
+        <div className="my-4 flex flex-wrap items-center justify-center gap-x-7 gap-y-2 border-y border-[var(--border-default)] py-3 font-mono text-[11px]">
 
           <div className="flex items-center gap-2">
-            <span className="size-2 rounded-full bg-cyan-300 shadow-[0_0_8px_rgba(34,211,238,0.65)]" />
-
-            <span className="font-semibold text-slate-300">
+            <span className="size-2 rounded-full bg-[var(--accent-primary-soft)]" />
+            <span className="font-semibold text-[var(--text-secondary)]">
               1. Baseline Voice (Clean)
             </span>
           </div>
 
           <div className="flex items-center gap-2">
-            <span className="size-2 rounded-full bg-red-400 shadow-[0_0_8px_rgba(248,113,113,0.65)]" />
-
-            <span className="font-semibold text-red-300">
+            <span className="size-2 rounded-full bg-[var(--status-danger)]" />
+            <span className="font-semibold text-[var(--status-danger)]">
               2. The Dip (Attacked Voice)
             </span>
           </div>
 
           <div className="flex items-center gap-2">
-            <span className="size-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.65)]" />
-
-            <span className="font-semibold text-emerald-300">
+            <span className="size-2 rounded-full bg-[var(--status-success)]" />
+            <span className="font-semibold text-[var(--status-success)]">
               3. The Defense (Shield Active)
             </span>
           </div>
@@ -821,23 +753,19 @@ export default function AdversarialRobustness() {
               viewBox={`0 0 ${chartWidth} ${chartHeight}`}
               className="h-auto w-full overflow-visible select-none"
             >
-
               {/* Evasion Zone */}
-
               <rect
                 x={pad.left}
                 y={getY(0.5)}
-                width={
-                  chartWidth - pad.left - pad.right
-                }
+                width={chartWidth - pad.left - pad.right}
                 height={getY(0.0) - getY(0.5)}
-                fill="rgba(239, 68, 68, 0.045)"
+                fill="rgba(212, 85, 103, 0.04)"
               />
 
               <text
                 x={chartWidth - pad.right - 10}
                 y={getY(0.25)}
-                fill="rgba(248, 113, 113, 0.38)"
+                fill="rgba(212, 85, 103, 0.45)"
                 fontSize="12"
                 fontWeight="bold"
                 textAnchor="end"
@@ -847,61 +775,47 @@ export default function AdversarialRobustness() {
               </text>
 
               {/* Grid Lines & Y Axis */}
+              {[1.0, 0.8, 0.6, 0.5, 0.4, 0.2, 0].map((val) => {
+                const y = getY(val)
+                const isThresh = val === 0.5
 
-              {[1.0, 0.8, 0.6, 0.5, 0.4, 0.2, 0].map(
-                (val) => {
-                  const y = getY(val)
-                  const isThresh = val === 0.5
+                return (
+                  <g key={val}>
+                    <line
+                      x1={pad.left}
+                      y1={y}
+                      x2={chartWidth - pad.right}
+                      y2={y}
+                      stroke={
+                        isThresh
+                          ? 'var(--status-danger)'
+                          : 'var(--border-default)'
+                      }
+                      strokeWidth={isThresh ? 1.5 : 0.8}
+                      strokeDasharray={isThresh ? '4 4' : undefined}
+                      strokeOpacity={isThresh ? 0.7 : 0.6}
+                    />
 
-                  return (
-                    <g key={val}>
+                    <text
+                      x={pad.left - 8}
+                      y={y + 3.5}
+                      fill={isThresh ? 'var(--status-danger)' : 'var(--chart-axis)'}
+                      fontSize="10"
+                      fontWeight={isThresh ? 'bold' : 'normal'}
+                      textAnchor="end"
+                      className="font-mono"
+                    >
+                      {val.toFixed(1)}
+                    </text>
+                  </g>
+                )
+              })}
 
-                      <line
-                        x1={pad.left}
-                        y1={y}
-                        x2={chartWidth - pad.right}
-                        y2={y}
-                        stroke={
-                          isThresh
-                            ? 'rgba(248,113,113,0.7)'
-                            : 'rgba(148,163,184,0.12)'
-                        }
-                        strokeWidth={
-                          isThresh ? 1.5 : 0.8
-                        }
-                        strokeDasharray={
-                          isThresh ? '4 4' : undefined
-                        }
-                      />
-
-                      <text
-                        x={pad.left - 8}
-                        y={y + 3.5}
-                        fill={
-                          isThresh
-                            ? '#fca5a5'
-                            : '#64748b'
-                        }
-                        fontSize="10"
-                        fontWeight={
-                          isThresh ? 'bold' : 'normal'
-                        }
-                        textAnchor="end"
-                        className="font-mono"
-                      >
-                        {val.toFixed(1)}
-                      </text>
-                    </g>
-                  )
-                }
-              )}
-
-              {/* Decision Threshold */}
-
+              {/* Decision Threshold Label */}
               <text
                 x={chartWidth - pad.right}
                 y={getY(0.5) - 6}
-                fill="#fca5a5"
+                fill="var(--status-danger)"
                 fontSize="10"
                 fontWeight="bold"
                 textAnchor="end"
@@ -911,34 +825,22 @@ export default function AdversarialRobustness() {
               </text>
 
               {/* X Axis */}
-
               {curve.x_labels.map((lbl, idx) => {
                 const x = getX(idx)
-
                 return (
                   <g key={idx}>
-
                     <line
                       x1={x}
                       y1={chartHeight - pad.bottom}
                       x2={x}
-                      y2={
-                        chartHeight -
-                        pad.bottom +
-                        4
-                      }
-                      stroke="#475569"
+                      y2={chartHeight - pad.bottom + 4}
+                      stroke="var(--border-strong)"
                       strokeWidth="1"
                     />
-
                     <text
                       x={x}
-                      y={
-                        chartHeight -
-                        pad.bottom +
-                        18
-                      }
-                      fill="#94a3b8"
+                      y={chartHeight - pad.bottom + 18}
+                      fill="var(--chart-axis)"
                       fontSize="10"
                       textAnchor="middle"
                       className="font-mono"
@@ -949,88 +851,64 @@ export default function AdversarialRobustness() {
                 )
               })}
 
-              {/* =================================================
-                  CURVE 1 — BASELINE
-              ================================================= */}
-
+              {/* CURVE 1 — BASELINE */}
               <path
                 d={buildPath(curve.baseline)}
                 fill="none"
-                stroke="#67e8f9"
+                stroke="var(--accent-primary-soft)"
                 strokeWidth="2.5"
                 strokeDasharray="5 5"
                 className="opacity-70"
               />
 
-              {/* =================================================
-                  CURVE 2 — ATTACKED
-              ================================================= */}
-
+              {/* CURVE 2 — ATTACKED */}
               <path
                 d={buildPath(curve.attacked)}
                 fill="none"
-                stroke="#f87171"
+                stroke="var(--status-danger)"
                 strokeWidth="3.5"
                 strokeLinecap="round"
                 strokeLinejoin="round"
-                filter="drop-shadow(0 0 6px rgba(248,113,113,0.4))"
               />
 
-              {/* =================================================
-                  CURVE 3 — DEFENSE
-              ================================================= */}
-
+              {/* CURVE 3 — DEFENSE */}
               <path
                 d={buildPath(curve.defended)}
                 fill="none"
-                stroke="#34d399"
+                stroke="var(--status-success)"
                 strokeWidth="3.5"
                 strokeLinecap="round"
                 strokeLinejoin="round"
-                filter="drop-shadow(0 0 6px rgba(52,211,153,0.4))"
               />
 
-              {/* =================================================
-                  DATA POINTS
-              ================================================= */}
-
+              {/* DATA POINTS */}
               {curve.x_labels.map((_, idx) => {
                 const pClean = curve.baseline[idx]
                 const pAtk = curve.attacked[idx]
                 const pDef = curve.defended[idx]
-                const isActive =
-                  idx === curve.active_level
+                const isActive = idx === curve.active_level
 
                 return (
                   <g key={idx}>
-
                     {/* Clean */}
-
                     <circle
                       cx={getX(idx)}
                       cy={getY(pClean)}
                       r="4"
-                      fill="#0b1018"
-                      stroke="#67e8f9"
+                      fill="var(--bg-surface)"
+                      stroke="var(--accent-primary-soft)"
                       strokeWidth="2"
                     />
 
                     {/* Attacked */}
-
                     <circle
                       cx={getX(idx)}
                       cy={getY(pAtk)}
                       r={isActive ? 7 : 5}
-                      fill="#f87171"
-                      stroke={
-                        isActive
-                          ? '#ffffff'
-                          : 'none'
-                      }
-                      strokeWidth={
-                        isActive ? 2 : 0
-                      }
-                      className="cursor-pointer transition-all hover:r-8"
+                      fill="var(--status-danger)"
+                      stroke={isActive ? 'var(--bg-surface)' : 'none'}
+                      strokeWidth={isActive ? 2 : 0}
+                      className="cursor-pointer"
                       onMouseEnter={() =>
                         setHoveredPoint({
                           x: getX(idx),
@@ -1038,27 +916,18 @@ export default function AdversarialRobustness() {
                           text: `Attacked: ${(pAtk * 100).toFixed(1)}%`
                         })
                       }
-                      onMouseLeave={() =>
-                        setHoveredPoint(null)
-                      }
+                      onMouseLeave={() => setHoveredPoint(null)}
                     />
 
                     {/* Defended */}
-
                     <circle
                       cx={getX(idx)}
                       cy={getY(pDef)}
                       r={isActive ? 7 : 5}
-                      fill="#34d399"
-                      stroke={
-                        isActive
-                          ? '#ffffff'
-                          : 'none'
-                      }
-                      strokeWidth={
-                        isActive ? 2 : 0
-                      }
-                      className="cursor-pointer transition-all hover:r-8"
+                      fill="var(--status-success)"
+                      stroke={isActive ? 'var(--bg-surface)' : 'none'}
+                      strokeWidth={isActive ? 2 : 0}
+                      className="cursor-pointer"
                       onMouseEnter={() =>
                         setHoveredPoint({
                           x: getX(idx),
@@ -1066,39 +935,29 @@ export default function AdversarialRobustness() {
                           text: `Defended: ${(pDef * 100).toFixed(1)}%`
                         })
                       }
-                      onMouseLeave={() =>
-                        setHoveredPoint(null)
-                      }
+                      onMouseLeave={() => setHoveredPoint(null)}
                     />
                   </g>
                 )
               })}
 
-              {/* =================================================
-                  HOVER TOOLTIP
-              ================================================= */}
-
+              {/* HOVER TOOLTIP */}
               {hoveredPoint && (
-                <g
-                  transform={`translate(${hoveredPoint.x}, ${
-                    hoveredPoint.y - 12
-                  })`}
-                >
+                <g transform={`translate(${hoveredPoint.x}, ${hoveredPoint.y - 12})`}>
                   <rect
                     x="-45"
                     y="-20"
                     width="90"
                     height="20"
                     rx="4"
-                    fill="#080c12"
-                    stroke="rgba(148,163,184,0.35)"
+                    fill="var(--bg-surface)"
+                    stroke="var(--border-default)"
                     strokeWidth="1"
                   />
-
                   <text
                     x="0"
                     y="-6"
-                    fill="#ffffff"
+                    fill="var(--text-primary)"
                     fontSize="10"
                     fontWeight="bold"
                     textAnchor="middle"
@@ -1110,53 +969,37 @@ export default function AdversarialRobustness() {
               )}
             </svg>
           ) : (
-            <div className="flex h-48 flex-col items-center justify-center space-y-2 rounded-xl border border-dashed border-white/10 bg-black/10 text-slate-600 font-mono text-[11px]">
-
-              <span className="flex size-10 items-center justify-center rounded-full border border-violet-400/10 bg-violet-400/[0.04]">
-                <TrendingDown
-                  size={22}
-                  className="text-violet-400/50"
-                />
+            <div className="flex h-48 flex-col items-center justify-center space-y-2 rounded-xl border border-dashed border-[var(--border-default)] bg-[var(--bg-hover)] text-[var(--text-muted)] font-mono text-[11px]">
+              <span className="flex size-10 items-center justify-center rounded-full border border-[var(--accent-primary)]/15 bg-[var(--accent-primary-muted)]">
+                <TrendingDown size={22} className="text-[var(--accent-primary-soft)]" />
               </span>
-
               <p>
-                Click "Run Adversarial Attack & Defense Test"
+                Click "Run Adversarial Attack &amp; Defense Test"
                 above to generate live response curves.
               </p>
             </div>
           )}
         </div>
 
-        {/* =================================================
-            DYNAMIC FOOTER TELEMETRY
-        ================================================= */}
-
+        {/* DYNAMIC FOOTER TELEMETRY */}
         {curve && (
-          <div className="mt-4 flex flex-col gap-3 rounded-xl border border-white/[0.08] bg-black/20 p-3.5 font-mono text-[11px] sm:flex-row sm:items-center sm:justify-between">
+          <div className="mt-4 flex flex-col gap-3 rounded-xl border border-[var(--border-default)] bg-[var(--bg-hover)] p-3.5 font-mono text-[11px] sm:flex-row sm:items-center sm:justify-between">
 
-            <div className="flex items-center gap-2 text-slate-400">
-              <Shield
-                size={14}
-                className="shrink-0 text-cyan-300"
-              />
-
+            <div className="flex items-center gap-2 text-[var(--text-muted)]">
+              <Shield size={14} className="shrink-0 text-[var(--accent-primary-soft)]" />
               <span>
-                Live evaluated on current audio sample across
-                5 intensities (0..4)
+                Live evaluated on current audio sample across 5 intensities (0..4)
               </span>
             </div>
 
-            <span className="font-bold text-emerald-300">
+            <span className="font-bold text-[var(--status-success)]">
               Peak Recovery: +
               {Math.max(
                 0,
                 ...curve.defended.map((d, i) =>
-                  Math.round(
-                    (d - curve.attacked[i]) * 100
-                  )
+                  Math.round((d - curve.attacked[i]) * 100)
                 )
-              )}
-              %
+              )}%
             </span>
           </div>
         )}

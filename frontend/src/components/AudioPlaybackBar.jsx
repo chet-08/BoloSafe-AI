@@ -28,14 +28,14 @@ export default function AudioPlaybackBar({
   const clampedLevel = Math.max(0, Math.min(100, Number(level) || 0))
 
   return (
-    <div className="flex items-center gap-3 rounded-xl border border-slate-800 bg-[#121824]/80 px-4 py-3">
+    <div className="flex items-center gap-3 rounded-xl border border-[var(--border-default)] bg-[var(--bg-card)] px-4 py-3">
       <button
         onClick={onToggle}
         disabled={disabled}
         className={`flex size-8 shrink-0 items-center justify-center rounded-full transition disabled:opacity-40 disabled:cursor-not-allowed ${
           isPlaying
-            ? 'bg-cyan-400 text-slate-950'
-            : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+            ? 'bg-[var(--accent-primary)] text-white'
+            : 'bg-[var(--bg-hover)] text-[var(--text-secondary)] hover:bg-[var(--border-default)]'
         }`}
         aria-label={isPlaying ? 'Pause' : 'Play'}
       >
@@ -43,17 +43,23 @@ export default function AudioPlaybackBar({
       </button>
 
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-1.5 text-[11px] font-mono text-slate-400">
-          <Volume2 size={12} className={isPlaying ? 'text-cyan-400' : 'text-slate-500'} />
+        <div className="flex items-center gap-1.5 text-[11px] font-mono text-[var(--text-muted)]">
+          <Volume2
+            size={12}
+            className={isPlaying ? 'text-[var(--accent-primary-soft)]' : 'text-[var(--text-subtle)]'}
+          />
           {label}
         </div>
 
-        <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-slate-800">
+        <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-[var(--bg-hover)]">
           <div
-            className={`h-full rounded-full transition-all duration-100 ${
-              isPlaying ? 'bg-cyan-400' : 'bg-slate-700'
-            }`}
-            style={{ width: `${clampedLevel}%` }}
+            className="h-full rounded-full transition-all duration-100"
+            style={{
+              width: `${clampedLevel}%`,
+              backgroundColor: isPlaying
+                ? 'var(--accent-primary)'
+                : 'var(--border-strong)',
+            }}
           />
         </div>
       </div>

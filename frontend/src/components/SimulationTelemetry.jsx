@@ -214,24 +214,24 @@ export default function SimulationTelemetry({ activeStreamId = 'call_001', onRes
   }
 
   return (
-    <div className="rounded-2xl border border-slate-800 bg-[#0d1117] p-5">
+    <div className="rounded-2xl border border-[var(--border-default)] bg-[var(--bg-card)] p-5">
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h2 className="text-sm font-semibold text-white">Simulation telemetry injection</h2>
-          <p className="text-xs text-slate-400 mt-0.5">Transmit verified audio windows to the /ws/audio pipeline</p>
+          <h2 className="text-sm font-semibold text-[var(--text-primary)]">Simulation telemetry injection</h2>
+          <p className="text-xs text-[var(--text-muted)] mt-0.5">Transmit verified audio windows to the /ws/audio pipeline</p>
         </div>
-        <Radio size={18} className={isTransmitting ? 'text-cyan-400 animate-pulse' : 'text-slate-500'} />
+        <Radio size={18} className={isTransmitting ? 'text-[var(--accent-primary-soft)] animate-pulse' : 'text-[var(--text-muted)]'} />
       </div>
 
       <div className="space-y-4">
         <div>
-          <label className="block text-xs font-medium text-slate-400 mb-1.5 font-mono">Sample</label>
+          <label className="block text-xs font-medium text-[var(--text-muted)] mb-1.5 font-mono">Sample</label>
           <div className="relative">
             <select
               value={selectedSampleId}
               onChange={(e) => setSelectedSampleId(e.target.value)}
               disabled={isTransmitting}
-              className="w-full rounded-xl border border-slate-700 bg-slate-900/90 px-3.5 py-2.5 text-xs text-slate-200 font-mono focus:border-cyan-400 focus:outline-none cursor-pointer"
+              className="w-full rounded-xl border border-[var(--border-default)] bg-[var(--bg-surface)] px-3.5 py-2.5 text-xs text-[var(--text-primary)] font-mono focus:border-[var(--accent-primary)] focus:outline-none cursor-pointer"
             >
               {demoSamples.map((sample) => (
                 <option key={sample.id} value={sample.id}>
@@ -240,13 +240,13 @@ export default function SimulationTelemetry({ activeStreamId = 'call_001', onRes
               ))}
             </select>
           </div>
-          <p className="text-[11px] text-slate-500 mt-1.5 font-mono">{selectedSample.description}</p>
+          <p className="text-[11px] text-[var(--text-muted)] mt-1.5 font-mono">{selectedSample.description}</p>
         </div>
 
         <button
           onClick={transmitAudioWindow}
           disabled={isTransmitting}
-          className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-cyan-500 to-indigo-600 px-4 py-2.5 text-xs font-bold text-slate-950 transition hover:opacity-90 active:scale-[0.99] disabled:opacity-50 cursor-pointer shadow-lg shadow-cyan-500/20"
+          className="flex w-full items-center justify-center gap-2 rounded-xl bg-[var(--accent-primary)] px-4 py-2.5 text-xs font-bold text-white transition hover:bg-[var(--accent-primary-soft)] active:scale-[0.99] disabled:opacity-50 cursor-pointer shadow-[var(--shadow-card)]"
         >
           {isTransmitting ? (
             <>
@@ -254,7 +254,7 @@ export default function SimulationTelemetry({ activeStreamId = 'call_001', onRes
             </>
           ) : (
             <>
-              <Play size={14} className="fill-slate-950" /> Transmit window
+              <Play size={14} className="fill-white" /> Transmit window
             </>
           )}
         </button>
@@ -269,8 +269,8 @@ export default function SimulationTelemetry({ activeStreamId = 'call_001', onRes
         />
 
         {statusMessage && (
-          <div className="text-[11px] font-mono text-cyan-300 bg-cyan-950/30 border border-cyan-500/20 p-2 rounded-lg flex items-center gap-2">
-            <CheckCircle2 size={13} className="text-cyan-400 shrink-0" />
+          <div className="text-[11px] font-mono text-[var(--accent-primary-soft)] bg-[var(--accent-primary-muted)] border border-[var(--accent-primary)]/20 p-2 rounded-lg flex items-center gap-2">
+            <CheckCircle2 size={13} className="text-[var(--accent-primary-soft)] shrink-0" />
             <span>{statusMessage}</span>
           </div>
         )}

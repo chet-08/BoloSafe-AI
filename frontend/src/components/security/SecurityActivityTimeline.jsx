@@ -11,55 +11,55 @@ const icons = {
 
 const tones = {
   ready: {
-    text: 'text-[#5863D6]',
-    bg: 'bg-[#5863D6]/10',
-    border: 'border-[#5863D6]/20',
-    line: 'bg-[#5863D6]',
+    text: 'text-[var(--accent-primary-soft)]',
+    bg: 'bg-[var(--accent-primary-muted)]',
+    border: 'border-[var(--accent-primary)]/25',
+    line: 'bg-[var(--accent-primary)]',
   },
   detected: {
-    text: 'text-[#D96A78]',
-    bg: 'bg-[#D96A78]/10',
-    border: 'border-[#D96A78]/25',
-    line: 'bg-[#D96A78]',
+    text: 'text-[var(--status-danger)]',
+    bg: 'bg-[var(--status-danger)]/10',
+    border: 'border-[var(--status-danger)]/25',
+    line: 'bg-[var(--status-danger)]',
   },
   decided: {
-    text: 'text-[#D96A78]',
-    bg: 'bg-[#D96A78]/10',
-    border: 'border-[#D96A78]/25',
-    line: 'bg-[#D96A78]',
+    text: 'text-[var(--status-danger)]',
+    bg: 'bg-[var(--status-danger)]/10',
+    border: 'border-[var(--status-danger)]/25',
+    line: 'bg-[var(--status-danger)]',
   },
   identity: {
-    text: 'text-[#70B88A]',
-    bg: 'bg-[#70B88A]/10',
-    border: 'border-[#70B88A]/20',
-    line: 'bg-[#70B88A]',
+    text: 'text-[var(--status-success)]',
+    bg: 'bg-[var(--status-success)]/10',
+    border: 'border-[var(--status-success)]/20',
+    line: 'bg-[var(--status-success)]',
   },
   pending: {
-    text: 'text-[#858BA3]',
-    bg: 'bg-[#858BA3]/10',
-    border: 'border-[#292E46]',
-    line: 'bg-[#292E46]',
+    text: 'text-[var(--text-muted)]',
+    bg: 'bg-[var(--bg-hover)]',
+    border: 'border-[var(--border-default)]',
+    line: 'bg-[var(--border-default)]',
   },
 }
 
 export default function SecurityActivityTimeline({ steps = [] }) {
   return (
-    <section className="overflow-hidden rounded-2xl border border-[#292E46] bg-[#171A2D]">
-      <div className="border-b border-[#292E46] px-5 py-4">
-        <div className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#858BA3]">
+    <section className="overflow-hidden rounded-2xl border border-[var(--border-default)] bg-[var(--bg-card)]">
+      <div className="border-b border-[var(--border-default)] px-5 py-4">
+        <div className="text-[10px] font-bold uppercase tracking-[0.16em] text-[var(--text-muted)]">
           Security Activity
         </div>
 
-        <h2 className="mt-1 text-lg font-semibold text-[#F4F5FA]">
+        <h2 className="mt-1 text-lg font-semibold text-[var(--text-primary)]">
           Current protection flow
         </h2>
 
-        <p className="mt-1 text-xs text-[#858BA3]">
+        <p className="mt-1 text-xs text-[var(--text-muted)]">
           Context → detection → governance → identity
         </p>
       </div>
 
-      <div className="grid divide-y divide-[#292E46] md:grid-cols-4 md:divide-x md:divide-y-0">
+      <div className="grid divide-y divide-[var(--border-default)] md:grid-cols-4 md:divide-x md:divide-y-0">
         {steps.map((step, index) => {
           const Icon = icons[step.tone] || Circle
           const tone = tones[step.tone] || tones.pending
@@ -74,7 +74,7 @@ export default function SecurityActivityTimeline({ steps = [] }) {
               />
 
               <div className="flex items-center justify-between gap-3">
-                <div className="text-[9px] font-bold uppercase tracking-[0.16em] text-[#858BA3]">
+                <div className="text-[9px] font-bold uppercase tracking-[0.16em] text-[var(--text-muted)]">
                   Step {String(index + 1).padStart(2, '0')}
                 </div>
 
@@ -98,11 +98,11 @@ export default function SecurityActivityTimeline({ steps = [] }) {
                 </div>
 
                 <div className="min-w-0">
-                  <div className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[#858BA3]">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--text-muted)]">
                     {step.label}
                   </div>
 
-                  <div className="mt-1 text-sm font-semibold text-[#F4F5FA]">
+                  <div className="mt-1 text-sm font-semibold text-[var(--text-primary)]">
                     {step.value}
                   </div>
                 </div>

@@ -9,37 +9,37 @@ import {
 const toneMap = {
   allow: {
     icon: CheckCircle2,
-    iconClass: 'text-[#70B88A]',
-    border: 'border-[#70B88A]/30',
-    bg: 'bg-[#70B88A]/[0.06]',
+    iconClass: 'text-[var(--status-success)]',
+    border: 'border-[var(--status-success)]/30',
+    bg: 'bg-[var(--status-success)]/[0.06]',
     label: 'ALLOW',
   },
   verify: {
     icon: ShieldCheck,
-    iconClass: 'text-[#D5AE52]',
-    border: 'border-[#D5AE52]/30',
-    bg: 'bg-[#D5AE52]/[0.06]',
+    iconClass: 'text-[var(--status-warning)]',
+    border: 'border-[var(--status-warning)]/30',
+    bg: 'bg-[var(--status-warning)]/[0.06]',
     label: 'VERIFY',
   },
   hold: {
     icon: Lock,
-    iconClass: 'text-[#D96A78]',
-    border: 'border-[#D96A78]/30',
-    bg: 'bg-[var(--state-danger)]/[0.045]',
+    iconClass: 'text-[var(--status-danger)]',
+    border: 'border-[var(--status-danger)]/30',
+    bg: 'bg-[var(--status-danger)]/[0.045]',
     label: 'HOLD',
   },
   escalate: {
     icon: ShieldAlert,
-    iconClass: 'text-[#D96A78]',
-    border: 'border-[#D96A78]/35',
-    bg: 'bg-[#D96A78]/[0.08]',
+    iconClass: 'text-[var(--status-danger)]',
+    border: 'border-[var(--status-danger)]/35',
+    bg: 'bg-[var(--status-danger)]/[0.08]',
     label: 'ESCALATE',
   },
   pending: {
     icon: ShieldCheck,
-    iconClass: 'text-[#858BA3]',
-    border: 'border-[#292E46]',
-    bg: 'bg-[#171A2D]/60',
+    iconClass: 'text-[var(--text-muted)]',
+    border: 'border-[var(--border-default)]',
+    bg: 'bg-[var(--bg-card)]',
     label: 'STANDBY',
   },
 }
@@ -104,7 +104,7 @@ export default function GovernanceDecisionCard({
                 {recommendations.map((item, index) => (
                   <div
                     key={`${item}-${index}`}
-                    className="flex items-start gap-2 rounded-lg border border-[var(--border-default)] bg-[var(--bg-surface,#121526)] px-3 py-2.5 text-xs text-[var(--text-primary)]"
+                    className="flex items-start gap-2 rounded-lg border border-[var(--border-default)] bg-[var(--bg-surface)] px-3 py-2.5 text-xs text-[var(--text-primary)]"
                   >
                     <span
                       className={`mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full ${config.iconClass.replace(

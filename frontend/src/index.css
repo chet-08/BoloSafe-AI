@@ -1,57 +1,118 @@
 @import "tailwindcss";
 
+/* =========================================================
+   BOLOSAFE DESIGN TOKENS — LIGHT MODE (DEFAULT)
+   Scoped to the entire page; console overrides live below.
+   ========================================================= */
 :root {
-  --bg-page: #f4f5f9;
-  --bg-surface: #ffffff;
-  --bg-card: #f8f9fc;
-  --bg-hover: #f0f2f7;
+  /* --- page structure --- */
+  --bg-page: #F5F6FA;
+  --bg-surface: #FFFFFF;
+  --bg-card: #F0F2F7;
+  --bg-hover: #E8EBF2;
 
-  --border-default: #dde1ec;
-  --border-strong: #cbd1df;
+  /* --- borders --- */
+  --border-default: #DDE1EA;
+  --border-strong: #C8CEDB;
 
-  --text-primary: #1b1e2d;
-  --text-secondary: #555c70;
-  --text-muted: #70768a;
-  --text-subtle: #969caf;
+  /* --- typography --- */
+  --text-primary: #171B2D;
+  --text-secondary: #596275;
+  --text-muted: #8A93A6;
+  --text-subtle: #ACB3C4;
 
-  --accent-primary: #5863d6;
-  --accent-primary-soft: #7079e0;
-  --accent-primary-muted: rgba(88, 99, 214, 0.10);
+  /* --- accent --- */
+  --accent-primary: #5965E8;
+  --accent-primary-soft: #6874E8;
+  --accent-primary-muted: rgba(89, 101, 232, 0.10);
 
-  --status-success: #4d986c;
-  --status-warning: #b4872f;
-  --status-danger: #c65364;
-  --status-info: #5863d6;
+  /* --- semantic status --- */
+  --status-success: #3FA56C;
+  --status-warning: #B88722;
+  --status-danger: #D45567;
+  --status-info: #5965E8;
 
-  --shadow-card: 0 8px 28px rgba(31, 36, 55, 0.07);
-  --shadow-panel: 0 18px 50px rgba(31, 36, 55, 0.08);
+  /* --- shadows --- */
+  --shadow-card: 0 2px 12px rgba(23, 27, 45, 0.06);
+  --shadow-panel: 0 8px 32px rgba(23, 27, 45, 0.08);
+
+  /* --- graph/chart specific --- */
+  --chart-bg: #E8EBF2;
+  --chart-grid: rgba(89, 101, 232, 0.12);
+  --chart-axis: #8A93A6;
+  --chart-line: #5965E8;
+  --chart-area-start: rgba(89, 101, 232, 0.20);
+  --chart-area-end: rgba(89, 101, 232, 0.0);
+  --chart-threshold: #5965E8;
+
+  /* --- bolosafe legacy mapping (used by LiveGraph.jsx) --- */
+  --color-bolosafe-darkest: #E8EBF2;
+  --color-bolosafe-dark: #F0F2F7;
+  --color-bolosafe-border: #DDE1EA;
+  --color-bolosafe-pink: #D45567;
+  --color-bolosafe-cyan: #5965E8;
+
+  /* --- adversarial / code blocks --- */
+  --code-bg: #F0F2F7;
+  --code-border: #DDE1EA;
+  --code-text: #5965E8;
 }
 
+/* =========================================================
+   DARK MODE OVERRIDES
+   ========================================================= */
 [data-theme='dark'] {
+  /* --- page structure --- */
   --bg-page: #0b0d18;
   --bg-surface: #121526;
   --bg-card: #171a2d;
   --bg-hover: #1d2137;
 
+  /* --- borders --- */
   --border-default: #292e46;
   --border-strong: #373d58;
 
+  /* --- typography --- */
   --text-primary: #f4f5fa;
   --text-secondary: #b3b8c9;
   --text-muted: #858ba3;
   --text-subtle: #60677e;
 
-  --accent-primary: #5863d6;
-  --accent-primary-soft: #7079e0;
-  --accent-primary-muted: rgba(88, 99, 214, 0.14);
+  /* --- accent --- */
+  --accent-primary: #6874E8;
+  --accent-primary-soft: #7883F2;
+  --accent-primary-muted: rgba(104, 116, 232, 0.14);
 
+  /* --- semantic status --- */
   --status-success: #70b88a;
   --status-warning: #d5ae52;
   --status-danger: #d96a78;
-  --status-info: #7079e0;
+  --status-info: #7883F2;
 
+  /* --- shadows --- */
   --shadow-card: 0 8px 28px rgba(0, 0, 0, 0.20);
   --shadow-panel: 0 18px 50px rgba(0, 0, 0, 0.28);
+
+  /* --- graph/chart specific --- */
+  --chart-bg: #0E1120;
+  --chart-grid: rgba(255, 255, 255, 0.06);
+  --chart-axis: #64748b;
+  --chart-line: #7883F2;
+  --chart-area-start: rgba(216, 65, 103, 0.35);
+  --chart-area-end: rgba(216, 65, 103, 0.0);
+  --chart-threshold: #67e8f9;
+
+  /* --- bolosafe legacy mapping (used by LiveGraph.jsx) --- */
+  --color-bolosafe-darkest: #0b0d18;
+  --color-bolosafe-dark: #171a2d;
+  --color-bolosafe-border: #292e46;
+  --color-bolosafe-pink: #d96a78;
+  --color-bolosafe-cyan: #67e8f9;
+
+  /* --- adversarial / code blocks --- */
+  --code-bg: #070b14;
+  --code-border: #292e46;
+  --code-text: #67e8f9;
 }
 
 html,
@@ -99,8 +160,8 @@ textarea {
 }
 
 /* =========================================================
-   BOLOSAFE DESIGN TOKENS
-   Use these semantic classes for all new/refactored UI.
+   BOLOSAFE UTILITY CLASSES
+   Semantic helpers consumed by dashboard components.
    ========================================================= */
 
 .bolosafe-page {
@@ -161,7 +222,7 @@ textarea {
   color: var(--status-danger);
 }
 
-/* Kill the old high-glow feel on focus states. */
+/* Focus states */
 *:focus-visible {
   outline: 2px solid var(--accent-primary);
   outline-offset: 2px;
@@ -171,6 +232,61 @@ textarea {
 * {
   scrollbar-width: thin;
   scrollbar-color: var(--border-strong) transparent;
+}
+
+/* =========================================================
+   CONSOLE SHELL — THEME SCOPE
+   All dashboard panel + component overrides live here.
+   .console-shell wraps the authenticated dashboard.
+   ========================================================= */
+
+/* Inputs and selects inside console always theme-aware */
+.console-shell input,
+.console-shell select,
+.console-shell textarea {
+  background-color: var(--bg-surface);
+  color: var(--text-primary);
+  border-color: var(--border-default);
+}
+
+.console-shell input::placeholder,
+.console-shell textarea::placeholder {
+  color: var(--text-muted);
+}
+
+.console-shell input:focus,
+.console-shell select:focus,
+.console-shell textarea:focus {
+  border-color: var(--accent-primary);
+  outline: none;
+}
+
+/* =========================================================
+   CONSOLE SHELL — COMPONENT THEME OVERRIDES
+   Replace hard-coded dark classes without cascade war.
+   ========================================================= */
+
+/* AdversarialRobustness outer shell */
+.adversarial-modern-shell {
+  color: var(--text-primary);
+}
+
+/* Kill the aurora glows completely in light mode */
+html:not([data-theme='dark']) .adversarial-modern-shell .aurora-glow {
+  display: none;
+}
+
+/* Adversarial control panels: border-white/10 + bg-white/[0.025] pattern */
+.console-shell .panel-card {
+  background-color: var(--bg-card);
+  border-color: var(--border-default);
+}
+
+/* Code / terminal blocks inside the drawer */
+.console-shell .code-block {
+  background-color: var(--code-bg);
+  border-color: var(--code-border);
+  color: var(--code-text);
 }
 
 
@@ -12474,2399 +12590,251 @@ section.relative.min-h-\[560px\] {
 }
 
 /* =========================================================
-   BOLOSAFE — ADVERSARIAL STUDIO
-   Wide Security-Console UI
+   BOLOSAFE CONSOLE — THEME SYSTEM
+   Uses design tokens from :root / [data-theme='dark'].
+   No hardcoded colours. No !important wars.
    ========================================================= */
 
-.adversarial-modern-shell {
-  --adv-bg: #050817;
-  --adv-panel: #121526;
-  --adv-panel-raised: #171A2D;
-  --adv-panel-dark: #0B0E1C;
-
-  --adv-indigo: #5964D7;
-  --adv-indigo-bright: #6C76EA;
-
-  --adv-green: #00D993;
-  --adv-green-soft: #629E7C;
-
-  --adv-amber: #B5964D;
-  --adv-red: #B85D6D;
-
-  --adv-text: #F3F5FA;
-  --adv-text-soft: #A5ADC0;
-  --adv-muted: #68738B;
-
-  --adv-border: rgba(104,115,150,.20);
-  --adv-border-soft: rgba(255,255,255,.055);
-
-  width: 100% !important;
-  max-width: none !important;
-  margin: 0 !important;
-
-  color: var(--adv-text) !important;
-
-  background: #050817 !important;
-}
-
-/* =========================================================
-   FULL-WIDTH HEADER AREA
-   ========================================================= */
-
-.adversarial-modern-shell > div:first-child {
-  width: 100% !important;
-}
-
-.adversarial-modern-shell h1 {
-  color: #F5F6FA !important;
-
-  font-size: clamp(28px, 2.35vw, 38px) !important;
-
-  line-height: 1 !important;
-  letter-spacing: -.045em !important;
-}
-
-.adversarial-modern-shell h1 svg {
-  color: var(--adv-indigo-bright) !important;
-}
-
-.adversarial-modern-shell
-  .text-cyan-300 {
-  color: var(--adv-indigo-bright) !important;
-}
-
-.adversarial-modern-shell
-  .text-slate-500 {
-  color: var(--adv-muted) !important;
-}
-
-.adversarial-modern-shell
-  .text-slate-400 {
-  color: #8791A5 !important;
-}
-
-/* =========================================================
-   COMMAND STATUS
-   ========================================================= */
-
-.adversarial-modern-shell
-  [class*="border-emerald-400"] {
-  border-color:
-    rgba(0,217,147,.20)
-    !important;
-
-  background:
-    rgba(0,217,147,.035)
-    !important;
-
-  color:
-    var(--adv-green)
-    !important;
-
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,.025)
-    !important;
-}
-
-/* =========================================================
-   LARGE CONTROL PANEL
-   ========================================================= */
-
-.adversarial-modern-shell
-  > div:nth-of-type(2),
-.adversarial-modern-shell
-  > div:nth-of-type(3) {
-  width: 100% !important;
-
-  border-color:
-    var(--adv-border)
-    !important;
-
-  border-radius: 18px !important;
-
-  background:
-    linear-gradient(
-      135deg,
-      rgba(23,26,45,.96),
-      rgba(18,21,38,.98)
-    )
-    !important;
-
-  box-shadow:
-    0 22px 60px rgba(0,0,0,.20),
-    inset 0 1px 0 rgba(255,255,255,.025)
-    !important;
-}
-
-/* =========================================================
-   SOURCE BUTTONS
-   ========================================================= */
-
-.adversarial-modern-shell
-  button {
-  font-family: inherit !important;
-}
-
-.adversarial-modern-shell
-  button[class*="rounded-xl"] {
-  min-height: 52px !important;
-
-  border-radius: 11px !important;
-
-  border-color:
-    rgba(104,115,150,.17)
-    !important;
-
-  background:
-    rgba(8,11,28,.48)
-    !important;
-
-  color:
-    #7E899E
-    !important;
-}
-
-/* active source */
-.adversarial-modern-shell
-  button[class*="border-cyan-300\/35"] {
-  color:
-    #F0F2F8
-    !important;
-
-  border-color:
-    rgba(89,100,215,.56)
-    !important;
-
-  background:
-    linear-gradient(
-      135deg,
-      rgba(89,100,215,.20),
-      rgba(89,100,215,.07)
-    )
-    !important;
-
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,.035),
-    0 10px 28px rgba(0,0,0,.18)
-    !important;
-}
-
-.adversarial-modern-shell
-  button[class*="border-cyan-300\/35"]::after {
-  content: "";
-
-  position: absolute;
-
-  left: 0;
-  right: 0;
-  bottom: 0;
-
-  height: 2px;
-
-  background:
-    linear-gradient(
-      90deg,
-      transparent,
-      #5964D7,
-      transparent
-    );
-}
-
-/* =========================================================
-   INPUT / SAMPLE AREA
-   ========================================================= */
-
-.adversarial-modern-shell
-  select {
-  min-height: 46px !important;
-
-  border-radius: 10px !important;
-
-  border-color:
-    rgba(104,115,150,.16)
-    !important;
-
-  background:
-    #0B0E1C
-    !important;
-
-  color:
-    #D8DCE7
-    !important;
-}
-
-.adversarial-modern-shell
-  select:focus {
-  border-color:
-    rgba(89,100,215,.48)
-    !important;
-
-  box-shadow:
-    0 0 0 3px
-    rgba(89,100,215,.07)
-    !important;
-}
-
-/* =========================================================
-   CONTROL DIVIDER
-   ========================================================= */
-
-.adversarial-modern-shell
-  [class*="border-white\/\[0\.06\]"] {
-  border-color:
-    rgba(104,115,150,.12)
-    !important;
-}
-
-/* =========================================================
-   ATTACK / INTENSITY / DEFENSE
-   ========================================================= */
-
-.adversarial-modern-shell
-  input[type="range"] {
-  accent-color:
-    var(--adv-indigo)
-    !important;
-}
-
-.adversarial-modern-shell
-  input[type="range"]::-webkit-slider-runnable-track {
-  height: 4px;
-
-  border-radius: 999px;
-
-  background:
-    #282D45;
-}
-
-.adversarial-modern-shell
-  input[type="range"]::-webkit-slider-thumb {
-  width: 16px;
-  height: 16px;
-
-  margin-top: -6px;
-
-  border:
-    3px solid
-    #171A2D;
-
-  border-radius: 50%;
-
-  background:
-    #5964D7;
-
-  box-shadow:
-    0 0 0 1px rgba(89,100,215,.30),
-    0 0 16px rgba(89,100,215,.24);
-}
-
-/* intensity badge */
-.adversarial-modern-shell
-  [class*="border-cyan-300\/15"] {
-  border-color:
-    rgba(89,100,215,.30)
-    !important;
-
-  background:
-    rgba(89,100,215,.07)
-    !important;
-
-  color:
-    #9BA4F4
-    !important;
-}
-
-/* defense */
-.adversarial-modern-shell
-  [class*="border-emerald-400\/25"] {
-  border-color:
-    rgba(0,217,147,.22)
-    !important;
-
-  background:
-    rgba(0,217,147,.035)
-    !important;
-
-  color:
-    var(--adv-green)
-    !important;
-
-  box-shadow:
-    inset 2px 0 0 var(--adv-green)
-    !important;
-}
-
-/* =========================================================
-   PRIMARY EXECUTION ACTION
-   ========================================================= */
-
-.adversarial-modern-shell
-  button[class*="from-cyan-300"] {
-  min-height: 54px !important;
-
-  border-radius: 11px !important;
-
-  border:
-    1px solid
-    rgba(89,100,215,.32)
-    !important;
-
-  background:
-    linear-gradient(
-      135deg,
-      #5964D7,
-      #6C76EA
-    )
-    !important;
-
-  color:
-    #FFFFFF
-    !important;
-
-  box-shadow:
-    0 14px 34px rgba(89,100,215,.16),
-    inset 0 1px 0 rgba(255,255,255,.10)
-    !important;
-}
-
-.adversarial-modern-shell
-  button[class*="from-cyan-300"]:hover {
-  background:
-    linear-gradient(
-      135deg,
-      #6470E2,
-      #7881F0
-    )
-    !important;
-}
-
-/* =========================================================
-   RESULTS CARDS
-   ========================================================= */
-
-.adversarial-modern-shell
-  .grid[class*="md:grid-cols-3"] {
-  width: 100% !important;
-}
-
-.adversarial-modern-shell
-  .grid[class*="md:grid-cols-3"]
-  > div {
-  min-height: 180px !important;
-
-  border-radius: 16px !important;
-
-  border-color:
-    var(--adv-border)
-    !important;
-
-  background:
-    linear-gradient(
-      145deg,
-      #171A2D,
-      #121526
-    )
-    !important;
-
-  box-shadow:
-    0 18px 40px rgba(0,0,0,.20),
-    inset 0 1px 0 rgba(255,255,255,.025)
-    !important;
-}
-
-/* clean */
-.adversarial-modern-shell
-  .text-slate-300 {
-  color: #AEB5C7 !important;
-}
-
-/* attacked */
-.adversarial-modern-shell
-  .border-red-400\/35 {
-  border-color:
-    rgba(184,93,109,.34)
-    !important;
-
-  background:
-    rgba(184,93,109,.055)
-    !important;
-}
-
-.adversarial-modern-shell
-  .text-red-300 {
-  color:
-    #D47A89
-    !important;
-}
-
-/* defended */
-.adversarial-modern-shell
-  .border-emerald-400\/20 {
-  border-color:
-    rgba(98,158,124,.26)
-    !important;
-
-  background:
-    rgba(98,158,124,.035)
-    !important;
-}
-
-.adversarial-modern-shell
-  .text-emerald-300 {
-  color:
-    #73B090
-    !important;
-}
-
-/* result percentages */
-.adversarial-modern-shell
-  .font-black.text-white {
-  font-size: 34px !important;
-
-  letter-spacing: -.045em !important;
-}
-
-/* =========================================================
-   TELEMETRY STRIP
-   ========================================================= */
-
-.adversarial-modern-shell
-  .bg-black\/20 {
-  background:
-    #0B0E1C
-    !important;
-
-  border-color:
-    rgba(104,115,150,.12)
-    !important;
-}
-
-/* =========================================================
-   GRAPH PANEL
-   ========================================================= */
-
-.adversarial-modern-shell
-  > div:last-child {
-  width: 100% !important;
-}
-
-.adversarial-modern-shell
-  .border-dashed {
-  min-height: 310px !important;
-
-  border-color:
-    rgba(89,100,215,.13)
-    !important;
-
-  background:
-    radial-gradient(
-      circle at 50% 42%,
-      rgba(89,100,215,.045),
-      transparent 44%
-    ),
-    #0B0E1C
-    !important;
-}
-
-/* graph title icon */
-.adversarial-modern-shell
-  .bg-violet-400\/\[0\.06\] {
-  background:
-    rgba(89,100,215,.08)
-    !important;
-}
-
-.adversarial-modern-shell
-  .text-violet-300 {
-  color:
-    #7D86E8
-    !important;
-}
-
-/* graph legend */
-.adversarial-modern-shell
-  .bg-cyan-300 {
-  background:
-    #5964D7
-    !important;
-}
-
-.adversarial-modern-shell
-  .bg-red-400 {
-  background:
-    #B85D6D
-    !important;
-}
-
-.adversarial-modern-shell
-  .bg-emerald-400 {
-  background:
-    #629E7C
-    !important;
-}
-
-/* =========================================================
-   TYPOGRAPHY
-   ========================================================= */
-
-.adversarial-modern-shell
-  .font-mono {
-  letter-spacing: .015em;
-}
-
-.adversarial-modern-shell
-  label {
-  color:
-    #7F899F
-    !important;
-
-  font-size:
-    9px
-    !important;
-
-  letter-spacing:
-    .18em
-    !important;
-}
-
-/* =========================================================
-   DESKTOP WIDTHS
-   ========================================================= */
-
-@media (min-width: 1400px) {
-  .adversarial-modern-shell {
-    padding-bottom: 42px !important;
-  }
-
-  .adversarial-modern-shell
-    .rounded-2xl {
-    border-radius: 18px !important;
-  }
-}
-
-@media (max-width: 1100px) {
-  .adversarial-modern-shell
-    .grid-cols-3 {
-    grid-template-columns: 1fr !important;
-  }
-}
-
-/* =========================================================
-   MOBILE
-   ========================================================= */
-
-@media (max-width: 767px) {
-  .adversarial-modern-shell {
-    width: 100% !important;
-  }
-
-  .adversarial-modern-shell
-    .grid-cols-3 {
-    grid-template-columns: 1fr !important;
-  }
-
-  .adversarial-modern-shell
-    .grid-cols-2 {
-    grid-template-columns: 1fr !important;
-  }
-
-  .adversarial-modern-shell
-    .border-dashed {
-    min-height: 220px !important;
-  }
-}
-
-
-/* =========================================================
-   BOLOSAFE CONSOLE — UNIFIED CANVAS
-   Applies to authenticated pages only.
-   Landing Hero is unaffected.
-   ========================================================= */
-
-.console-shell {
-  --console-bg: #050817;
-  --console-surface: #121526;
-  --console-surface-raised: #171A2D;
-  --console-surface-deep: #0B0E1C;
-
-  --console-indigo: #5964D7;
-  --console-indigo-bright: #6C76EA;
-  --console-green: #00D993;
-
-  --console-text: #F3F5FA;
-  --console-muted: #7B869C;
-  --console-border: rgba(104,115,150,.18);
-
-  background: var(--console-bg) !important;
-  color: var(--console-text) !important;
-}
-
-/* ---------------------------------------------------------
-   SAME BACKGROUND EVERYWHERE IN CONSOLE
-   --------------------------------------------------------- */
-
-.console-shell,
-.console-shell > .flex-1,
-.console-shell main,
-.console-shell section,
-.console-shell article {
-  background-color: var(--console-bg) !important;
-}
-
-/* Kill the old full-screen aurora treatment on console pages */
-.console-shell > .pointer-events-none.fixed {
-  display: none !important;
-}
-
-/* ---------------------------------------------------------
-   SIDEBAR — EXACT SAME CANVAS COLOR
-   --------------------------------------------------------- */
-
-.console-shell > aside {
-  background:
-    var(--console-bg)
-    !important;
-
-  border-right:
-    1px solid
-    rgba(255,255,255,.065)
-    !important;
-
-  border-bottom:
-    1px solid
-    rgba(255,255,255,.065)
-    !important;
-
-  box-shadow:
-    none
-    !important;
-
-  backdrop-filter:
-    none
-    !important;
-}
-
-/* sidebar logo container */
-.console-shell > aside
-  [class*="bg-gradient-to-br"] {
-  background:
-    rgba(89,100,215,.08)
-    !important;
-
-  border-color:
-    rgba(108,118,234,.20)
-    !important;
-
-  box-shadow:
-    0 10px 25px rgba(0,0,0,.18)
-    !important;
-}
-
-/* sidebar icons */
-.console-shell > aside svg {
-  color:
-    #717BD7
-    !important;
-}
-
-/* sidebar labels */
-.console-shell > aside
-  a,
-.console-shell > aside
-  button {
-  color:
-    #7E899F
-    !important;
-}
-
-/* active navigation */
-.console-shell > aside
-  [class*="bg-indigo"],
-.console-shell > aside
-  [class*="bg-\[#"] {
-  background:
-    rgba(89,100,215,.10)
-    !important;
-
-  border-color:
-    rgba(89,100,215,.20)
-    !important;
-
-  color:
-    #909AFF
-    !important;
-}
-
-/* sidebar separators */
-.console-shell > aside
-  [class*="border-white"] {
-  border-color:
-    rgba(255,255,255,.055)
-    !important;
-}
-
-/* ---------------------------------------------------------
-   TOP BAR
-   --------------------------------------------------------- */
-
-.console-shell > .relative.z-10 {
-  background:
-    var(--console-bg)
-    !important;
-}
-
-.console-shell
-  header,
-.console-shell
-  nav {
-  background:
-    var(--console-bg)
-    !important;
-}
-
-/* ---------------------------------------------------------
-   MAIN CONTENT WRAPPER
-   --------------------------------------------------------- */
-
-.console-shell > .relative.z-10 > div {
-  background:
-    var(--console-bg)
-    !important;
-}
-
-/* ---------------------------------------------------------
-   PANELS / CARDS
-   Keep these raised for depth.
-   --------------------------------------------------------- */
-
-.console-shell
-  .rounded-xl,
-.console-shell
-  .rounded-2xl,
-.console-shell
-  .rounded-3xl {
-  background:
-    var(--console-surface)
-    !important;
-
-  border-color:
-    var(--console-border)
-    !important;
-
-  box-shadow:
-    0 12px 32px rgba(0,0,0,.16),
-    inset 0 1px 0 rgba(255,255,255,.025)
-    !important;
-}
-
-/* deeper internal areas */
-.console-shell
-  .bg-black\/20,
-.console-shell
-  .bg-black\/25,
-.console-shell
-  .bg-black\/30 {
-  background:
-    var(--console-surface-deep)
-    !important;
-}
-
-/* ---------------------------------------------------------
-   PAGE TITLES / EYEBROWS
-   --------------------------------------------------------- */
-
-.console-shell
-  h1 {
-  color:
-    #F3F5FA
-    !important;
-}
-
-.console-shell
-  h2,
-.console-shell
-  h3 {
-  color:
-    #E5E9F1
-    !important;
-}
-
-.console-shell
-  .text-slate-500 {
-  color:
-    #69758D
-    !important;
-}
-
-.console-shell
-  .text-slate-400 {
-  color:
-    #8791A5
-    !important;
-}
-
-/* ---------------------------------------------------------
-   PRIMARY INDIGO
-   --------------------------------------------------------- */
-
-.console-shell
-  .bg-indigo-500,
-.console-shell
-  .bg-indigo-600,
-.console-shell
-  .bg-\[\#4F46E5\] {
-  background:
-    linear-gradient(
-      135deg,
-      #5964D7,
-      #6C76EA
-    )
-    !important;
-}
-
-/* green remains status-only */
-.console-shell
-  .text-emerald-300,
-.console-shell
-  .text-emerald-400 {
-  color:
-    var(--console-green)
-    !important;
-}
-
-/* ---------------------------------------------------------
-   REMOVE OLD GLOBAL NEON CAST
-   --------------------------------------------------------- */
-
-.console-shell
-  [class*="bg-cyan-"],
-.console-shell
-  [class*="bg-violet-"],
-.console-shell
-  [class*="bg-fuchsia-"] {
-  background-color:
-    rgba(89,100,215,.06)
-    !important;
-}
-
-.console-shell
-  [class*="text-cyan-"],
-.console-shell
-  [class*="text-violet-"] {
-  color:
-    #737DE1
-    !important;
-}
-
-/* keep genuine danger state red */
-.console-shell
-  [class*="text-red-"] {
-  color:
-    #C96E7B
-    !important;
-}
-
-/* keep genuine warning state amber */
-.console-shell
-  [class*="text-amber-"] {
-  color:
-    #B99A50
-    !important;
-}
-
-/* ---------------------------------------------------------
-   CONSOLE SCROLL AREA
-   --------------------------------------------------------- */
-
-.console-shell
-  .overflow-y-auto {
-  background:
-    var(--console-bg)
-    !important;
-}
-
-/* ---------------------------------------------------------
-   MOBILE
-   --------------------------------------------------------- */
-
-@media (max-width: 767px) {
-  .console-shell > aside {
-    background:
-      var(--console-bg)
-      !important;
-  }
-}
-
-
-/* =========================================================
-   BOLOSAFE CONSOLE — GLOBAL BACKGROUND = SIDEBAR
-   Landing page remains untouched.
-   ========================================================= */
-
-:root {
-  --console-global-bg: #121526;
-  --console-surface: #171A2D;
-  --console-surface-deep: #0E1120;
-  --console-border: #292E46;
-  --console-text: #F5F7FF;
-  --console-text-soft: #A4ACBE;
-  --console-muted: #7B8499;
-}
-
-/* Light console palette */
-html[data-theme="light"] {
-  --console-global-bg: #F5F6FA;
-  --console-surface: #FFFFFF;
-  --console-surface-deep: #EEF1F7;
-  --console-border: #E2E5EE;
-  --console-text: #171B2D;
-  --console-text-soft: #667085;
-  --console-muted: #8A93A6;
-}
-
-/* authenticated console only */
+/* --- Page-level canvas matches the theme token --- */
 html:has(.console-shell),
-body:has(.console-shell),
-#root:has(.console-shell) {
-  background: var(--console-global-bg) !important;
+body:has(.console-shell) {
+  background-color: var(--bg-page);
 }
 
-/* entire authenticated canvas */
+/* --- Dashboard outer wrapper --- */
 .console-shell {
-  background: var(--console-global-bg) !important;
+  background-color: var(--bg-page);
+  color: var(--text-primary);
 }
 
-/* main page/background layers */
-.console-shell,
-.console-shell > .flex-1,
-.console-shell > div,
-.console-shell main,
-.console-shell section,
-.console-shell article,
-.console-shell .overflow-y-auto,
-.console-shell .min-h-screen {
-  background-color: var(--console-global-bg) !important;
-}
-
-/* sidebar = exact same color */
+/* --- Sidebar --- */
 .console-shell > aside {
-  background-color: var(--console-global-bg) !important;
+  background-color: var(--bg-surface) !important;
+  border-color: var(--border-default) !important;
 }
 
-/* preserve panel hierarchy */
+/* --- Scroll container (direct child div) --- */
+.console-shell > div {
+  background-color: var(--bg-page) !important;
+}
+
+/* --- Topbar header (sticky, inside scroll container) --- */
+.console-shell header {
+  background-color: var(--bg-page) !important;
+  border-color: var(--border-default) !important;
+}
+
+/* --- Cards / panels (rounded containers) --- */
 .console-shell .rounded-xl,
 .console-shell .rounded-2xl,
 .console-shell .rounded-3xl {
-  background-color: var(--console-surface) !important;
-  border-color: var(--console-border) !important;
+  background-color: var(--bg-card);
+  border-color: var(--border-default);
 }
 
-/* Theme-aware console text */
-.console-shell h1,
-.console-shell h2,
-.console-shell h3,
-.console-shell h4,
-.console-shell h5,
-.console-shell h6 {
-  color: var(--console-text);
+/* --- Deeper inset areas --- */
+.console-shell .bg-black\/20,
+.console-shell .bg-black\/25,
+.console-shell .bg-black\/30 {
+  background-color: var(--bg-hover) !important;
 }
 
-.console-shell .text-slate-300 {
-  color: var(--console-text-soft) !important;
+/* --- Text corrections for legacy Tailwind colour classes --- */
+.console-shell .text-slate-300 { color: var(--text-secondary); }
+.console-shell .text-slate-400 { color: var(--text-secondary); }
+.console-shell .text-slate-500 { color: var(--text-muted); }
+
+/* --- Form controls --- */
+.console-shell input,
+.console-shell select,
+.console-shell textarea {
+  background-color: var(--bg-surface);
+  color: var(--text-primary);
+  border-color: var(--border-default);
 }
 
-.console-shell .text-slate-400 {
-  color: var(--console-muted) !important;
+.console-shell input::placeholder,
+.console-shell textarea::placeholder {
+  color: var(--text-muted);
 }
 
-/* Smooth theme transition */
+/* --- Smooth transitions --- */
 .console-shell,
 .console-shell > aside,
-.console-shell main,
-.console-shell section,
-.console-shell article {
+.console-shell > div,
+.console-shell .rounded-xl,
+.console-shell .rounded-2xl,
+.console-shell .rounded-3xl {
   transition:
     background-color 180ms ease,
     border-color 180ms ease,
     color 180ms ease;
 }
 
-/* deeper input / graph areas */
-.console-shell .bg-black\/20,
-.console-shell .bg-black\/25,
-.console-shell .bg-black\/30,
-.console-shell select {
-  background-color: var(--console-surface-deep) !important;
-}
-
-/* remove old console aurora/background casts */
-.console-shell > .pointer-events-none.fixed {
-  display: none !important;
-}
-
-/* no accidental dark strips around pages */
-.console-shell [class*="bg-[#03040b]"],
-.console-shell [class*="bg-[#050817]"],
-.console-shell [class*="bg-[#060711]"] {
-  background-color: var(--console-global-bg) !important;
-}
-
-
-/* =========================================================
-   BOLOSAFE — ADVERSARIAL MATCHES OVERVIEW PALETTE
-   ========================================================= */
-
-.adversarial-modern-shell {
-  --adv-bg: #0B0E1C;
-  --adv-panel: #15182A;
-  --adv-panel-2: #121526;
-  --adv-deep: #0E1120;
-
-  /* same muted indigo language as Overview */
-  --adv-indigo: #616BC2;
-  --adv-indigo-bright: #7079D6;
-  --adv-indigo-soft: rgba(97,107,194,.10);
-
-  /* same operational green */
-  --adv-green: #70B88A;
-  --adv-green-soft: rgba(112,184,138,.055);
-
-  /* same semantic warning / risk colors */
-  --adv-amber: #C7A34D;
-  --adv-amber-soft: rgba(199,163,77,.06);
-
-  --adv-red: #D16D7A;
-  --adv-red-soft: rgba(209,109,122,.055);
-
-  --adv-text: #F2F4F8;
-  --adv-text-soft: #A4ACBE;
-  --adv-muted: #7B8499;
-
-  --adv-border: rgba(104,115,150,.18);
-  --adv-border-soft: rgba(255,255,255,.055);
+/* --- Aurora glows: off in light mode --- */
+html:not([data-theme='dark']) .console-shell .aurora-glow,
+html:not([data-theme='dark']) .adversarial-modern-shell .aurora-glow {
+  display: none;
 }
 
 /* =========================================================
-   BACKGROUND + PANELS
+   BOLOSAFE CONSOLE — LIGHT MODE COLOUR ACCENTS
+   Only fires when data-theme is NOT dark (= light or unset).
+   Dark mode is completely untouched.
    ========================================================= */
 
-.adversarial-modern-shell {
-  background:
-    var(--adv-bg)
-    !important;
+/* ---- Sidebar ---- */
 
-  color:
-    var(--adv-text)
-    !important;
+/* Sidebar shell: slightly warmer surface + subtle left gradient */
+html:not([data-theme='dark']) .console-shell > aside {
+  background: linear-gradient(180deg, #FFFFFF 0%, #F7F8FD 100%) !important;
+  border-right-color: #E0E4F0 !important;
 }
 
-.adversarial-modern-shell
-  .rounded-xl,
-.adversarial-modern-shell
-  .rounded-2xl,
-.adversarial-modern-shell
-  .rounded-3xl {
-  background:
-    var(--adv-panel)
-    !important;
-
-  border-color:
-    var(--adv-border)
-    !important;
-
-  box-shadow:
-    0 14px 36px rgba(0,0,0,.16),
-    inset 0 1px 0 rgba(255,255,255,.02)
-    !important;
-}
-
-/* darker inner fields */
-.adversarial-modern-shell
-  select,
-.adversarial-modern-shell
-  .bg-black\/20,
-.adversarial-modern-shell
-  .bg-black\/25,
-.adversarial-modern-shell
-  .bg-black\/30,
-.adversarial-modern-shell
-  .border-dashed {
-  background:
-    var(--adv-deep)
-    !important;
-}
-
-/* =========================================================
-   PRIMARY INDIGO — REMOVE BRIGHT PURPLE/BLUE CAST
-   ========================================================= */
-
-.adversarial-modern-shell
-  .text-cyan-300,
-.adversarial-modern-shell
-  .text-cyan-200,
-.adversarial-modern-shell
-  .text-violet-300,
-.adversarial-modern-shell
-  .text-violet-400 {
-  color:
-    var(--adv-indigo-bright)
-    !important;
-}
-
-.adversarial-modern-shell
-  button[class*="from-cyan-300"],
-.adversarial-modern-shell
-  button[class*="bg-indigo-"] {
-  background:
-    linear-gradient(
-      135deg,
-      #616BC2,
-      #7079D6
-    )
-    !important;
-
-  border-color:
-    rgba(97,107,194,.30)
-    !important;
-
-  box-shadow:
-    0 12px 30px
-    rgba(97,107,194,.14),
-    inset 0 1px 0
-    rgba(255,255,255,.08)
-    !important;
-}
-
-.adversarial-modern-shell
-  button[class*="from-cyan-300"]:hover {
-  background:
-    linear-gradient(
-      135deg,
-      #6872CD,
-      #7881DE
-    )
-    !important;
-}
-
-/* active dataset/source state */
-.adversarial-modern-shell
-  button[class*="border-cyan-300"] {
-  border-color:
-    rgba(97,107,194,.46)
-    !important;
-
-  background:
-    rgba(97,107,194,.10)
-    !important;
-
-  color:
-    #E7E9F4
-    !important;
-}
-
-/* =========================================================
-   SUCCESS / DEFENSE — SAME AS OVERVIEW
-   ========================================================= */
-
-.adversarial-modern-shell
-  .text-emerald-200,
-.adversarial-modern-shell
-  .text-emerald-300,
-.adversarial-modern-shell
-  .text-emerald-400 {
-  color:
-    var(--adv-green)
-    !important;
-}
-
-.adversarial-modern-shell
-  [class*="border-emerald"] {
-  border-color:
-    rgba(112,184,138,.24)
-    !important;
-
-  background:
-    var(--adv-green-soft)
-    !important;
-}
-
-.adversarial-modern-shell
-  .bg-emerald-400 {
-  background:
-    var(--adv-green)
-    !important;
-
-  box-shadow:
-    0 0 7px
-    rgba(112,184,138,.28)
-    !important;
-}
-
-/* =========================================================
-   WARNING — SAME MUTED AMBER AS OVERVIEW
-   ========================================================= */
-
-.adversarial-modern-shell
-  .text-amber-200,
-.adversarial-modern-shell
-  .text-amber-300,
-.adversarial-modern-shell
-  .text-yellow-300,
-.adversarial-modern-shell
-  .text-yellow-400 {
-  color:
-    var(--adv-amber)
-    !important;
-}
-
-.adversarial-modern-shell
-  [class*="border-amber"],
-.adversarial-modern-shell
-  [class*="border-yellow"] {
-  border-color:
-    rgba(199,163,77,.24)
-    !important;
-}
-
-.adversarial-modern-shell
-  .bg-amber-400,
-.adversarial-modern-shell
-  .bg-yellow-400 {
-  background:
-    var(--adv-amber)
-    !important;
-}
-
-/* =========================================================
-   HIGH RISK / ATTACK — SAME MUTED RED
-   ========================================================= */
-
-.adversarial-modern-shell
-  .text-red-200,
-.adversarial-modern-shell
-  .text-red-300,
-.adversarial-modern-shell
-  .text-red-400 {
-  color:
-    var(--adv-red)
-    !important;
-}
-
-.adversarial-modern-shell
-  [class*="border-red"] {
-  border-color:
-    rgba(209,109,122,.25)
-    !important;
-
-  background:
-    var(--adv-red-soft)
-    !important;
-}
-
-.adversarial-modern-shell
-  .bg-red-400 {
-  background:
-    var(--adv-red)
-    !important;
-}
-
-/* =========================================================
-   BASELINE / ATTACK / DEFENSE GRAPH COLORS
-   ========================================================= */
-
-.adversarial-modern-shell
-  .bg-cyan-300 {
-  background:
-    var(--adv-indigo)
-    !important;
-}
-
-.adversarial-modern-shell
-  .bg-red-400 {
-  background:
-    var(--adv-red)
-    !important;
-}
-
-.adversarial-modern-shell
-  .bg-emerald-400 {
-  background:
-    var(--adv-green)
-    !important;
-}
-
-/* SVG equivalents */
-.adversarial-modern-shell
-  path[stroke="#34d399"],
-.adversarial-modern-shell
-  circle[fill="#34d399"] {
-  stroke:
-    var(--adv-green)
-    !important;
-
-  fill:
-    var(--adv-green)
-    !important;
-}
-
-.adversarial-modern-shell
-  path[stroke="#fb7185"],
-.adversarial-modern-shell
-  circle[fill="#fb7185"] {
-  stroke:
-    var(--adv-red)
-    !important;
-
-  fill:
-    var(--adv-red)
-    !important;
-}
-
-/* =========================================================
-   TEXT HIERARCHY
-   ========================================================= */
-
-.adversarial-modern-shell
-  .text-white {
-  color:
-    var(--adv-text)
-    !important;
-}
-
-.adversarial-modern-shell
-  .text-slate-300 {
-  color:
-    var(--adv-text-soft)
-    !important;
-}
-
-.adversarial-modern-shell
-  .text-slate-400 {
-  color:
-    #8992A6
-    !important;
-}
-
-.adversarial-modern-shell
-  .text-slate-500 {
-  color:
-    var(--adv-muted)
-    !important;
-}
-
-/* =========================================================
-   FORM CONTROLS
-   ========================================================= */
-
-.adversarial-modern-shell
-  select {
-  border-color:
-    rgba(104,115,150,.16)
-    !important;
-
-  color:
-    #D9DDE7
-    !important;
-}
-
-.adversarial-modern-shell
-  input[type="range"] {
-  accent-color:
-    var(--adv-indigo)
-    !important;
-}
-
-.adversarial-modern-shell
-  input[type="range"]::-webkit-slider-runnable-track {
-  background:
-    #292D42
-    !important;
-}
-
-.adversarial-modern-shell
-  input[type="range"]::-webkit-slider-thumb {
-  background:
-    var(--adv-indigo)
-    !important;
-
-  border-color:
-    var(--adv-panel)
-    !important;
-
-  box-shadow:
-    0 0 0 1px
-    rgba(97,107,194,.28),
-    0 0 12px
-    rgba(97,107,194,.18)
-    !important;
-}
-
-/* =========================================================
-   ACTIVE SHIELD
-   ========================================================= */
-
-.adversarial-modern-shell
-  [class*="border-emerald"] {
-  box-shadow:
-    inset 2px 0 0
-    var(--adv-green)
-    !important;
-}
-
-/* =========================================================
-   GRAPH / EMPTY STATE
-   ========================================================= */
-
-.adversarial-modern-shell
-  .border-dashed {
-  border-color:
-    rgba(104,115,150,.13)
-    !important;
-
-  background:
-    #0E1120
-    !important;
-}
-
-/* =========================================================
-   NO NEON CAST
-   ========================================================= */
-
-.adversarial-modern-shell
-  [class*="shadow-[0_0_"],
-.adversarial-modern-shell
-  [class*="drop-shadow"] {
-  filter: none !important;
-}
-
-/* retain only tiny status glow */
-.adversarial-modern-shell
-  .bg-emerald-400 {
-  box-shadow:
-    0 0 6px
-    rgba(112,184,138,.24)
-    !important;
-}
-
-
-/* =========================================================
-   ADVERSARIAL — FORCE OVERVIEW PALETTE
-   Remove ALL legacy cyan / emerald styling from this page
-   ========================================================= */
-
-.adversarial-modern-shell {
-
-  /* exact Overview palette */
-  --adv-overview-indigo: #616BC2;
-  --adv-overview-indigo-bright: #7079D6;
-  --adv-overview-green: #70B88A;
-  --adv-overview-amber: #C7A34D;
-  --adv-overview-red: #D16D7A;
-}
-
-/* =========================================================
-   KILL CYAN
-   ========================================================= */
-
-.adversarial-modern-shell [class*="text-cyan-"],
-.adversarial-modern-shell [class*="text-sky-"],
-.adversarial-modern-shell [class*="text-teal-"] {
-  color: var(--adv-overview-indigo-bright) !important;
-}
-
-.adversarial-modern-shell [class*="border-cyan-"],
-.adversarial-modern-shell [class*="border-sky-"],
-.adversarial-modern-shell [class*="border-teal-"] {
-  border-color: rgba(97,107,194,.28) !important;
-}
-
-.adversarial-modern-shell [class*="bg-cyan-"],
-.adversarial-modern-shell [class*="bg-sky-"],
-.adversarial-modern-shell [class*="bg-teal-"] {
-  background-color: rgba(97,107,194,.08) !important;
-}
-
-/* cyan gradients */
-.adversarial-modern-shell [class*="from-cyan-"],
-.adversarial-modern-shell [class*="via-cyan-"],
-.adversarial-modern-shell [class*="to-cyan-"] {
-  --tw-gradient-from: #616BC2 !important;
-  --tw-gradient-via: #616BC2 !important;
-  --tw-gradient-to: #7079D6 !important;
-}
-
-/* =========================================================
-   KILL BRIGHT EMERALD / MINT
-   ========================================================= */
-
-.adversarial-modern-shell [class*="text-emerald-"],
-.adversarial-modern-shell [class*="text-green-"] {
-  color: var(--adv-overview-green) !important;
-}
-
-.adversarial-modern-shell [class*="border-emerald-"],
-.adversarial-modern-shell [class*="border-green-"] {
-  border-color: rgba(112,184,138,.27) !important;
-}
-
-.adversarial-modern-shell [class*="bg-emerald-"],
-.adversarial-modern-shell [class*="bg-green-"] {
-  background-color: rgba(112,184,138,.055) !important;
-}
-
-/* green gradients */
-.adversarial-modern-shell [class*="from-emerald-"],
-.adversarial-modern-shell [class*="via-emerald-"],
-.adversarial-modern-shell [class*="to-emerald-"],
-.adversarial-modern-shell [class*="from-green-"],
-.adversarial-modern-shell [class*="via-green-"],
-.adversarial-modern-shell [class*="to-green-"] {
-  --tw-gradient-from: #70B88A !important;
-  --tw-gradient-via: #70B88A !important;
-  --tw-gradient-to: #70B88A !important;
-}
-
-/* =========================================================
-   ICONS / SVGs
-   ========================================================= */
-
-/* Legacy cyan/teal lucide icons */
-.adversarial-modern-shell [class*="text-cyan-"] svg,
-.adversarial-modern-shell [class*="text-teal-"] svg,
-.adversarial-modern-shell [class*="text-sky-"] svg {
-  color: var(--adv-overview-indigo-bright) !important;
-  stroke: currentColor !important;
-}
-
-/* Legacy emerald/green icons */
-.adversarial-modern-shell [class*="text-emerald-"] svg,
-.adversarial-modern-shell [class*="text-green-"] svg {
-  color: var(--adv-overview-green) !important;
-  stroke: currentColor !important;
-}
-
-/* =========================================================
-   ACTIVE SHIELD — MATCH OVERVIEW GREEN EXACTLY
-   ========================================================= */
-
-.adversarial-modern-shell
-  [class*="border-emerald"] {
-  color: var(--adv-overview-green) !important;
-
-  border-color:
-    rgba(112,184,138,.28) !important;
-
-  background:
-    rgba(112,184,138,.045) !important;
-
-  box-shadow:
-    inset 2px 0 0 var(--adv-overview-green) !important;
-}
-
-/* status dot */
-.adversarial-modern-shell
-  [class*="bg-emerald"] {
-  background:
-    var(--adv-overview-green) !important;
-
-  box-shadow:
-    0 0 6px rgba(112,184,138,.22) !important;
-}
-
-/* =========================================================
-   PRIMARY UI = OVERVIEW INDIGO
-   ========================================================= */
-
-.adversarial-modern-shell
-  button[class*="from-cyan-"],
-.adversarial-modern-shell
-  button[class*="from-indigo-"],
-.adversarial-modern-shell
-  button[class*="bg-indigo-"] {
-  background:
-    linear-gradient(
-      135deg,
-      #616BC2,
-      #7079D6
-    ) !important;
-
-  border-color:
-    rgba(97,107,194,.30) !important;
-
-  box-shadow:
-    0 12px 28px rgba(97,107,194,.13) !important;
-}
-
-/* =========================================================
-   HEADER EYEBROW / ICON
-   ========================================================= */
-
-.adversarial-modern-shell
-  .text-cyan-300.animate-pulse,
-.adversarial-modern-shell
-  .text-cyan-300 {
-  color:
-    #7079D6 !important;
-}
-
-/* =========================================================
-   GRAPH LEGEND
-   ========================================================= */
-
-.adversarial-modern-shell
-  .bg-cyan-300 {
-  background:
-    #616BC2 !important;
-}
-
-.adversarial-modern-shell
-  .bg-emerald-400 {
-  background:
-    #70B88A !important;
-}
-
-.adversarial-modern-shell
-  .text-emerald-300 {
-  color:
-    #70B88A !important;
-}
-
-/* =========================================================
-   ABSOLUTE FINAL FALLBACK:
-   Any remaining cyan/green SVG strokes/fills
-   ========================================================= */
-
-.adversarial-modern-shell
-  svg[stroke="#22d3ee"],
-.adversarial-modern-shell
-  svg[stroke="#34d399"],
-.adversarial-modern-shell
-  path[stroke="#22d3ee"],
-.adversarial-modern-shell
-  path[stroke="#34d399"],
-.adversarial-modern-shell
-  circle[fill="#22d3ee"],
-.adversarial-modern-shell
-  circle[fill="#34d399"] {
-  stroke: var(--adv-overview-indigo-bright) !important;
-  fill: var(--adv-overview-indigo-bright) !important;
-}
-
-/* green SVGs should remain operational green */
-.adversarial-modern-shell
-  path[stroke="#10b981"],
-.adversarial-modern-shell
-  circle[fill="#10b981"] {
-  stroke: var(--adv-overview-green) !important;
-  fill: var(--adv-overview-green) !important;
-}
-
-
-/* =========================================================
-   FIX: ADVERSARIAL STATUS BADGE
-   Restore translucent Overview-style green treatment
-   ========================================================= */
-
-/* undo solid green gradient overrides */
-.adversarial-modern-shell
-  [class*="from-emerald-"],
-.adversarial-modern-shell
-  [class*="via-emerald-"],
-.adversarial-modern-shell
-  [class*="to-emerald-"],
-.adversarial-modern-shell
-  [class*="from-green-"],
-.adversarial-modern-shell
-  [class*="via-green-"],
-.adversarial-modern-shell
-  [class*="to-green-"] {
-  --tw-gradient-from:
-    rgba(112,184,138,.07) !important;
-
-  --tw-gradient-via:
-    rgba(112,184,138,.035) !important;
-
-  --tw-gradient-to:
-    rgba(112,184,138,.015) !important;
-
-  background-image:
-    linear-gradient(
-      90deg,
-      rgba(112,184,138,.07),
-      rgba(112,184,138,.025)
-    ) !important;
-
-  color:
-    #70B88A !important;
-
-  border-color:
-    rgba(112,184,138,.24) !important;
-
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,.025) !important;
-}
-
-/* never let status text inherit a solid background */
-.adversarial-modern-shell
-  [class*="border-emerald"] {
-  color:
-    #70B88A !important;
-
-  background-color:
-    rgba(112,184,138,.035) !important;
-}
-
-/* status icon */
-.adversarial-modern-shell
-  [class*="border-emerald"] svg {
-  color:
-    #70B88A !important;
-
-  stroke:
-    currentColor !important;
-}
-
-/* healthy status dot */
-.adversarial-modern-shell
-  [class*="bg-emerald"] {
-  background-color:
-    #70B88A !important;
-}
-
-/* keep the small dot small */
-.adversarial-modern-shell
-  [class*="bg-emerald-400"] {
-  width: 7px !important;
-  height: 7px !important;
-  box-shadow:
-    0 0 6px rgba(112,184,138,.24) !important;
-}
-
-
-/* =========================================================
-   FIX OVERVIEW-STYLE GREEN STATUS CONTAINERS
-   Do NOT size entire green containers like status dots.
-   ========================================================= */
-
-/* Top-right Active Purifier status */
-.adversarial-modern-shell
-  span[class*="border-emerald-400/25"] {
-  width: auto !important;
-  min-width: max-content !important;
-  height: auto !important;
-  min-height: 38px !important;
-
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-
-  flex-shrink: 0 !important;
-
-  padding:
-    8px 14px
-    !important;
-
-  border-radius: 999px !important;
-
-  color:
-    #70B88A !important;
-
-  border-color:
-    rgba(112,184,138,.24) !important;
-
-  background:
-    rgba(112,184,138,.045) !important;
-
-  box-shadow:
-    none !important;
-}
-
-.adversarial-modern-shell
-  span[class*="border-emerald-400/25"] svg {
-  width: 14px !important;
-  height: 14px !important;
-
-  flex-shrink: 0 !important;
-
-  color:
-    #70B88A !important;
-}
-
-/* =========================================================
-   DEFENSE SHIELD CONTAINER
-   ========================================================= */
-
-.adversarial-modern-shell
-  div[class*="border-emerald-400/20"] {
-  width: 100% !important;
-  height: auto !important;
-  min-height: 52px !important;
-
-  display: flex !important;
-  align-items: center !important;
-
-  padding:
-    12px 14px
-    !important;
-
-  border-radius: 11px !important;
-
-  color:
-    #70B88A !important;
-
-  border-color:
-    rgba(112,184,138,.24) !important;
-
-  background:
-    rgba(112,184,138,.035) !important;
-
-  box-shadow:
-    inset 2px 0 0 #70B88A !important;
-}
-
-.adversarial-modern-shell
-  div[class*="border-emerald-400/20"] svg {
-  width: 15px !important;
-  height: 15px !important;
-
-  flex-shrink: 0 !important;
-
-  color:
-    #70B88A !important;
-}
-
-/* =========================================================
-   ONLY ACTUAL STATUS DOTS GET 7px
-   ========================================================= */
-
-/* top status / defense indicators that are literal spans */
-.adversarial-modern-shell
-  span.size-2.bg-emerald-400,
-.adversarial-modern-shell
-  span.size-1\.5.bg-emerald-400 {
-  width: 7px !important;
-  height: 7px !important;
-
-  min-width: 7px !important;
-  min-height: 7px !important;
-
-  padding: 0 !important;
-
-  border-radius: 999px !important;
-
-  background:
-    #70B88A !important;
-
-  box-shadow:
-    0 0 6px
-    rgba(112,184,138,.24) !important;
-}
-
-/* remove accidental sizing from generic green utility nodes */
-.adversarial-modern-shell
-  [class*="bg-emerald-"] {
-  min-width: 0 !important;
-  min-height: 0 !important;
-}
-
-/* re-assert real indicator size */
-.adversarial-modern-shell
-  span[class*="bg-emerald-"] {
-  width: 7px !important;
-  height: 7px !important;
-}
-
-/* =========================================================
-   KEEP PRIMARY INDIGO BUTTON NORMAL
-   ========================================================= */
-
-.adversarial-modern-shell
-  button[class*="border-cyan-300/35"] {
-  width: 100% !important;
-  min-height: 52px !important;
-}
-
-/* =========================================================
-   BOLOSAFE-AI — LANDING PAGE REDESIGN & POLISH SYSTEM
-   Strict adherence to color tokens, typography, readability,
-   and responsive component architectures.
-   ========================================================= */
-
-:root {
-  --bs-bg-primary: #050817;
-  --bs-bg-secondary: #080C1D;
-  --bs-bg-elevated: #0C1228;
-  --bs-border: rgba(120, 130, 255, 0.14);
-  --bs-border-bright: rgba(120, 130, 255, 0.32);
-  --bs-indigo-primary: #5B5BF7;
-  --bs-indigo-secondary: #7370FF;
-  --bs-violet-soft: #8A7CFF;
-  --bs-security-green: #00D9A5;
-  --bs-text-primary: #F7F8FF;
-  --bs-text-secondary: #A4ADCA;
-  --bs-text-muted: #66708F;
-}
-
-body {
-  font-family: 'Plus Jakarta Sans', Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
-  background-color: #050817 !important;
-  color: #F7F8FF !important;
-}
-
-/* Section Spacing & Hierarchy Standard */
-.hero-main-stage {
-  padding-top: 48px !important;
-  padding-bottom: 96px !important;
-}
-
-.hero-main-stage h1 {
-  font-size: clamp(2.75rem, 5vw, 4.5rem) !important;
-  line-height: 1.05 !important;
-  letter-spacing: -0.04em !important;
-  font-weight: 800 !important;
-  color: #F7F8FF !important;
-  max-width: 640px !important;
-}
-
-.hero-main-stage h1 span {
-  color: #7370FF !important;
-}
-
-.hero-main-stage h1 + p {
-  font-size: 1.125rem !important;
-  line-height: 1.65 !important;
-  font-weight: 500 !important;
-  color: #F7F8FF !important;
-  max-width: 580px !important;
-  margin-top: 24px !important;
-}
-
-.hero-main-stage h1 + p + p {
-  font-size: 0.95rem !important;
-  line-height: 1.7 !important;
-  color: #A4ADCA !important;
-  max-width: 580px !important;
-  margin-top: 14px !important;
+/* Active nav item: stronger indigo tint + left border stripe */
+html:not([data-theme='dark']) .console-shell aside nav button[class*="bg-[var(--accent-primary-muted)]"] {
+  background-color: rgba(89, 101, 232, 0.12) !important;
+  border-color: rgba(89, 101, 232, 0.30) !important;
+  color: #4A56D4 !important;
+  box-shadow: inset 3px 0 0 #5965E8;
 }
 
-/* Hero Right Visual: High-End Cybersecurity Engine */
-.final-hero-visual {
-  position: relative !important;
-  width: 100% !important;
-  height: 680px !important;
+/* Active nav item icon: vivid indigo */
+html:not([data-theme='dark']) .console-shell aside nav button[class*="bg-[var(--accent-primary-muted)]"] svg {
+  color: #5965E8 !important;
 }
 
-.final-hero-card-head {
-  font-size: 11px !important;
-  font-weight: 700 !important;
-  letter-spacing: 0.14em !important;
-  color: #8A7CFF !important;
+/* Inactive nav item icons: soft indigo tint instead of plain gray */
+html:not([data-theme='dark']) .console-shell aside nav button:not([class*="bg-[var(--accent-primary-muted)]"]) svg {
+  color: #8A95CB !important;
+  transition: color 150ms ease;
 }
 
-.final-hero-card-head b {
-  font-size: 10px !important;
-  font-weight: 700 !important;
-  padding: 3px 8px !important;
-  background: rgba(0, 217, 165, 0.1) !important;
-  border: 1px solid rgba(0, 217, 165, 0.3) !important;
-  color: #00D9A5 !important;
-  border-radius: 999px !important;
+html:not([data-theme='dark']) .console-shell aside nav button:not([class*="bg-[var(--accent-primary-muted)]"]):hover svg {
+  color: #5965E8 !important;
 }
 
-.final-hero-micro-labels {
-  font-size: 10px !important;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
-  color: #A4ADCA !important;
-  letter-spacing: 0.1em !important;
+/* Sidebar brand icon container */
+html:not([data-theme='dark']) .console-shell > aside [class*="bg-[var(--accent-primary-muted)]"]:first-of-type {
+  background-color: rgba(89, 101, 232, 0.10) !important;
+  border-color: rgba(89, 101, 232, 0.22) !important;
 }
 
-.final-hero-attack-label {
-  font-size: 11px !important;
-  font-weight: 700 !important;
-  letter-spacing: 0.18em !important;
-  color: #8A7CFF !important;
-  margin-bottom: 12px !important;
-}
-
-.final-hero-attack-card {
-  height: 98px !important;
-  margin-bottom: 9px !important;
-  border: 1px solid rgba(120, 130, 255, 0.18) !important;
-  background: rgba(8, 12, 29, 0.85) !important;
-  backdrop-filter: blur(16px) !important;
-  border-radius: 14px !important;
-  transition: all 0.3s ease !important;
-}
-
-.final-hero-attack-card:hover {
-  border-color: var(--attack-color, #7370FF) !important;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), 0 0 20px color-mix(in srgb, var(--attack-color, #7370FF) 25%, transparent) !important;
-}
-
-.final-hero-attack-sector {
-  font-size: 10px !important;
-  font-weight: 700 !important;
-  letter-spacing: 0.14em !important;
-  text-transform: uppercase !important;
-  color: var(--attack-color, #7370FF) !important;
-}
-
-.final-hero-attack-title {
-  font-size: 14px !important;
-  font-weight: 700 !important;
-  color: #F7F8FF !important;
-  margin-top: 2px !important;
-}
-
-.final-hero-attack-action {
-  font-size: 11px !important;
-  color: #A4ADCA !important;
-  margin-top: 2px !important;
-}
-
-.final-hero-attack-meta {
-  display: flex !important;
-  align-items: center !important;
-  gap: 6px !important;
-  font-size: 9px !important;
-  font-weight: 600 !important;
-  letter-spacing: 0.12em !important;
-  color: #00D9A5 !important;
-  margin-top: 4px !important;
-}
-
-.final-hero-attack-meta i {
-  display: inline-block !important;
-  width: 5px !important;
-  height: 5px !important;
-  border-radius: 50% !important;
-  background: #00D9A5 !important;
-  box-shadow: 0 0 6px #00D9A5 !important;
-}
-
-.final-hero-brand {
-  font-size: 15px !important;
-  font-weight: 800 !important;
-  letter-spacing: 0.14em !important;
-  color: #F7F8FF !important;
-}
-
-.final-hero-neural {
-  font-size: 10px !important;
-  font-weight: 700 !important;
-  letter-spacing: 0.22em !important;
-  color: #7370FF !important;
-}
-
-.final-hero-core-status {
-  font-size: 10px !important;
-  font-weight: 600 !important;
-  letter-spacing: 0.12em !important;
-  color: #00D9A5 !important;
-}
-
-.final-hero-panel-title {
-  font-size: 11px !important;
-  font-weight: 700 !important;
-  letter-spacing: 0.16em !important;
-  color: #8A7CFF !important;
-}
-
-.final-hero-legend span {
-  font-size: 11px !important;
-  color: #A4ADCA !important;
-}
-
-.final-hero-risk-caption {
-  font-size: 11px !important;
-  color: #A4ADCA !important;
-}
-
-.final-hero-alert {
-  font-size: 10px !important;
-  font-weight: 700 !important;
-  color: #F43F8A !important;
-  border: 1.5px solid rgba(244, 63, 138, 0.5) !important;
-  border-radius: 999px !important;
-  width: auto !important;
-  height: auto !important;
-  padding: 4px 10px !important;
-}
-
-/* Fix pipeline nodes — no overflowing, natural wrapping, generous height */
-.pipeline-node {
-  height: auto !important;
-  min-height: 180px !important;
-  max-height: none !important;
-  padding: 20px 18px !important;
-  background: #0C1228 !important;
-  border: 1px solid rgba(120, 130, 255, 0.14) !important;
-  border-radius: 16px !important;
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
-}
-
-.pipeline-node:hover,
-.pipeline-node.is-active {
-  border-color: rgba(115, 112, 255, 0.5) !important;
-  background: rgba(14, 22, 50, 0.95) !important;
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4), 0 0 25px rgba(91, 91, 247, 0.2) !important;
-  transform: translateY(-4px) !important;
-}
-
-.pipeline-node__title {
-  font-size: 15px !important;
-  line-height: 1.25 !important;
-  font-weight: 700 !important;
-  color: #F7F8FF !important;
-  white-space: normal !important;
-  word-break: break-word !important;
-}
-
-.pipeline-node__subtitle {
-  font-size: 12px !important;
-  color: #A4ADCA !important;
-  line-height: 1.45 !important;
-  margin-top: 6px !important;
-}
-
-.pipeline-node__number {
-  font-size: 14px !important;
-  font-weight: 800 !important;
-  color: #7370FF !important;
-}
-
-/* Sector Reference Card improvements */
-.sector-reference-section {
-  padding: 96px 0 !important;
-  background: transparent !important;
-}
-
-.sector-reference-wrap {
-  width: 100% !important;
-  max-width: 1360px !important;
-  margin: 0 auto !important;
-  padding: 0 24px !important;
-  display: grid !important;
-  grid-template-columns: 360px minmax(0, 1fr) !important;
-  gap: 48px !important;
-  align-items: center !important;
-}
-
-@media (max-width: 1024px) {
-  .sector-reference-wrap {
-    grid-template-columns: 1fr !important;
-    gap: 36px !important;
-  }
-}
-
-.sector-reference-cards {
-  display: grid !important;
-  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
-  gap: 16px !important;
-}
-
-@media (max-width: 1100px) {
-  .sector-reference-cards {
-    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-  }
-}
-
-@media (max-width: 640px) {
-  .sector-reference-cards {
-    grid-template-columns: 1fr !important;
-  }
-}
-
-.sector-reference-card {
-  height: 420px !important;
-  border-radius: 18px !important;
-  border: 1px solid rgba(120, 130, 255, 0.16) !important;
-  background: #080C1D !important;
-  transform: none !important;
-  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.4) !important;
-  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1) !important;
-}
-
-.sector-reference-card:hover,
-.sector-reference-card.is-active {
-  border-color: var(--sector-accent, #7370FF) !important;
-  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.6), 0 0 30px color-mix(in srgb, var(--sector-accent, #7370FF) 28%, transparent) !important;
-  transform: translateY(-6px) !important;
-}
-
-.sector-reference-image-overlay {
-  background: linear-gradient(
-    180deg,
-    rgba(8, 12, 29, 0.25) 0%,
-    rgba(8, 12, 29, 0.65) 45%,
-    rgba(8, 12, 29, 0.96) 82%,
-    #080C1D 100%
-  ) !important;
-}
-
-.sector-reference-eyebrow {
-  font-size: 11px !important;
-  font-weight: 700 !important;
-  letter-spacing: 0.18em !important;
-  color: #7370FF !important;
-}
-
-.sector-reference-name {
-  font-size: 11px !important;
-  font-weight: 700 !important;
-  letter-spacing: 0.14em !important;
-  text-transform: uppercase !important;
-  color: var(--sector-accent, #7370FF) !important;
-}
-
-.sector-reference-title {
-  font-size: 18px !important;
-  font-weight: 800 !important;
-  color: #F7F8FF !important;
-  margin-top: 4px !important;
-}
-
-.sector-reference-description {
-  font-size: 13px !important;
-  line-height: 1.55 !important;
-  color: #A4ADCA !important;
-  margin-top: 8px !important;
-}
-
-.sector-reference-explore {
-  font-size: 12px !important;
-  font-weight: 600 !important;
-  color: var(--sector-accent, #7370FF) !important;
-  margin-top: 14px !important;
-  display: flex !important;
-  align-items: center !important;
-  gap: 6px !important;
-}
-
-/* Reduced motion accessibility */
-@media (prefers-reduced-motion: reduce) {
-  *,
-  ::before,
-  ::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
-  }
-}
-
-
-/* =========================================================
-   BOLOSAFE CONSOLE — FINAL LIGHT/DARK THEME OVERRIDES
-   Must remain at the END of this file so it wins the cascade.
-   Landing page is intentionally untouched.
-   ========================================================= */
-
-/* ---------- LIGHT MODE ---------- */
-html[data-theme="light"] body:has(.console-shell),
-html[data-theme="light"] #root:has(.console-shell),
-html[data-theme="light"] .console-shell,
-html[data-theme="light"] .console-shell > .flex-1,
-html[data-theme="light"] .console-shell > div,
-html[data-theme="light"] .console-shell main,
-html[data-theme="light"] .console-shell section,
-html[data-theme="light"] .console-shell article,
-html[data-theme="light"] .console-shell .overflow-y-auto,
-html[data-theme="light"] .console-shell .min-h-screen,
-html[data-theme="light"] .console-shell > aside {
-  background-color: #F5F6FA !important;
-  background-image: none !important;
-}
-
-html[data-theme="light"] .console-shell {
-  color: #171B2D !important;
-}
+/* ---- Topbar ---- */
 
-html[data-theme="light"] .console-shell .rounded-xl,
-html[data-theme="light"] .console-shell .rounded-2xl,
-html[data-theme="light"] .console-shell .rounded-3xl {
+/* Topbar: clean white with a subtle indigo-tinted bottom border */
+html:not([data-theme='dark']) .console-shell header {
   background-color: #FFFFFF !important;
-  border-color: #E2E5EE !important;
+  border-bottom-color: #E0E4F0 !important;
+  box-shadow: 0 1px 0 #E8EBF5;
 }
 
-html[data-theme="light"] .console-shell .bg-black\/20,
-html[data-theme="light"] .console-shell .bg-black\/25,
-html[data-theme="light"] .console-shell .bg-black\/30,
-html[data-theme="light"] .console-shell select {
-  background-color: #EEF1F7 !important;
+/* Topbar breadcrumb page name: deeper indigo */
+html:not([data-theme='dark']) .console-shell header span[class*="font-bold"][class*="text-primary"] {
+  color: #3A44B5 !important;
 }
 
-html[data-theme="light"] .console-shell h1,
-html[data-theme="light"] .console-shell h2,
-html[data-theme="light"] .console-shell h3,
-html[data-theme="light"] .console-shell h4,
-html[data-theme="light"] .console-shell h5,
-html[data-theme="light"] .console-shell h6 {
-  color: #171B2D !important;
+/* Backend status badge: use token colors */
+html:not([data-theme='dark']) .console-shell header [class*="rounded-lg"][class*="border-[var(--border-default)]"] {
+  background-color: #F3F5FF !important;
+  border-color: #D5D9F5 !important;
 }
 
-html[data-theme="light"] .console-shell .text-slate-300 {
-  color: #667085 !important;
+/* ---- Metric / stat cards ---- */
+
+/* Card hover: slightly more visible indigo border tint */
+html:not([data-theme='dark']) .console-shell .rounded-2xl:hover,
+html:not([data-theme='dark']) .console-shell .rounded-3xl:hover {
+  border-color: rgba(89, 101, 232, 0.25) !important;
+  box-shadow: 0 4px 16px rgba(89, 101, 232, 0.07) !important;
 }
 
-html[data-theme="light"] .console-shell .text-slate-400 {
-  color: #7A8498 !important;
+/* Neutral metric card icon badge: give it an indigo tint */
+html:not([data-theme='dark']) .console-shell [class*="rounded-xl"][class*="border-[var(--border-default)]"][class*="size-9"] {
+  background-color: rgba(89, 101, 232, 0.07) !important;
+  border-color: rgba(89, 101, 232, 0.18) !important;
 }
 
-html[data-theme="light"] .console-shell .text-slate-500 {
-  color: #8A93A6 !important;
+html:not([data-theme='dark']) .console-shell [class*="rounded-xl"][class*="border-[var(--border-default)]"][class*="size-9"] svg {
+  color: #5965E8 !important;
 }
 
-html[data-theme="light"] .console-shell input,
-html[data-theme="light"] .console-shell textarea,
-html[data-theme="light"] .console-shell select {
-  color: #171B2D !important;
-  border-color: #E2E5EE !important;
+/* Eyebrow labels (the "AI VOICE RISK", "SECTOR" etc tiny caps) */
+html:not([data-theme='dark']) .console-shell [class*="uppercase"][class*="tracking-[0.2em]"],
+html:not([data-theme='dark']) .console-shell [class*="uppercase"][class*="tracking-[0.18em]"] {
+  color: #6C78D0 !important;
 }
 
+/* ---- Buttons ---- */
 
-/* ---------- DARK MODE ---------- */
-html[data-theme="dark"] body:has(.console-shell),
-html[data-theme="dark"] #root:has(.console-shell),
-html[data-theme="dark"] .console-shell,
-html[data-theme="dark"] .console-shell > .flex-1,
-html[data-theme="dark"] .console-shell > div,
-html[data-theme="dark"] .console-shell main,
-html[data-theme="dark"] .console-shell section,
-html[data-theme="dark"] .console-shell article,
-html[data-theme="dark"] .console-shell .overflow-y-auto,
-html[data-theme="dark"] .console-shell .min-h-screen,
-html[data-theme="dark"] .console-shell > aside {
-  background-color: #121526 !important;
+/* Ghost / outline buttons (Upload audio, secondary actions): light indigo tint bg */
+html:not([data-theme='dark']) .console-shell button[class*="border-[var(--border-default)]"][class*="bg-[var(--bg-card)]"],
+html:not([data-theme='dark']) .console-shell button[class*="border-[var(--border-default)]"][class*="bg-[var(--bg-surface)]"] {
+  background-color: #F3F5FF !important;
+  border-color: #D5D9F5 !important;
+  color: #4A56D4 !important;
 }
 
-html[data-theme="dark"] .console-shell .rounded-xl,
-html[data-theme="dark"] .console-shell .rounded-2xl,
-html[data-theme="dark"] .console-shell .rounded-3xl {
-  background-color: #171A2D !important;
-  border-color: #292E46 !important;
+html:not([data-theme='dark']) .console-shell button[class*="border-[var(--border-default)]"][class*="bg-[var(--bg-card)]"]:hover,
+html:not([data-theme='dark']) .console-shell button[class*="border-[var(--border-default)]"][class*="bg-[var(--bg-surface)]"]:hover {
+  background-color: #EAEDFF !important;
+  border-color: #5965E8 !important;
+  color: #3A44B5 !important;
 }
 
-html[data-theme="dark"] .console-shell .bg-black\/20,
-html[data-theme="dark"] .console-shell .bg-black\/25,
-html[data-theme="dark"] .console-shell .bg-black\/30,
-html[data-theme="dark"] .console-shell select {
-  background-color: #0E1120 !important;
+/* Primary accent buttons: richer indigo + shadow */
+html:not([data-theme='dark']) .console-shell button[class*="bg-[var(--accent-primary)]"]:not([disabled]) {
+  background-color: #5965E8 !important;
+  box-shadow: 0 2px 8px rgba(89, 101, 232, 0.30) !important;
+  color: #FFFFFF !important;
 }
 
+html:not([data-theme='dark']) .console-shell button[class*="bg-[var(--accent-primary)]"]:not([disabled]):hover {
+  background-color: #4A56D4 !important;
+  box-shadow: 0 4px 14px rgba(89, 101, 232, 0.40) !important;
+}
 
-/* ---------- THEME TRANSITION ---------- */
-.console-shell,
-.console-shell > aside,
-.console-shell > .flex-1,
-.console-shell main,
-.console-shell section,
-.console-shell article,
-.console-shell .rounded-xl,
-.console-shell .rounded-2xl,
-.console-shell .rounded-3xl {
-  transition:
-    background-color 180ms ease,
-    border-color 180ms ease,
-    color 180ms ease !important;
+/* ---- Status / badge chips ---- */
+
+/* "Required" / "Configured" pill */
+html:not([data-theme='dark']) .console-shell [class*="rounded-full"][class*="border"][class*="px-2.5"] {
+  box-shadow: 0 1px 3px rgba(89, 101, 232, 0.10);
+}
+
+/* OFFLINE / ONLINE badge in Live Operations */
+html:not([data-theme='dark']) .console-shell [class*="rounded-full"][class*="bg-[var(--bg-surface)]"][class*="px-3"] {
+  background-color: #F3F5FF !important;
+  border-color: #D5D9F5 !important;
+}
+
+/* ---- Section cards: tinted bg for key sections ---- */
+
+/* Context card: subtle indigo-to-white gradient */
+html:not([data-theme='dark']) .console-shell [class*="from-[var(--bg-card)]"][class*="to-[var(--bg-surface)]"] {
+  background: linear-gradient(135deg, #F3F5FF 0%, #FFFFFF 100%) !important;
+  border-color: rgba(89, 101, 232, 0.20) !important;
+}
+
+/* ---- Progress bars (sector distribution) ---- */
+html:not([data-theme='dark']) .console-shell [class*="bg-[var(--accent-primary)]"][class*="rounded-full"][class*="h-full"] {
+  background: linear-gradient(90deg, #5965E8, #7884F0) !important;
+}
+
+/* Track for the progress bars */
+html:not([data-theme='dark']) .console-shell [class*="h-2"][class*="overflow-hidden"][class*="rounded-full"] {
+  background-color: #E8ECFF !important;
+}
+
+/* ---- Stream / flow step cards ---- */
+html:not([data-theme='dark']) .console-shell [class*="STEP"],
+html:not([data-theme='dark']) .console-shell [class*="WAITING"] {
+  color: #6C78D0;
+}
+
+/* Step cards bottom row */
+html:not([data-theme='dark']) .console-shell [class*="CORE STREAM"],
+html:not([data-theme='dark']) .console-shell [class*="WORKFLOW"],
+html:not([data-theme='dark']) .console-shell [class*="DECISION"],
+html:not([data-theme='dark']) .console-shell [class*="IDENTITY"] {
+  color: #6C78D0;
 }

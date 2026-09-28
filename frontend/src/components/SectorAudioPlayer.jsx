@@ -54,15 +54,15 @@ export default function SectorAudioPlayer({
   return (
     <div className="space-y-4">
       {/* Signal header */}
-      <div className="flex flex-col gap-3 rounded-xl border border-[var(--border-default)] bg-[var(--bg-surface,#121526)] p-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-3 rounded-xl border border-[var(--border-default)] bg-[var(--bg-surface)] p-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0">
           <div className="flex items-center gap-2">
             <div
               className={[
                 'flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border',
                 isStreaming
-                  ? 'border-[var(--state-success)]/20 bg-[var(--state-success)]/10 text-[var(--state-success)]'
-                  : 'border-[var(--border-default)] bg-[var(--bg-card,#171A2D)] text-[var(--text-muted)]',
+                  ? 'border-[var(--status-success)]/25 bg-[var(--status-success)]/10 text-[var(--status-success)]'
+                  : 'border-[var(--border-default)] bg-[var(--bg-card)] text-[var(--text-muted)]',
               ].join(' ')}
             >
               <Radio size={15} />
@@ -89,15 +89,15 @@ export default function SectorAudioPlayer({
             'flex w-fit items-center gap-2 rounded-full border px-2.5 py-1.5',
             'text-[9px] font-bold uppercase tracking-[0.14em]',
             isStreaming
-              ? 'border-[var(--state-success)]/20 bg-[var(--state-success)]/10 text-[var(--state-success)]'
-              : 'border-[var(--border-default)] bg-[var(--bg-card,#171A2D)] text-[var(--text-muted)]',
+              ? 'border-[var(--status-success)]/25 bg-[var(--status-success)]/10 text-[var(--status-success)]'
+              : 'border-[var(--border-default)] bg-[var(--bg-card)] text-[var(--text-muted)]',
           ].join(' ')}
         >
           <span
             className={[
               'h-1.5 w-1.5 rounded-full',
               isStreaming
-                ? 'bg-[var(--state-success)]'
+                ? 'bg-[var(--status-success)]'
                 : 'bg-[var(--text-muted)]',
             ].join(' ')}
           />
@@ -106,9 +106,9 @@ export default function SectorAudioPlayer({
       </div>
 
       {/* Main waveform */}
-      <div className="rounded-xl border border-[var(--border-default)] bg-[var(--bg-surface,#121526)] p-4 md:p-5">
+      <div className="rounded-xl border border-[var(--border-default)] bg-[var(--bg-surface)] p-4 md:p-5">
         <div className="mb-3 flex items-center justify-between">
-          <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.15em] text-[#7079E0]">
+          <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.15em] text-[var(--accent-primary-soft)]">
             <Activity size={13} />
             Active audio signal
           </div>
@@ -119,21 +119,19 @@ export default function SectorAudioPlayer({
           </div>
         </div>
 
-        <div className="relative flex h-40 items-center md:h-44 justify-center overflow-hidden rounded-xl border border-[var(--border-default)] bg-[var(--bg-card,#171A2D)] px-4">
-          <div className="absolute inset-x-0 top-1/2 border-t border-[var(--border-default)]/70" />
+        <div className="relative flex h-40 items-center md:h-44 justify-center overflow-hidden rounded-xl border border-[var(--border-default)] bg-[var(--bg-card)] px-4">
+          <div className="absolute inset-x-0 top-1/2 border-t border-[var(--border-default)]/60" />
 
           <div className="relative z-10 flex h-full w-full items-center justify-center gap-[3px]">
             {waveform.map((height, index) => (
               <span
                 key={index}
-                className={[
-                  'block w-[3px] rounded-full transition-all duration-150 md:w-[4px]',
-                  isStreaming
-                    ? 'bg-[#7079E0]'
-                    : 'bg-[#292E46]',
-                ].join(' ')}
+                className="block w-[3px] rounded-full transition-all duration-150 md:w-[4px]"
                 style={{
                   height: `${height}%`,
+                  backgroundColor: isStreaming
+                    ? 'var(--accent-primary-soft)'
+                    : 'var(--border-strong)',
                   opacity: isStreaming
                     ? Math.min(1, 0.42 + normalizedLevel / 120)
                     : 0.7,
@@ -144,7 +142,7 @@ export default function SectorAudioPlayer({
 
           {!isStreaming && (
             <div className="absolute inset-0 flex items-center justify-center">
-              <span className="rounded-full border border-[var(--border-default)] bg-[var(--bg-surface,#121526)] px-3 py-1 text-[9px] font-semibold uppercase tracking-[0.14em] text-[var(--text-muted)]">
+              <span className="rounded-full border border-[var(--border-default)] bg-[var(--bg-surface)] px-3 py-1 text-[9px] font-semibold uppercase tracking-[0.14em] text-[var(--text-muted)]">
                 Waiting for audio input
               </span>
             </div>
@@ -170,27 +168,27 @@ export default function SectorAudioPlayer({
 
       {/* Dataset scenarios */}
       {samples.length > 0 && (
-        <div className="rounded-2xl border border-[#292E46] bg-[#121526] p-4 md:p-5">
+        <div className="rounded-2xl border border-[var(--border-default)] bg-[var(--bg-surface)] p-4 md:p-5">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <div className="flex items-center gap-2">
-                <span className="h-1.5 w-1.5 rounded-full bg-[#5863D6]" />
-                <div className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#7079E0]">
+                <span className="h-1.5 w-1.5 rounded-full bg-[var(--accent-primary)]" />
+                <div className="text-[10px] font-bold uppercase tracking-[0.16em] text-[var(--accent-primary-soft)]">
                   Detection test library
                 </div>
               </div>
 
-              <h3 className="mt-2 text-base font-semibold text-[#F4F5FA]">
+              <h3 className="mt-2 text-base font-semibold text-[var(--text-primary)]">
                 Run a sector voice scenario
               </h3>
 
-              <p className="mt-1 max-w-2xl text-[11px] leading-5 text-[#858BA3]">
+              <p className="mt-1 max-w-2xl text-[11px] leading-5 text-[var(--text-muted)]">
                 Use a real dataset sample to exercise the live audio pipeline,
                 detection model, speaker verification and governance layer.
               </p>
             </div>
 
-            <div className="flex shrink-0 items-center gap-2 rounded-full border border-[#292E46] bg-[#171A2D] px-2.5 py-1.5 text-[9px] font-bold uppercase tracking-[0.12em] text-[#858BA3]">
+            <div className="flex shrink-0 items-center gap-2 rounded-full border border-[var(--border-default)] bg-[var(--bg-card)] px-2.5 py-1.5 text-[9px] font-bold uppercase tracking-[0.12em] text-[var(--text-muted)]">
               <span>{samples.length}</span>
               <span>Scenarios</span>
             </div>
@@ -204,18 +202,18 @@ export default function SectorAudioPlayer({
 
               const tone = spoof
                 ? {
-                    border: 'border-[#D96A78]/30',
-                    bg: 'bg-[#D96A78]/[0.055]',
-                    accent: '#D96A78',
-                    iconBg: 'bg-[#D96A78]/10',
+                    border: 'border-[var(--status-danger)]/30',
+                    bg: 'bg-[var(--status-danger)]/[0.055]',
+                    accent: 'var(--status-danger)',
+                    iconBg: 'bg-[var(--status-danger)]/10',
                     label: 'SPOOF',
                     context: 'Synthetic / adversarial sample',
                   }
                 : {
-                    border: 'border-[#70B88A]/25',
-                    bg: 'bg-[#70B88A]/[0.045]',
-                    accent: '#70B88A',
-                    iconBg: 'bg-[#70B88A]/10',
+                    border: 'border-[var(--status-success)]/25',
+                    bg: 'bg-[var(--status-success)]/[0.045]',
+                    accent: 'var(--status-success)',
+                    iconBg: 'bg-[var(--status-success)]/10',
                     label: 'BONAFIDE',
                     context: 'Authentic reference sample',
                   }
@@ -239,7 +237,7 @@ export default function SectorAudioPlayer({
                     tone.border,
                     tone.bg,
                     active
-                      ? 'ring-1 ring-[#5863D6]/60'
+                      ? 'ring-1 ring-[var(--accent-primary)]/50'
                       : '',
                     'disabled:cursor-not-allowed disabled:opacity-45',
                   ].join(' ')}
@@ -268,8 +266,8 @@ export default function SectorAudioPlayer({
                       className="rounded-full border px-2 py-1 text-[8px] font-bold uppercase tracking-[0.12em]"
                       style={{
                         color: tone.accent,
-                        borderColor: `${tone.accent}55`,
-                        backgroundColor: `${tone.accent}12`,
+                        borderColor: `color-mix(in srgb, ${tone.accent} 35%, transparent)`,
+                        backgroundColor: `color-mix(in srgb, ${tone.accent} 12%, transparent)`,
                       }}
                     >
                       {tone.label}
@@ -277,27 +275,27 @@ export default function SectorAudioPlayer({
                   </div>
 
                   <div className="mt-4 min-w-0">
-                    <div className="text-[9px] font-bold uppercase tracking-[0.14em] text-[#858BA3]">
+                    <div className="text-[9px] font-bold uppercase tracking-[0.14em] text-[var(--text-muted)]">
                       Scenario {String(index + 1).padStart(2, '0')}
                     </div>
 
-                    <div className="mt-1.5 min-h-[42px] text-sm font-semibold leading-5 text-[#F4F5FA]">
+                    <div className="mt-1.5 min-h-[42px] text-sm font-semibold leading-5 text-[var(--text-primary)]">
                       {sample.label}
                     </div>
 
-                    <div className="mt-2 flex items-center gap-2 text-[10px] text-[#858BA3]">
+                    <div className="mt-2 flex items-center gap-2 text-[10px] text-[var(--text-muted)]">
                       <span>{sample.language}</span>
-                      <span className="text-[#292E46]">•</span>
+                      <span className="text-[var(--border-default)]">•</span>
                       <span>{tone.context}</span>
                     </div>
 
-                    <p className="mt-2 min-h-[34px] text-[10px] leading-4 text-[#858BA3]">
+                    <p className="mt-2 min-h-[34px] text-[10px] leading-4 text-[var(--text-muted)]">
                       {sample.description}
                     </p>
                   </div>
 
-                  <div className="mt-4 flex items-center justify-between border-t border-[#292E46] pt-3">
-                    <span className="text-[9px] font-semibold uppercase tracking-[0.12em] text-[#858BA3]">
+                  <div className="mt-4 flex items-center justify-between border-t border-[var(--border-default)] pt-3">
+                    <span className="text-[9px] font-semibold uppercase tracking-[0.12em] text-[var(--text-muted)]">
                       {active ? 'Selected' : 'Ready to run'}
                     </span>
 
@@ -313,19 +311,19 @@ export default function SectorAudioPlayer({
             })}
           </div>
 
-          <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-[9px] uppercase tracking-[0.12em] text-[#858BA3]">
+          <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-[9px] uppercase tracking-[0.12em] text-[var(--text-muted)]">
             <span className="flex items-center gap-1.5">
-              <span className="h-1.5 w-1.5 rounded-full bg-[#70B88A]" />
+              <span className="h-1.5 w-1.5 rounded-full bg-[var(--status-success)]" />
               Bonafide reference
             </span>
 
             <span className="flex items-center gap-1.5">
-              <span className="h-1.5 w-1.5 rounded-full bg-[#D96A78]" />
+              <span className="h-1.5 w-1.5 rounded-full bg-[var(--status-danger)]" />
               Synthetic / spoof
             </span>
 
             <span className="flex items-center gap-1.5">
-              <span className="h-1.5 w-1.5 rounded-full bg-[#5863D6]" />
+              <span className="h-1.5 w-1.5 rounded-full bg-[var(--accent-primary)]" />
               Live detection pipeline
             </span>
           </div>
@@ -341,7 +339,7 @@ export default function SectorAudioPlayer({
             'inline-flex min-h-10 flex-1 items-center justify-center gap-2 rounded-lg border px-4 py-2.5 text-xs font-semibold',
             'transition-colors duration-200',
             isStreaming
-              ? 'border-[var(--state-danger)]/25 bg-[var(--state-danger)] text-white hover:opacity-90'
+              ? 'border-[var(--status-danger)]/25 bg-[var(--status-danger)] text-white hover:opacity-90'
               : 'border-[var(--accent-primary)]/25 bg-[var(--accent-primary)] text-white hover:bg-[var(--accent-primary-soft)]',
           ].join(' ')}
         >
@@ -370,7 +368,7 @@ export default function SectorAudioPlayer({
           type="button"
           onClick={() => fileInputRef.current?.click()}
           disabled={isStreaming}
-          className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-[var(--border-default)] bg-[var(--bg-surface,#121526)] px-4 py-2.5 text-xs font-semibold text-[var(--text-primary)] transition-colors hover:bg-[var(--bg-hover,#1C2033)] disabled:cursor-not-allowed disabled:opacity-45 sm:min-w-[190px]"
+          className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-[var(--border-default)] bg-[var(--bg-surface)] px-4 py-2.5 text-xs font-semibold text-[var(--text-primary)] transition-colors hover:bg-[var(--bg-hover)] disabled:cursor-not-allowed disabled:opacity-45 sm:min-w-[190px]"
         >
           <Upload size={14} className="text-[var(--text-muted)]" />
           Upload custom audio

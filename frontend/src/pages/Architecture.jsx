@@ -194,11 +194,11 @@ function NeuralFlowDiagram() {
   ]
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-[#5863D6]/30 bg-[#0D1120]">
+    <div className="overflow-hidden rounded-2xl border border-[var(--accent-primary)]/25 bg-[var(--bg-card)]">
       <div className="border-b border-[var(--border-default)] px-5 py-4">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-[#7079E0]">
+            <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-[var(--accent-primary-soft)]">
               Live architecture view
             </p>
             <h3 className="mt-1 text-sm font-bold text-[var(--text-primary)]">
@@ -209,9 +209,9 @@ function NeuralFlowDiagram() {
             </p>
           </div>
 
-          <div className="flex items-center gap-2 rounded-full border border-[#70B88A]/25 bg-[#70B88A]/10 px-3 py-1.5">
-            <span className="h-2 w-2 animate-pulse rounded-full bg-[#70B88A]" />
-            <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#70B88A]">
+          <div className="flex items-center gap-2 rounded-full border border-[var(--status-success)]/25 bg-[var(--status-success)]/10 px-3 py-1.5">
+            <span className="h-2 w-2 animate-pulse rounded-full bg-[var(--status-success)]" />
+            <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--status-success)]">
               Pipeline active
             </span>
           </div>
@@ -236,7 +236,7 @@ function NeuralFlowDiagram() {
 
           <path
             d="M 55 115 H 755"
-            stroke="#292E46"
+            stroke="var(--border-default)"
             strokeWidth="2"
             strokeDasharray="6 8"
           />
@@ -248,13 +248,13 @@ function NeuralFlowDiagram() {
                 y1="115"
                 x2={nodes[index + 1].x - 55}
                 y2="115"
-                stroke="#3A405F"
+                stroke="var(--border-strong)"
                 strokeWidth="2"
               />
 
               <polygon
                 points={`${nodes[index + 1].x - 61},109 ${nodes[index + 1].x - 50},115 ${nodes[index + 1].x - 61},121`}
-                fill="#7079E0"
+                fill="var(--accent-primary-soft)"
               />
             </g>
           ))}
@@ -267,7 +267,7 @@ function NeuralFlowDiagram() {
                 width="110"
                 height="94"
                 rx="14"
-                fill="#171A2D"
+                fill="var(--bg-surface)"
                 stroke={node.color}
                 strokeOpacity="0.45"
               />
@@ -300,7 +300,7 @@ function NeuralFlowDiagram() {
                 x={node.x}
                 y="137"
                 textAnchor="middle"
-                fill="#F4F5FA"
+                fill="var(--text-primary)"
                 fontSize="10"
                 fontWeight="700"
               >
@@ -311,7 +311,7 @@ function NeuralFlowDiagram() {
                 x={node.x}
                 y="151"
                 textAnchor="middle"
-                fill="#858BA3"
+                fill="var(--text-muted)"
                 fontSize="8"
               >
                 {node.sub}
@@ -333,7 +333,7 @@ function NeuralFlowDiagram() {
             x="405"
             y="33"
             textAnchor="middle"
-            fill="#858BA3"
+            fill="var(--text-muted)"
             fontSize="9"
             fontWeight="700"
             letterSpacing="2"
@@ -345,7 +345,7 @@ function NeuralFlowDiagram() {
             x="405"
             y="204"
             textAnchor="middle"
-            fill="#5863D6"
+            fill="var(--accent-primary)"
             fontSize="9"
             fontWeight="700"
             letterSpacing="1.5"
@@ -370,7 +370,7 @@ function SecurityFabricDiagram() {
   return (
     <div className="rounded-2xl border border-[var(--border-default)] bg-[var(--bg-card)] p-5">
       <div className="mb-4">
-        <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-[#7079E0]">
+        <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-[var(--accent-primary-soft)]">
           Security fabric
         </p>
         <h3 className="mt-1 text-sm font-bold text-[var(--text-primary)]">
@@ -390,7 +390,7 @@ function SecurityFabricDiagram() {
               cy="180"
               r={r}
               fill="none"
-              stroke="#292E46"
+              stroke="var(--border-default)"
               strokeWidth="1"
             />
           ))}
@@ -406,7 +406,7 @@ function SecurityFabricDiagram() {
                   y1="180"
                   x2={cx}
                   y2={cy}
-                  stroke="#333852"
+                  stroke="var(--border-strong)"
                   strokeWidth="1"
                 />
 
@@ -430,7 +430,7 @@ function SecurityFabricDiagram() {
                   x={cx}
                   y={cy + 42}
                   textAnchor="middle"
-                  fill="#858BA3"
+                  fill="var(--text-muted)"
                   fontSize="9"
                   fontWeight="600"
                 >
@@ -444,9 +444,9 @@ function SecurityFabricDiagram() {
             cx="180"
             cy="180"
             r="42"
-            fill="#5863D6"
+            fill="var(--accent-primary)"
             fillOpacity="0.10"
-            stroke="#7079E0"
+            stroke="var(--accent-primary-soft)"
             strokeWidth="2"
           />
 
@@ -454,22 +454,22 @@ function SecurityFabricDiagram() {
             cx="180"
             cy="180"
             r="28"
-            fill="#171A2D"
-            stroke="#5863D6"
+            fill="var(--bg-surface)"
+            stroke="var(--accent-primary)"
           />
 
           <circle
             cx="180"
             cy="180"
             r="7"
-            fill="#7079E0"
+            fill="var(--accent-primary-soft)"
           />
 
           <text
             x="180"
             y="245"
             textAnchor="middle"
-            fill="#F4F5FA"
+            fill="var(--text-primary)"
             fontSize="11"
             fontWeight="700"
           >

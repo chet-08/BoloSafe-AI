@@ -60,7 +60,7 @@ export default function DetectionMetricGrid({ metrics = [] }) {
             key={metric.id || metric.label}
             className={[
               'relative overflow-hidden rounded-2xl border p-4 md:p-5',
-              'bg-[#171A2D] transition-all duration-200',
+              'bg-[var(--bg-surface)] transition-all duration-200',
               tone.border,
             ].join(' ')}
           >
@@ -77,12 +77,12 @@ export default function DetectionMetricGrid({ metrics = [] }) {
                     style={{ backgroundColor: tone.accent }}
                   />
 
-                  <div className="truncate text-[10px] font-bold uppercase tracking-[0.16em] text-[#858BA3]">
+                  <div className="truncate text-[10px] font-bold uppercase tracking-[0.16em] text-[var(--text-muted)]">
                     {metric.label}
                   </div>
                 </div>
 
-                <div className="mt-3 text-[28px] font-semibold leading-none tracking-tight text-[#F4F5FA] md:text-[30px]">
+                <div className="mt-3 text-[28px] font-semibold leading-none tracking-tight text-[var(--text-primary)] md:text-[30px]">
                   {metric.value}
                 </div>
               </div>
@@ -101,7 +101,7 @@ export default function DetectionMetricGrid({ metrics = [] }) {
 
             {metric.progress != null && (
               <div className="mt-5">
-                <div className="h-1.5 overflow-hidden rounded-full bg-[#292E46]">
+                <div className="h-1.5 overflow-hidden rounded-full bg-[var(--bg-hover)]">
                   <div
                     className={`h-full rounded-full ${tone.bar} transition-all duration-500`}
                     style={{

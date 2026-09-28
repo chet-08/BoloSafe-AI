@@ -262,7 +262,7 @@ function ConsoleTopBar({
   }
 
   return (
-    <header className="sticky top-0 z-30 -mx-5 mb-6 border-b border-[var(--border-default)] bg-[var(--bg-page)]/95 px-5 py-3 backdrop-blur-md lg:-mx-10 lg:px-10">
+    <header className="sticky top-0 z-30 -mx-5 mb-6 border-b border-[var(--border-default)] bg-[var(--bg-page)] px-5 py-3 backdrop-blur-md lg:-mx-10 lg:px-10">
       <div className="flex items-center gap-4">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
@@ -1929,7 +1929,7 @@ function MainApp() {
 
   // 2. Show Dashboard if authenticated
   return (
-    <main className="relative flex min-h-screen flex-col overflow-hidden bg-[var(--bg-page)] font-sans text-[var(--text-primary)] md:flex-row">
+    <main className="console-shell relative flex min-h-screen flex-col overflow-hidden bg-[var(--bg-page)] font-sans text-[var(--text-primary)] md:flex-row">
       <aside
         className={[
           'relative z-20 flex w-full shrink-0 flex-col border-b border-[var(--border-default)]',
