@@ -13407,6 +13407,21 @@ section.relative.min-h-\[560px\] {
   --console-global-bg: #121526;
   --console-surface: #171A2D;
   --console-surface-deep: #0E1120;
+  --console-border: #292E46;
+  --console-text: #F5F7FF;
+  --console-text-soft: #A4ACBE;
+  --console-muted: #7B8499;
+}
+
+/* Light console palette */
+html[data-theme="light"] {
+  --console-global-bg: #F5F6FA;
+  --console-surface: #FFFFFF;
+  --console-surface-deep: #EEF1F7;
+  --console-border: #E2E5EE;
+  --console-text: #171B2D;
+  --console-text-soft: #667085;
+  --console-muted: #8A93A6;
 }
 
 /* authenticated console only */
@@ -13443,6 +13458,37 @@ body:has(.console-shell),
 .console-shell .rounded-2xl,
 .console-shell .rounded-3xl {
   background-color: var(--console-surface) !important;
+  border-color: var(--console-border) !important;
+}
+
+/* Theme-aware console text */
+.console-shell h1,
+.console-shell h2,
+.console-shell h3,
+.console-shell h4,
+.console-shell h5,
+.console-shell h6 {
+  color: var(--console-text);
+}
+
+.console-shell .text-slate-300 {
+  color: var(--console-text-soft) !important;
+}
+
+.console-shell .text-slate-400 {
+  color: var(--console-muted) !important;
+}
+
+/* Smooth theme transition */
+.console-shell,
+.console-shell > aside,
+.console-shell main,
+.console-shell section,
+.console-shell article {
+  transition:
+    background-color 180ms ease,
+    border-color 180ms ease,
+    color 180ms ease;
 }
 
 /* deeper input / graph areas */
@@ -14707,4 +14753,120 @@ body {
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
+}
+
+
+/* =========================================================
+   BOLOSAFE CONSOLE — FINAL LIGHT/DARK THEME OVERRIDES
+   Must remain at the END of this file so it wins the cascade.
+   Landing page is intentionally untouched.
+   ========================================================= */
+
+/* ---------- LIGHT MODE ---------- */
+html[data-theme="light"] body:has(.console-shell),
+html[data-theme="light"] #root:has(.console-shell),
+html[data-theme="light"] .console-shell,
+html[data-theme="light"] .console-shell > .flex-1,
+html[data-theme="light"] .console-shell > div,
+html[data-theme="light"] .console-shell main,
+html[data-theme="light"] .console-shell section,
+html[data-theme="light"] .console-shell article,
+html[data-theme="light"] .console-shell .overflow-y-auto,
+html[data-theme="light"] .console-shell .min-h-screen,
+html[data-theme="light"] .console-shell > aside {
+  background-color: #F5F6FA !important;
+  background-image: none !important;
+}
+
+html[data-theme="light"] .console-shell {
+  color: #171B2D !important;
+}
+
+html[data-theme="light"] .console-shell .rounded-xl,
+html[data-theme="light"] .console-shell .rounded-2xl,
+html[data-theme="light"] .console-shell .rounded-3xl {
+  background-color: #FFFFFF !important;
+  border-color: #E2E5EE !important;
+}
+
+html[data-theme="light"] .console-shell .bg-black\/20,
+html[data-theme="light"] .console-shell .bg-black\/25,
+html[data-theme="light"] .console-shell .bg-black\/30,
+html[data-theme="light"] .console-shell select {
+  background-color: #EEF1F7 !important;
+}
+
+html[data-theme="light"] .console-shell h1,
+html[data-theme="light"] .console-shell h2,
+html[data-theme="light"] .console-shell h3,
+html[data-theme="light"] .console-shell h4,
+html[data-theme="light"] .console-shell h5,
+html[data-theme="light"] .console-shell h6 {
+  color: #171B2D !important;
+}
+
+html[data-theme="light"] .console-shell .text-slate-300 {
+  color: #667085 !important;
+}
+
+html[data-theme="light"] .console-shell .text-slate-400 {
+  color: #7A8498 !important;
+}
+
+html[data-theme="light"] .console-shell .text-slate-500 {
+  color: #8A93A6 !important;
+}
+
+html[data-theme="light"] .console-shell input,
+html[data-theme="light"] .console-shell textarea,
+html[data-theme="light"] .console-shell select {
+  color: #171B2D !important;
+  border-color: #E2E5EE !important;
+}
+
+
+/* ---------- DARK MODE ---------- */
+html[data-theme="dark"] body:has(.console-shell),
+html[data-theme="dark"] #root:has(.console-shell),
+html[data-theme="dark"] .console-shell,
+html[data-theme="dark"] .console-shell > .flex-1,
+html[data-theme="dark"] .console-shell > div,
+html[data-theme="dark"] .console-shell main,
+html[data-theme="dark"] .console-shell section,
+html[data-theme="dark"] .console-shell article,
+html[data-theme="dark"] .console-shell .overflow-y-auto,
+html[data-theme="dark"] .console-shell .min-h-screen,
+html[data-theme="dark"] .console-shell > aside {
+  background-color: #121526 !important;
+}
+
+html[data-theme="dark"] .console-shell .rounded-xl,
+html[data-theme="dark"] .console-shell .rounded-2xl,
+html[data-theme="dark"] .console-shell .rounded-3xl {
+  background-color: #171A2D !important;
+  border-color: #292E46 !important;
+}
+
+html[data-theme="dark"] .console-shell .bg-black\/20,
+html[data-theme="dark"] .console-shell .bg-black\/25,
+html[data-theme="dark"] .console-shell .bg-black\/30,
+html[data-theme="dark"] .console-shell select {
+  background-color: #0E1120 !important;
+}
+
+
+/* ---------- THEME TRANSITION ---------- */
+.console-shell,
+.console-shell > aside,
+.console-shell > .flex-1,
+.console-shell main,
+.console-shell section,
+.console-shell article,
+.console-shell .rounded-xl,
+.console-shell .rounded-2xl,
+.console-shell .rounded-3xl {
+  transition:
+    background-color 180ms ease,
+    border-color 180ms ease,
+    color 180ms ease !important;
 }
