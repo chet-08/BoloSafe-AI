@@ -12,6 +12,7 @@ import {
   CheckCircle2,
   XCircle,
   FileBadge2,
+  FileCheck,
   Download,
   Ban,
   Lock,
@@ -20,8 +21,13 @@ import {
 } from 'lucide-react';
 import SectorAudioPlayer from '../../components/SectorAudioPlayer';
 import EnterpriseWebhookDrawer from '../../components/EnterpriseWebhookDrawer';
-import GuidedUserFlowBar from '../../components/GuidedUserFlowBar';
 import { generateProvenanceCert, simulateThreat } from '../../utils/sectorApi';
+import SecurityPageShell from '../../components/security/SecurityPageShell';
+import DetectionMetricGrid from '../../components/security/DetectionMetricGrid';
+import LiveDetectionPanel from '../../components/security/LiveDetectionPanel';
+import SectorContextCard from '../../components/security/SectorContextCard';
+import GovernanceDecisionCard from '../../components/security/GovernanceDecisionCard';
+import SecurityActivityTimeline from '../../components/security/SecurityActivityTimeline';
 
 export default function EntertainmentSecurity({
   selected = {},
@@ -168,381 +174,391 @@ export default function EntertainmentSecurity({
   };
 
   return (
-    <div className="space-y-6">
-      {/* Toast Notification */}
+    <div className="space-y-5">
+
       {toastMsg && (
-        <div className="fixed top-6 right-6 z-50 flex items-center gap-2 rounded-xl border border-violet-400/40 bg-violet-950/90 px-4 py-3 text-xs font-mono text-violet-200 shadow-2xl backdrop-blur-xl animate-in slide-in-from-top-4">
-          <CheckCircle2 className="size-4 text-violet-400 shrink-0" />
-          <span>{toastMsg}</span>
-        </div>
-      )}
-
-      {/* Guided Hackathon Stepper */}
-      <GuidedUserFlowBar
-        currentSector="entertainment"
-        hasAudioPlaying={isStreaming}
-        hasResults={aiProbability > 0}
-        hasActionTaken={rightsBlocked || provenanceExported || certified}
-        onOpenWebhook={() => setShowWebhook(true)}
-      />
-
-      {/* Top Header Card */}
-      <div className="relative overflow-hidden rounded-2xl border border-violet-400/20 bg-gradient-to-r from-violet-950/40 via-purple-950/30 to-slate-900/50 p-6 shadow-2xl backdrop-blur-xl">
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div className="flex items-center gap-4">
-            <div className="flex size-12 items-center justify-center rounded-xl border border-violet-400/30 bg-violet-500/20 text-violet-300 shadow-[0_0_20px_rgba(139,92,246,0.25)]">
-              <Film className="size-6" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-xl font-bold tracking-tight text-white md:text-2xl">
-                  Entertainment & Media Audio Authenticity
-                </h1>
-                <span className="rounded-full border border-violet-400/30 bg-violet-400/10 px-2.5 py-0.5 text-xs font-semibold text-violet-300">
-                  Tertiary Sector · Entertainment & Media
-                </span>
-              </div>
-              <p className="mt-1 text-xs text-slate-400">
-                Safeguards voice actors, dubbing studios, and media rights under Indian Copyright Act (Sec 38B) against unauthorized synthetic AI voice cloning.
-              </p>
-            </div>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="flex items-center gap-1.5 rounded-xl border border-violet-400/20 bg-violet-950/40 px-3 py-1.5 text-xs font-mono text-violet-300">
-              <Lock className="size-3.5 text-violet-400" />
-              <span>DPDP Act 2023 · Ephemeral RAM (0 Bytes Disk)</span>
-            </div>
-            <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-mono">
-              <span className={`size-2 rounded-full ${isConnected ? 'bg-emerald-400 animate-pulse' : 'bg-rose-400'}`} />
-              <span className="text-slate-300">{isConnected ? 'STUDIO ENGINE LIVE' : 'OFFLINE'}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Cross-Sector Threat Intelligence Alert Banner */}
-      {hasCrossSectorThreat && (
-        <div className="relative overflow-hidden rounded-2xl border border-rose-500/50 bg-gradient-to-r from-rose-950/80 via-red-950/60 to-slate-900/80 p-4 shadow-[0_0_30px_rgba(244,63,94,0.3)] backdrop-blur-xl animate-pulse">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="flex size-10 items-center justify-center rounded-xl bg-rose-500/20 text-rose-300 border border-rose-500/40">
-                <ShieldAlert className="size-6" />
-              </div>
-              <div>
-                <div className="flex items-center gap-2 font-bold text-rose-200 text-sm">
-                  <span>🚨 CROSS-SECTOR THREAT INTELLIGENCE ALERT</span>
-                  <span className="rounded-full bg-rose-500/20 px-2 py-0.5 text-[10px] uppercase font-mono tracking-wider text-rose-300 border border-rose-500/30">
-                    Voice Actor Timbre Impersonation
-                  </span>
-                </div>
-                <p className="mt-0.5 text-xs text-rose-300/90 font-mono">
-                  Synthesizer voice model matches audio attacks observed in: <strong className="text-white">{threatOrigin}</strong>. Stem flagged for copyright infringement.
-                </p>
-              </div>
-            </div>
-            <button
-              onClick={() => setSimulatedThreat(false)}
-              className="text-xs text-rose-400 hover:text-white font-mono underline ml-4"
-            >
-              Dismiss
-            </button>
+        <div className="fixed right-6 top-6 z-50 rounded-xl border border-indigo-400/20 bg-slate-950/90 px-4 py-3 text-xs font-semibold text-slate-200 shadow-xl backdrop-blur-md">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 size={15} className="text-indigo-400" />
+            {toastMsg}
           </div>
         </div>
       )}
 
-      {/* Sector Live Audio Controller & 1-Click Samples */}
-      <SectorAudioPlayer
-        title="Studio Audio Authenticity Studio & Dubbing Verification"
-        sector="entertainment"
-        scenario={governance.scenario || "dubbing_verification"}
-        samples={samples}
-        onPlaySample={(url, scn) => streamAudioFromUrl?.(url, 'entertainment', scn || 'dubbing_verification')}
-        onStartMic={startMicrophoneStream}
-        onStopMic={stopMicrophoneStream}
-        onFileUpload={handleFileUpload}
-        isStreaming={isStreaming}
-        micStatus={micStatus}
-        micLevel={micLevel}
-        accentColor="violet"
-      />
+      <SecurityPageShell
+        eyebrow="Entertainment Security"
+        title="Entertainment & Media Audio Authenticity"
+        description="Safeguards voice actors, dubbing studios, and media rights against unauthorized synthetic AI voice cloning."
+        status={isConnected ? "LIVE" : "OFFLINE"}
+        statusTone={isConnected ? "active" : "medium"}
+        critical={
+          riskLevel === "high" || hasCrossSectorThreat
+            ? {
+                label: hasCrossSectorThreat
+                  ? "Cross-sector threat detected"
+                  : "Critical detection",
+                title: hasCrossSectorThreat
+                  ? "Coordinated media voice attack detected"
+                  : "Synthetic voice detected",
+                description:
+                  hasCrossSectorThreat
+                    ? `Voice signature associated with ${threatOrigin}.`
+                    : governance.reason ||
+                      "High synthetic-voice probability detected during a media authenticity check.",
+                actions: hasCrossSectorThreat ? (
+                  <button
+                    type="button"
+                    onClick={() => setSimulatedThreat(false)}
+                    className="rounded-lg border border-rose-500/25 bg-rose-500/10 px-3 py-2 text-xs font-semibold text-rose-300"
+                  >
+                    Dismiss
+                  </button>
+                ) : null,
+              }
+            : null
+        }
+      >
 
-      {/* Main Grid */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        {/* Left Column: Simulated Studio Master Context */}
-        <div className="rounded-2xl border border-white/10 bg-slate-900/60 p-5 shadow-xl backdrop-blur-md">
-          <h2 className="mb-4 flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-slate-300">
-            <Mic className="size-4 text-violet-400" />
-            Vocal Stem & Rights Metadata
-          </h2>
-
-          <div className="space-y-3 font-mono text-xs">
-            <div className="flex items-center justify-between rounded-lg border border-white/5 bg-white/[0.02] p-2.5">
-              <span className="text-slate-400">Licensed Artist</span>
-              <span className="font-semibold text-white">Aditi V. (SAG-AFTRA / CINTAA)</span>
-            </div>
-            <div className="flex items-center justify-between rounded-lg border border-white/5 bg-white/[0.02] p-2.5">
-              <span className="text-slate-400">Track Reference</span>
-              <span className="font-semibold text-violet-300">#STEM-DUB-4912-HIN</span>
-            </div>
-            <div className="flex items-center justify-between rounded-lg border border-white/5 bg-white/[0.02] p-2.5">
-              <span className="text-slate-400">Tenant Store</span>
-              <span className="font-semibold text-violet-300">Biometric [entertainment_isolated]</span>
-            </div>
-            <div className="flex items-center justify-between rounded-lg border border-white/5 bg-white/[0.02] p-2.5">
-              <span className="text-slate-400">Audio Provenance Hash</span>
-              <span className="font-semibold text-slate-300">sha256:7b92...8f31</span>
-            </div>
-            <div className="flex items-center justify-between rounded-lg border border-white/5 bg-white/[0.02] p-2.5">
-              <span className="text-slate-400">Distribution Channel</span>
-              <span className="font-semibold text-emerald-400">Theatrical / OTT Localization</span>
-            </div>
-            <div className="flex items-center justify-between rounded-lg border border-white/5 bg-white/[0.02] p-2.5">
-              <span className="text-slate-400">Target Languages</span>
-              <span className="font-semibold text-amber-300">Hindi, Tamil, Telugu</span>
-            </div>
-          </div>
-
-          <div className="mt-5 rounded-xl border border-violet-500/20 bg-violet-500/10 p-3 text-xs text-violet-200">
-            <div className="flex items-center gap-2 font-bold">
-              <AlertTriangle className="size-4 shrink-0 text-violet-400" />
-              Copyright Act 1957 (Sec 38B)
-            </div>
-            <p className="mt-1 text-[11px] leading-relaxed text-violet-300/80">
-              Protects moral rights of performers against unauthorized synthetic voice replacement and commercial distribution without written consent.
-            </p>
-          </div>
-        </div>
-
-        {/* Center Column: Live Risk & Biometric Gauges */}
-        <div className="space-y-4 lg:col-span-2">
-          {/* 4-Card Gauge Grid */}
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            {/* 1. Risk State Pill */}
-            <div className={`rounded-2xl border p-4 backdrop-blur-md transition-all ${
-              !hasDetectionResult
-                ? 'border-slate-700/50 bg-slate-900/60 text-slate-300'
-                : riskLevel === 'high'
-                ? 'border-rose-500/40 bg-rose-950/30 text-rose-200'
-                : riskLevel === 'medium'
-                ? 'border-amber-500/40 bg-amber-950/30 text-amber-200'
-                : 'border-emerald-500/40 bg-emerald-950/30 text-emerald-200'
-            }`}>
-              <div className="text-xs uppercase tracking-wider opacity-80">Rights Clearance Gate</div>
-              <div className="mt-2 flex items-center gap-2 text-lg font-bold uppercase">
-                {!hasDetectionResult ? (
-                  <>
-                    <Clock className="size-5 text-slate-400" />
-                    Standby
-                  </>
-                ) : riskLevel === 'high' ? (
-                  <>
-                    <XCircle className="size-5 text-rose-400" />
-                    IP Violation
-                  </>
-                ) : riskLevel === 'medium' ? (
-                  <>
-                    <AlertTriangle className="size-5 text-amber-400" />
-                    Audit Req.
-                  </>
-                ) : (
-                  <>
-                    <CheckCircle2 className="size-5 text-emerald-400" />
-                    Authentic
-                  </>
-                )}
-              </div>
-              <div className="mt-1 text-xs opacity-75 font-mono">
-                Level: {!hasDetectionResult ? 'STANDBY' : riskLevel.toUpperCase()}
-              </div>
-            </div>
-
-            {/* 2. AI Clone Probability */}
-            <div className="rounded-2xl border border-white/10 bg-slate-900/60 p-4 backdrop-blur-md">
-              <div className="text-xs uppercase tracking-wider text-slate-400">Synthetic Voice Index</div>
-              <div className="mt-2 text-xl font-mono font-bold text-white">
-                {hasDetectionResult ? `${(aiProbability * 100).toFixed(1)}%` : 'WAITING'}
-              </div>
-              <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-white/10">
-                <div
-                  className={`h-full transition-all duration-500 ${
-                    !hasDetectionResult
-                      ? 'bg-slate-600'
-                      : aiProbability > 0.75
-                      ? 'bg-rose-500'
-                      : aiProbability > 0.40
-                      ? 'bg-amber-400'
-                      : 'bg-emerald-400'
-                  }`}
-                  style={{ width: `${hasDetectionResult ? Math.min(100, Math.max(0, aiProbability * 100)) : 0}%` }}
-                />
-              </div>
-              <div className="mt-1 text-[10px] text-slate-400 font-mono">
-                {hasDetectionResult ? 'P(synthetic acoustic)' : 'Awaiting audio stream'}
-              </div>
-            </div>
-
-            {/* 3. Speaker Biometric Match */}
-            <div className="rounded-2xl border border-white/10 bg-slate-900/60 p-4 backdrop-blur-md">
-              <div className="text-xs uppercase tracking-wider text-slate-400">Artist Timbre Match</div>
-              <div className="mt-2 text-xl font-mono font-bold text-white">
-                {hasDetectionResult
-                  ? speakerSimilarity !== null
-                    ? `${(speakerSimilarity * 100).toFixed(1)}%`
-                    : isGenuine
-                    ? '98.4%'
-                    : '—'
-                  : '—'}
-              </div>
-              <div className="mt-1 flex items-center gap-1.5 text-xs text-slate-300">
-                <UserCheck className="size-3.5 text-violet-400" />
-                <span className="text-[11px]">
-                  {!hasDetectionResult
-                    ? 'Awaiting verification'
-                    : isSpoof
-                    ? 'Unauthorized Vocal Timbre'
-                    : speakerMatch === true
-                    ? 'Matches Licensed Performer'
-                    : 'ECAPA-TDNN Verified'}
-                </span>
-              </div>
-            </div>
-
-            {/* 4. Unified Composite Risk Score */}
-            <div className={`rounded-2xl border p-4 backdrop-blur-md transition-all ${
-              !hasDetectionResult
-                ? 'border-white/10 bg-slate-900/60'
+        <DetectionMetricGrid
+          metrics={[
+            {
+              id: "synthetic-voice",
+              label: "Synthetic Voice Probability",
+              value: hasDetectionResult
+                ? `${(aiProbability * 100).toFixed(1)}%`
+                : "WAITING",
+              icon: "risk",
+              tone: !hasDetectionResult
+                ? "neutral"
+                : aiProbability >= 0.75
+                  ? "high"
+                  : aiProbability >= 0.4
+                    ? "medium"
+                    : "low",
+              progress: hasDetectionResult ? aiProbability * 100 : undefined,
+              helper: hasDetectionResult
+                ? "AI acoustic detection"
+                : "Awaiting live audio analysis",
+            },
+            {
+              id: "artist-match",
+              label: "Artist Timbre Match",
+              value:
+                hasDetectionResult && speakerSimilarity !== null
+                  ? `${(speakerSimilarity * 100).toFixed(1)}%`
+                  : "WAITING",
+              icon: "speaker",
+              tone:
+                hasDetectionResult && speakerMatch === false
+                  ? "high"
+                  : "neutral",
+              progress:
+                hasDetectionResult && speakerSimilarity !== null
+                  ? speakerSimilarity * 100
+                  : undefined,
+              helper: !hasDetectionResult
+                ? "Awaiting performer verification"
+                : speakerMatch === true
+                  ? "Matches licensed performer"
+                  : speakerMatch === false
+                    ? "Timbre mismatch"
+                    : "Performer verification",
+            },
+            {
+              id: "composite-risk",
+              label: "Composite Risk",
+              value: hasDetectionResult
+                ? `${(compositeRiskScore * 100).toFixed(1)}%`
+                : "WAITING",
+              icon: "composite",
+              tone: !hasDetectionResult
+                ? "neutral"
                 : compositeRiskScore >= 0.75
-                ? 'border-rose-500/30 bg-rose-950/20'
-                : compositeRiskScore >= 0.40
-                ? 'border-amber-500/30 bg-amber-950/20'
-                : 'border-emerald-500/30 bg-emerald-950/20'
-            }`}>
-              <div className="flex items-center justify-between text-xs uppercase tracking-wider text-slate-300">
-                <span>Composite Risk</span>
-                <Activity className="size-3.5 text-cyan-400" />
-              </div>
-              <div className="mt-2 text-xl font-mono font-bold text-white">
-                {hasDetectionResult ? `${(compositeRiskScore * 100).toFixed(1)}%` : 'WAITING'}
-              </div>
-              <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-white/10">
-                <div
-                  className={`h-full transition-all duration-500 ${
-                    !hasDetectionResult
-                      ? 'bg-slate-600'
-                      : compositeRiskScore >= 0.75
-                      ? 'bg-rose-500'
-                      : compositeRiskScore >= 0.40
-                      ? 'bg-amber-400'
-                      : 'bg-emerald-400'
-                  }`}
-                  style={{ width: `${hasDetectionResult ? Math.min(100, Math.max(0, compositeRiskScore * 100)) : 0}%` }}
-                />
-              </div>
-              <div className="mt-1 text-[9px] text-slate-400 font-mono">
-                {hasDetectionResult ? 'R = 50% AI + 30% Timbre + 20% IP' : 'Awaiting audio analysis'}
-              </div>
-            </div>
-          </div>
+                  ? "high"
+                  : compositeRiskScore >= 0.4
+                    ? "medium"
+                    : "low",
+              progress:
+                hasDetectionResult
+                  ? compositeRiskScore * 100
+                  : undefined,
+              helper: hasDetectionResult
+                ? "AI + timbre + rights context"
+                : "Awaiting complete risk evaluation",
+            },
+            {
+              id: "rights-gate",
+              label: "Rights Clearance Gate",
+              value: !hasDetectionResult
+                ? "NOT EVALUATED"
+                : riskLevel === "high"
+                  ? "BLOCKED"
+                  : riskLevel === "medium"
+                    ? "AUDIT"
+                    : "CLEARED",
+              icon: "authenticity",
+              tone: !hasDetectionResult
+                ? "neutral"
+                : riskLevel === "high"
+                  ? "high"
+                  : riskLevel === "medium"
+                    ? "medium"
+                    : "low",
+              helper: !hasDetectionResult
+                ? "Policy state · WAITING"
+                : `Policy state · ${riskLevel.toUpperCase()}`,
+            },
+          ]}
+        />
 
-          {/* Decision & Action Workflow Panel */}
-          <div className="rounded-2xl border border-white/10 bg-slate-900/60 p-5 shadow-xl backdrop-blur-md">
-            <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-slate-300">
-              Digital Rights Enforcement & Distribution Controls
-            </h2>
+        <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1.35fr_0.85fr]">
 
-            <div className="mb-4 rounded-xl border border-white/5 bg-white/[0.02] p-4">
-              <div className="text-xs text-slate-400">Authenticity Directive:</div>
-              <div className="mt-1 text-sm font-medium text-slate-200">
-                {governance.reason || (
-                  !hasDetectionResult
-                    ? 'Awaiting scenario audio run to evaluate studio stem authenticity and copyright clearance.'
-                    : isSpoof
-                    ? 'High voice-AI clone probability detected. Potential copyright infringement under Sec 38B.'
-                    : 'Vocal master stem confirmed authentic against licensed performer timbre embedding.'
-                )}
-              </div>
-              
-              <div className="mt-3 space-y-1.5">
-                <div className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Rights Management Directives:</div>
-                {recommendedActions.map((rec, i) => (
-                  <div key={i} className="flex items-start gap-2 text-xs text-slate-300">
-                    <ArrowRight className="size-3.5 mt-0.5 shrink-0 text-violet-400" />
-                    <span>{rec}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
+          <LiveDetectionPanel
+            title="Live entertainment voice detection"
+            description="Real-time audio ingestion and studio authenticity verification"
+            isLive={isStreaming}
+          >
+            <SectorAudioPlayer
+              title="Studio Audio Authenticity Studio & Dubbing Verification"
+              sector="entertainment"
+              scenario={governance.scenario || "dubbing_verification"}
+              samples={samples}
+              onPlaySample={(url, scn) =>
+                streamAudioFromUrl?.(
+                  url,
+                  "entertainment",
+                  scn || "dubbing_verification"
+                )
+              }
+              onStartMic={startMicrophoneStream}
+              onStopMic={stopMicrophoneStream}
+              onFileUpload={handleFileUpload}
+              isStreaming={isStreaming}
+              micStatus={micStatus}
+              micLevel={micLevel}
+            />
+          </LiveDetectionPanel>
 
-            {/* Operator Actions - Connected to Backend REST Endpoints */}
-            <div className="flex flex-wrap items-center gap-3 pt-2">
+          <SectorContextCard
+            title="Studio rights protection"
+            description="Voice identity, provenance and distribution context interpreted alongside audio risk."
+            rows={[
+              {
+                label: "Licensed Artist",
+                value: "Aditi V. (SAG-AFTRA / CINTAA)",
+              },
+              {
+                label: "Track Reference",
+                value: "#STEM-DUB-4912-HIN",
+              },
+              {
+                label: "Audio Provenance",
+                value: "sha256:7b92...8f31",
+              },
+              {
+                label: "Distribution Channel",
+                value: "Theatrical / OTT Localization",
+              },
+              {
+                label: "Target Languages",
+                value: "Hindi, Tamil, Telugu",
+              },
+              {
+                label: "Tenant",
+                value: "entertainment_isolated",
+              },
+            ]}
+            callout={{
+              title: "Copyright Act 1957 · Sec 38B",
+              description:
+                "Protects performer rights against unauthorized synthetic voice replacement and commercial distribution.",
+            }}
+          />
+
+        </div>
+
+        <GovernanceDecisionCard
+          tone={
+            !hasDetectionResult
+              ? "pending"
+              : isSpoof
+                ? "escalate"
+                : "allow"
+          }
+          title={
+            !hasDetectionResult
+              ? "Awaiting Live Voice Analysis"
+              : isSpoof
+                ? "CRITICAL: Synthetic Voice Detected — Rights Protection Active"
+                : "Studio Voice Authenticated — Rights Cleared"
+          }
+          reason={
+            !hasDetectionResult
+              ? "Select an entertainment scenario from the library or start the microphone to evaluate audio authenticity and rights policy."
+              : isSpoof
+                ? (
+                    governance.reason ||
+                    "Synthetic voice characteristics detected against the licensed performer profile."
+                  )
+                : (
+                    governance.reason ||
+                    "Vocal master stem confirmed authentic against the licensed performer profile."
+                  )
+          }
+          recommendations={recommendedActions}
+          actions={
+            <>
               <button
                 disabled={!hasDetectionResult}
                 onClick={() => {
-                  setRightsBlocked(!rightsBlocked);
-                  showToast(rightsBlocked ? "Rights clearance restored." : "Distribution revoked under Sec 38B!");
+                  setRightsBlocked(!rightsBlocked)
+                  showToast(
+                    rightsBlocked
+                      ? "Rights clearance restored."
+                      : "Distribution revoked under Sec 38B!"
+                  )
                 }}
-                className={`flex items-center gap-2 rounded-xl border px-4 py-2.5 text-xs font-semibold transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed ${
-                  rightsBlocked || isSpoof
-                    ? 'border-rose-400/50 bg-rose-500/30 text-rose-200'
-                    : 'border-rose-500/30 bg-rose-500/10 text-rose-300 hover:bg-rose-500/20'
-                }`}
+                className="rounded-lg border border-rose-500/30 bg-rose-500/10 px-3 py-2 text-xs font-semibold text-rose-300 disabled:cursor-not-allowed disabled:opacity-40"
               >
-                <Ban className="size-4" />
-                {rightsBlocked || isSpoof ? 'Media Rights Clearance Revoked ✓' : 'Revoke Distribution Clearance'}
+                <span className="flex items-center gap-2">
+                  <Ban className="size-4" />
+                  {rightsBlocked || isSpoof
+                    ? "Media Rights Clearance Revoked ✓"
+                    : "Revoke Distribution Clearance"}
+                </span>
               </button>
 
               <button
                 disabled={!hasDetectionResult}
                 onClick={handleExportProvenance}
-                className="flex items-center gap-2 rounded-xl border border-violet-400/40 bg-violet-500/20 px-4 py-2.5 text-xs font-semibold text-violet-200 transition-all hover:bg-violet-500/30 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
+                className="rounded-lg border border-indigo-400/30 bg-indigo-500/10 px-3 py-2 text-xs font-semibold text-indigo-200 disabled:cursor-not-allowed disabled:opacity-40"
               >
-                <Download className="size-4" />
-                {provenanceExported ? 'SHA-256 Provenance Cert Downloaded ✓' : 'Export SHA-256 Provenance Cert'}
+                <span className="flex items-center gap-2">
+                  <Download className="size-4" />
+                  {provenanceExported
+                    ? "SHA-256 Provenance Cert Downloaded ✓"
+                    : "Export SHA-256 Provenance Cert"}
+                </span>
               </button>
 
               {isGenuine ? (
-                <div className="flex items-center gap-2 rounded-xl border border-emerald-400/30 bg-emerald-500/20 px-4 py-2.5 text-xs font-semibold text-emerald-200">
+                <div className="flex items-center gap-2 rounded-lg border border-emerald-400/30 bg-emerald-500/20 px-3 py-2 text-xs font-semibold text-emerald-200">
                   <CheckCircle2 className="size-4 text-emerald-400" />
                   WIPO Rights Certified & Approved ✓
                 </div>
               ) : (
                 <button
                   onClick={() => {
-                    setCertified(true);
-                    showToast("WIPO DRM authenticity certification issued!");
+                    setCertified(true)
+                    showToast("WIPO DRM authenticity certification issued!")
                   }}
                   disabled={!hasDetectionResult || isSpoof || certified}
-                  className="flex items-center gap-2 rounded-xl border border-emerald-400/30 bg-emerald-500/20 px-4 py-2.5 text-xs font-semibold text-emerald-200 transition-all hover:bg-emerald-500/30 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="rounded-lg border border-emerald-400/30 bg-emerald-500/20 px-3 py-2 text-xs font-semibold text-emerald-200 disabled:cursor-not-allowed disabled:opacity-40"
                 >
-                  <FileBadge2 className="size-4 text-emerald-400" />
-                  {certified ? 'WIPO Rights Certified ✓' : 'Issue WIPO DRM Certification'}
+                  <span className="flex items-center gap-2">
+                    <FileCheck className="size-4" />
+                    {certified
+                      ? "WIPO Rights Certified ✓"
+                      : "Issue WIPO DRM Certification"}
+                  </span>
                 </button>
               )}
 
               <button
                 onClick={() => setShowWebhook(true)}
-                className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-xs font-mono font-semibold text-slate-300 hover:bg-white/10 hover:text-white transition-all active:scale-95"
+                className="rounded-lg border border-indigo-400/15 bg-slate-900/50 px-3 py-2 text-xs font-semibold text-slate-300"
               >
-                <span>&lt;/&gt;</span>
                 Inspect WIPO DRM Webhook
               </button>
 
               <button
                 onClick={handleSimulateThreat}
-                className={`flex items-center gap-2 rounded-xl border px-4 py-2.5 text-xs font-semibold transition-all active:scale-95 ${
-                  hasCrossSectorThreat
-                    ? 'border-rose-500/40 bg-rose-500/20 text-rose-200'
-                    : 'border-white/10 bg-white/5 text-slate-300 hover:bg-white/10'
-                }`}
+                className="rounded-lg border border-rose-500/25 bg-rose-500/10 px-3 py-2 text-xs font-semibold text-rose-300"
               >
-                <ShieldAlert className="size-4 text-rose-400" />
-                {hasCrossSectorThreat ? 'Cross-Sector Threat Active' : 'Simulate Cross-Sector Attacker'}
+                <span className="flex items-center gap-2">
+                  <ShieldAlert className="size-4" />
+                  {hasCrossSectorThreat
+                    ? "Cross-Sector Threat Active"
+                    : "Simulate Cross-Sector Attacker"}
+                </span>
               </button>
-            </div>
-          </div>
-        </div>
-      </div>
+            </>
+          }
+        />
+
+        <SecurityActivityTimeline
+          steps={[
+            {
+              label: "Security context",
+              value: hasDetectionResult
+                ? `${governance.scenario || "Dubbing Verification"} · #STEM-DUB-4912-HIN`
+                : "Session Standby · Studio Stem Verification",
+              tone: !hasDetectionResult
+                ? "pending"
+                : isSpoof
+                  ? "detected"
+                  : "ready",
+              status: !hasDetectionResult
+                ? "STANDBY"
+                : isSpoof
+                  ? "THREAT"
+                  : "VERIFIED",
+            },
+            {
+              label: "AI detection",
+              value: !hasDetectionResult
+                ? "Awaiting audio ingestion"
+                : `${(aiProbability * 100).toFixed(1)}% synthetic probability`,
+              tone: !hasDetectionResult
+                ? "pending"
+                : isSpoof
+                  ? "detected"
+                  : "ready",
+              status: !hasDetectionResult
+                ? "WAITING"
+                : isSpoof
+                  ? "CRITICAL"
+                  : "AUTHENTIC",
+            },
+            {
+              label: "Governance",
+              value: !hasDetectionResult
+                ? "Awaiting policy evaluation"
+                : isSpoof
+                  ? "Block Rights · Distribution Hold"
+                  : "Allow · Rights Cleared",
+              tone: !hasDetectionResult
+                ? "pending"
+                : isSpoof
+                  ? "detected"
+                  : "ready",
+              status: !hasDetectionResult
+                ? "PENDING"
+                : isSpoof
+                  ? "BLOCKED"
+                  : "CLEARED",
+            },
+            {
+              label: "Identity",
+              value: !hasDetectionResult
+                ? "Awaiting performer voiceprint"
+                : isSpoof
+                  ? "Unauthorized vocal timbre"
+                  : "Licensed performer confirmed",
+              tone: !hasDetectionResult
+                ? "pending"
+                : isSpoof
+                  ? "detected"
+                  : "ready",
+              status: !hasDetectionResult
+                ? "STANDBY"
+                : isSpoof
+                  ? "MISMATCH"
+                  : "MATCHED",
+            },
+          ]}
+        />
+      </SecurityPageShell>
 
       <EnterpriseWebhookDrawer
         isOpen={showWebhook}
@@ -553,8 +569,12 @@ export default function EntertainmentSecurity({
         action={action}
         aiProbability={aiProbability}
         speakerMatch={speakerMatch}
-        metadata={{ stemId: "#STEM-DUB-4912-HIN", artist: "Aditi V.", compositeRisk: compositeRiskScore }}
+        metadata={{
+          stemId: "#STEM-DUB-4912-HIN",
+          artist: "Aditi V.",
+          compositeRisk: compositeRiskScore,
+        }}
       />
     </div>
-  );
+  )
 }
