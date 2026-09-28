@@ -74,17 +74,43 @@ export default function SecurityPageShell({
       </section>
 
       {critical && (
-        <section className="relative overflow-hidden rounded-2xl border border-[#D96A78]/30 bg-[#D96A78]/[0.07] p-4 md:p-5">
-          <div className="absolute inset-y-0 left-0 w-1 bg-[#D96A78]" />
+        <section
+          className={[
+            'relative overflow-hidden rounded-2xl border p-4 md:p-5',
+            critical.tone === 'medium'
+              ? 'border-amber-400/30 bg-amber-400/[0.08]'
+              : 'border-[#D96A78]/30 bg-[#D96A78]/[0.07]',
+          ].join(' ')}
+        >
+          <div
+            className={[
+              'absolute inset-y-0 left-0 w-1',
+              critical.tone === 'medium' ? 'bg-amber-400' : 'bg-[#D96A78]',
+            ].join(' ')}
+          />
 
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div className="flex min-w-0 items-start gap-3 pl-1">
-              <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-[var(--state-danger)]/20 bg-[#D96A78]/10 text-[#D96A78]">
+              <div
+                className={[
+                  'mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border',
+                  critical.tone === 'medium'
+                    ? 'border-amber-400/20 bg-amber-400/10 text-amber-300'
+                    : 'border-[var(--state-danger)]/20 bg-[#D96A78]/10 text-[#D96A78]',
+                ].join(' ')}
+              >
                 <ShieldAlert size={18} />
               </div>
 
               <div className="min-w-0">
-                <div className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#D96A78]">
+                <div
+                  className={[
+                    'text-[10px] font-bold uppercase tracking-[0.16em]',
+                    critical.tone === 'medium'
+                      ? 'text-amber-300'
+                      : 'text-[#D96A78]',
+                  ].join(' ')}
+                >
                   {critical.label || 'Critical Detection'}
                 </div>
 

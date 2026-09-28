@@ -529,51 +529,22 @@ function MainApp() {
           return
         }
 
-        if (data.alert_triggered === true) {
-          console.warn('HIGH-RISK ALERT: HARD STOPPING FILE STREAM')
-          securityTerminatedRef.current = true
-          setSecurityTerminated(true)
-          fileStreamActiveRef.current = false
-
-          if (fileIntervalRef.current) {
-            clearInterval(fileIntervalRef.current)
-            fileIntervalRef.current = null
-          }
-
-          if (filePlaybackRef.current) {
-            try {
-              filePlaybackRef.current.pause()
-            } catch (e) {}
-          }
-
-          setIsFilePlaying(false)
-          setMicLevel(0)
-          setMicStatus('ALERT: Synthetic Voice Clone Detected')
-
-          // Keep the user on the command dashboard.
-          // Sector navigation happens only from an explicit
-          // user action on the alert.
-          setEscalatedIncident({
-            ...data,
-            sector:
-              data.governance_decision?.sector ||
-              data.sector ||
-              selectedSectorRef.current,
-            streamId: data.stream_id || streamId,
-          })
-
-            // Keep the operator on the active sector page while
-            // live detection results update.
-        }
-
         const currentStreamId = data.stream_id || streamId
         const activeSession = activeSessionRef.current
 
-        // Ignore results that belong to a different security session.
+        // Validate the stream and sector BEFORE any result side effects.
+        // A stale result must never stop playback or create an alert
+        // for the currently active security session.
         if (
           activeSession?.streamId &&
           currentStreamId !== activeSession.streamId
         ) {
+          console.debug(
+            'Ignoring stale stream result:',
+            currentStreamId,
+            'expected:',
+            activeSession.streamId
+          )
           return
         }
 
@@ -607,6 +578,44 @@ function MainApp() {
             activeSector
           )
           return
+        }
+
+        // ONLY a validated current-session result can trigger alert side effects.
+        if (data.alert_triggered === true) {
+          console.warn('HIGH-RISK ALERT: HARD STOPPING FILE STREAM')
+          securityTerminatedRef.current = true
+          setSecurityTerminated(true)
+          fileStreamActiveRef.current = false
+
+          if (fileIntervalRef.current) {
+            clearInterval(fileIntervalRef.current)
+            fileIntervalRef.current = null
+          }
+
+          if (filePlaybackRef.current) {
+            try {
+              filePlaybackRef.current.pause()
+            } catch (e) {}
+          }
+
+          setIsFilePlaying(false)
+          setMicLevel(0)
+          setMicStatus('ALERT: Synthetic Voice Clone Detected')
+
+          // Keep the user on the command dashboard.
+          // Sector navigation happens only from an explicit
+          // user action on the alert.
+          setEscalatedIncident({
+            ...data,
+            sector:
+              data.governance_decision?.sector ||
+              data.sector ||
+              selectedSectorRef.current,
+            streamId: data.stream_id || streamId,
+          })
+
+          // Keep the operator on the active sector page while
+          // live detection results update.
         }
 
         console.log(
