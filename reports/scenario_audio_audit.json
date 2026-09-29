@@ -1,0 +1,488 @@
+[
+  {
+    "sector": "finance",
+    "scenario": "customer_verification",
+    "label": "Balance & Statement Query",
+    "is_spoof": false,
+    "duration": 7.06,
+    "ai_probability": 0.8855,
+    "governance": {
+      "sector": "finance",
+      "scenario": "customer_verification",
+      "risk_level": "high",
+      "ai_probability": 0.8854884459248347,
+      "speaker_similarity": 0.88,
+      "speaker_match": true,
+      "verification_required": true,
+      "action": "hold_and_escalate",
+      "reason": "High voice-fraud risk detected during the financial interaction.",
+      "recommended_actions": [
+        "Place the financial transaction on hold.",
+        "Require strong customer authentication.",
+        "Escalate the interaction to the fraud team."
+      ],
+      "composite_risk_score": 0.618,
+      "rolling_score": null,
+      "alert_triggered": false,
+      "transaction_amount_inr": null,
+      "cross_sector_threat_detected": false,
+      "threat_intel": {
+        "is_cross_sector_threat": false,
+        "threat_count": 0,
+        "origin_sectors": [],
+        "highest_spoof_prob": 0.0,
+        "global_alert": null
+      }
+    }
+  },
+  {
+    "sector": "finance",
+    "scenario": "high_value_transfer",
+    "label": "\u20b95.25L RTGS Wire Fraud Attack (NEW AUDIO)",
+    "is_spoof": true,
+    "duration": 20.98,
+    "ai_probability": 0.2861,
+    "governance": {
+      "sector": "finance",
+      "scenario": "high_value_transfer",
+      "risk_level": "medium",
+      "ai_probability": 0.2861308489595172,
+      "speaker_similarity": 0.45,
+      "speaker_match": false,
+      "verification_required": true,
+      "action": "step_up_verification",
+      "reason": "Elevated composite risk (50.8%) requires step-up verification for transaction \u20b9525,000.",
+      "recommended_actions": [
+        "Trigger step-up authentication.",
+        "Require OTP or banking-app verification.",
+        "Proceed only after successful verification."
+      ],
+      "composite_risk_score": 0.508,
+      "rolling_score": null,
+      "alert_triggered": false,
+      "transaction_amount_inr": 525000.0,
+      "cross_sector_threat_detected": false,
+      "threat_intel": {
+        "is_cross_sector_threat": false,
+        "threat_count": 0,
+        "origin_sectors": [],
+        "highest_spoof_prob": 0.0,
+        "global_alert": null
+      }
+    }
+  },
+  {
+    "sector": "finance",
+    "scenario": "account_recovery",
+    "label": "Account Recovery Scam",
+    "is_spoof": true,
+    "duration": 8.78,
+    "ai_probability": 0.1457,
+    "governance": {
+      "sector": "finance",
+      "scenario": "account_recovery",
+      "risk_level": "medium",
+      "ai_probability": 0.1456892030747731,
+      "speaker_similarity": 0.45,
+      "speaker_match": false,
+      "verification_required": true,
+      "action": "step_up_verification",
+      "reason": "Biometric voiceprint mismatch detected. Step-up customer authentication required before completing financial request.",
+      "recommended_actions": [
+        "Trigger step-up authentication.",
+        "Require OTP or banking-app verification.",
+        "Proceed only after successful verification."
+      ],
+      "composite_risk_score": 0.287,
+      "rolling_score": null,
+      "alert_triggered": false,
+      "transaction_amount_inr": null,
+      "cross_sector_threat_detected": false,
+      "threat_intel": {
+        "is_cross_sector_threat": false,
+        "threat_count": 0,
+        "origin_sectors": [],
+        "highest_spoof_prob": 0.0,
+        "global_alert": null
+      }
+    }
+  },
+  {
+    "sector": "retail",
+    "scenario": "customer_care",
+    "label": "Customer Support Inquiry",
+    "is_spoof": false,
+    "duration": 7.13,
+    "ai_probability": 0.4785,
+    "governance": {
+      "sector": "retail",
+      "scenario": "customer_care",
+      "ai_probability": 0.4784817553109935,
+      "speaker_similarity": 0.88,
+      "speaker_match": true,
+      "risk_level": "medium",
+      "verification_required": true,
+      "action": "step_up_verification",
+      "reason": "Additional identity verification is required before completing the retail request.",
+      "recommended_actions": [
+        "CROSS-SECTOR ALERT: Originating attacker previously flagged in FINANCE",
+        "Trigger step-up OTP authentication.",
+        "Proceed only after successful customer verification."
+      ],
+      "workflow_status": "verification_required",
+      "otp_challenge_required": true,
+      "oms_hold_required": false,
+      "supervisor_escalation_required": false,
+      "workflow_actions": [
+        "Trigger step-up OTP authentication.",
+        "Proceed only after successful customer verification."
+      ],
+      "otp_challenge": {
+        "type": "retail_otp_challenge",
+        "status": "ready",
+        "channel": "registered_customer_contact",
+        "ttl_seconds": 120,
+        "scenario": "customer_care",
+        "verification_method": "one_time_passphrase"
+      },
+      "oms_hold": null,
+      "composite_risk_score": 0.353,
+      "cross_sector_threat_detected": true,
+      "threat_intel": {
+        "is_cross_sector_threat": true,
+        "threat_count": 1,
+        "origin_sectors": [
+          "finance"
+        ],
+        "highest_spoof_prob": 0.885,
+        "global_alert": "Active threat flagged in: FINANCE"
+      }
+    }
+  },
+  {
+    "sector": "retail",
+    "scenario": "order_modification",
+    "label": "Delivery Address Spoof (NEW AUDIO)",
+    "is_spoof": true,
+    "duration": 15.44,
+    "ai_probability": 0.834,
+    "governance": {
+      "sector": "retail",
+      "scenario": "order_modification",
+      "ai_probability": 0.8339967549099072,
+      "speaker_similarity": 0.45,
+      "speaker_match": false,
+      "risk_level": "high",
+      "verification_required": true,
+      "action": "hold_and_escalate",
+      "reason": "High voice-AI risk detected during the retail interaction.",
+      "recommended_actions": [
+        "Place the requested order modification on hold.",
+        "Issue a step-up OTP challenge.",
+        "Escalate the interaction to a retail fraud supervisor."
+      ],
+      "workflow_status": "order_held",
+      "otp_challenge_required": true,
+      "oms_hold_required": true,
+      "supervisor_escalation_required": true,
+      "workflow_actions": [
+        "Place the requested order modification on hold.",
+        "Issue a step-up OTP challenge.",
+        "Escalate the interaction to a retail fraud supervisor."
+      ],
+      "otp_challenge": {
+        "type": "retail_otp_challenge",
+        "status": "ready",
+        "channel": "registered_customer_contact",
+        "ttl_seconds": 120,
+        "scenario": "order_modification",
+        "verification_method": "one_time_passphrase"
+      },
+      "oms_hold": {
+        "type": "retail_oms_hold",
+        "status": "ready",
+        "action": "HOLD_SHIPMENT",
+        "order_reference": "SIM-ORDER-PENDING",
+        "scenario": "order_modification",
+        "risk_score": 0.834,
+        "reason": "High voice-AI risk detected during an order modification."
+      },
+      "composite_risk_score": 0.735,
+      "cross_sector_threat_detected": false,
+      "threat_intel": {
+        "is_cross_sector_threat": false,
+        "threat_count": 0,
+        "origin_sectors": [],
+        "highest_spoof_prob": 0.0,
+        "global_alert": null
+      }
+    }
+  },
+  {
+    "sector": "retail",
+    "scenario": "order_modification",
+    "label": "Refund Diversion Attack",
+    "is_spoof": true,
+    "duration": 5.66,
+    "ai_probability": 0.2508,
+    "governance": {
+      "sector": "retail",
+      "scenario": "order_modification",
+      "ai_probability": 0.25076149109097334,
+      "speaker_similarity": 0.45,
+      "speaker_match": false,
+      "risk_level": "medium",
+      "verification_required": true,
+      "action": "step_up_verification",
+      "reason": "Additional identity verification is required before completing the retail request.",
+      "recommended_actions": [
+        "CROSS-SECTOR ALERT: Originating attacker previously flagged in RETAIL",
+        "Trigger step-up OTP authentication.",
+        "Proceed only after successful customer verification."
+      ],
+      "workflow_status": "verification_required",
+      "otp_challenge_required": true,
+      "oms_hold_required": false,
+      "supervisor_escalation_required": false,
+      "workflow_actions": [
+        "Trigger step-up OTP authentication.",
+        "Proceed only after successful customer verification."
+      ],
+      "otp_challenge": {
+        "type": "retail_otp_challenge",
+        "status": "ready",
+        "channel": "registered_customer_contact",
+        "ttl_seconds": 120,
+        "scenario": "order_modification",
+        "verification_method": "one_time_passphrase"
+      },
+      "oms_hold": null,
+      "composite_risk_score": 0.355,
+      "cross_sector_threat_detected": true,
+      "threat_intel": {
+        "is_cross_sector_threat": true,
+        "threat_count": 1,
+        "origin_sectors": [
+          "retail"
+        ],
+        "highest_spoof_prob": 0.834,
+        "global_alert": "Active threat flagged in: RETAIL"
+      }
+    }
+  },
+  {
+    "sector": "hospitality",
+    "scenario": "guest_verification",
+    "label": "Dining Reservation Confirmation",
+    "is_spoof": false,
+    "duration": 8.59,
+    "ai_probability": 0.8905,
+    "governance": {
+      "sector": "hospitality",
+      "scenario": "guest_verification",
+      "ai_probability": 0.8904886424005728,
+      "speaker_similarity": 0.88,
+      "speaker_match": true,
+      "risk_level": "high",
+      "verification_required": true,
+      "action": "lock_folio_and_escalate",
+      "reason": "High voice-AI clone likelihood detected during hospitality service request.",
+      "recommended_actions": [
+        "CROSS-SECTOR ALERT: Originating attacker previously flagged in FINANCE",
+        "Immediately lock room folio and suspend phone-authorized billing.",
+        "Mandate physical government ID verification at the hotel front desk.",
+        "Alert Duty Manager and Concierge security dispatch."
+      ],
+      "composite_risk_score": 0.621,
+      "cross_sector_threat_detected": true,
+      "threat_intel": {
+        "is_cross_sector_threat": true,
+        "threat_count": 1,
+        "origin_sectors": [
+          "finance"
+        ],
+        "highest_spoof_prob": 0.885,
+        "global_alert": "Active threat flagged in: FINANCE"
+      }
+    }
+  },
+  {
+    "sector": "hospitality",
+    "scenario": "reservation_change",
+    "label": "Reservation Change Scam (NEW AUDIO)",
+    "is_spoof": true,
+    "duration": 15.93,
+    "ai_probability": 0.1316,
+    "governance": {
+      "sector": "hospitality",
+      "scenario": "reservation_change",
+      "ai_probability": 0.1316148526576329,
+      "speaker_similarity": 0.45,
+      "speaker_match": false,
+      "risk_level": "medium",
+      "verification_required": true,
+      "action": "require_front_desk_id",
+      "reason": "Guest voiceprint does not match the registered in-house guest.",
+      "recommended_actions": [
+        "CROSS-SECTOR ALERT: Originating attacker previously flagged in RETAIL",
+        "Send secondary SMS verification to the primary reservation phone.",
+        "Require physical government ID verification at reception.",
+        "Restrict room-key re-issuance until the guest is verified."
+      ],
+      "composite_risk_score": 0.278,
+      "cross_sector_threat_detected": true,
+      "threat_intel": {
+        "is_cross_sector_threat": true,
+        "threat_count": 1,
+        "origin_sectors": [
+          "retail"
+        ],
+        "highest_spoof_prob": 0.834,
+        "global_alert": "Active threat flagged in: RETAIL"
+      }
+    }
+  },
+  {
+    "sector": "hospitality",
+    "scenario": "vip_booking",
+    "label": "VIP Suite Folio Hijack",
+    "is_spoof": true,
+    "duration": 9.14,
+    "ai_probability": 0.8954,
+    "governance": {
+      "sector": "hospitality",
+      "scenario": "vip_booking",
+      "ai_probability": 0.8954084696469538,
+      "speaker_similarity": 0.45,
+      "speaker_match": false,
+      "risk_level": "high",
+      "verification_required": true,
+      "action": "lock_folio_and_escalate",
+      "reason": "High voice-AI clone likelihood detected during hospitality service request.",
+      "recommended_actions": [
+        "CROSS-SECTOR ALERT: Originating attacker previously flagged in RETAIL",
+        "Immediately lock room folio and suspend phone-authorized billing.",
+        "Mandate physical government ID verification at the hotel front desk.",
+        "Alert Duty Manager and Concierge security dispatch."
+      ],
+      "composite_risk_score": 0.775,
+      "cross_sector_threat_detected": true,
+      "threat_intel": {
+        "is_cross_sector_threat": true,
+        "threat_count": 1,
+        "origin_sectors": [
+          "retail"
+        ],
+        "highest_spoof_prob": 0.834,
+        "global_alert": "Active threat flagged in: RETAIL"
+      }
+    }
+  },
+  {
+    "sector": "entertainment",
+    "scenario": "dubbing_verification",
+    "label": "Studio ADR Voice Stem",
+    "is_spoof": false,
+    "duration": 7.61,
+    "ai_probability": 0.1197,
+    "governance": {
+      "sector": "entertainment",
+      "scenario": "dubbing_verification",
+      "ai_probability": 0.11973968251508124,
+      "speaker_similarity": 0.88,
+      "speaker_match": true,
+      "risk_level": "low",
+      "verification_required": false,
+      "action": "certify_authentic",
+      "reason": "Audio certified authentic with natural organic glottal pulse characteristics.",
+      "recommended_actions": [
+        "CROSS-SECTOR ALERT: Originating attacker previously flagged in HOSPITALITY, FINANCE",
+        "Issue digital authenticity certificate for broadcast/dubbing release."
+      ],
+      "composite_risk_score": 0.12,
+      "cross_sector_threat_detected": true,
+      "threat_intel": {
+        "is_cross_sector_threat": true,
+        "threat_count": 2,
+        "origin_sectors": [
+          "hospitality",
+          "finance"
+        ],
+        "highest_spoof_prob": 0.89,
+        "global_alert": "Active threat flagged in: HOSPITALITY, FINANCE"
+      }
+    }
+  },
+  {
+    "sector": "entertainment",
+    "scenario": "voice_authenticity",
+    "label": "Celebrity Dubbing Clone (NEW AUDIO)",
+    "is_spoof": true,
+    "duration": 20.56,
+    "ai_probability": 0.1437,
+    "governance": {
+      "sector": "entertainment",
+      "scenario": "voice_authenticity",
+      "ai_probability": 0.14374233468381198,
+      "speaker_similarity": 0.45,
+      "speaker_match": false,
+      "risk_level": "medium",
+      "verification_required": true,
+      "action": "flag_for_spectral_audit",
+      "reason": "Acoustic anomalies or voiceprint biometric deviation detected in stem.",
+      "recommended_actions": [
+        "CROSS-SECTOR ALERT: Originating attacker previously flagged in RETAIL, HOSPITALITY",
+        "Route track for secondary vocoder artifact & spectral phase audit.",
+        "Request uncompressed master stems directly from talent agency."
+      ],
+      "composite_risk_score": 0.286,
+      "cross_sector_threat_detected": true,
+      "threat_intel": {
+        "is_cross_sector_threat": true,
+        "threat_count": 2,
+        "origin_sectors": [
+          "retail",
+          "hospitality"
+        ],
+        "highest_spoof_prob": 0.895,
+        "global_alert": "Active threat flagged in: RETAIL, HOSPITALITY"
+      }
+    }
+  },
+  {
+    "sector": "entertainment",
+    "scenario": "speaker_comparison",
+    "label": "Artist IP Infringement Clone",
+    "is_spoof": true,
+    "duration": 6.38,
+    "ai_probability": 0.1172,
+    "governance": {
+      "sector": "entertainment",
+      "scenario": "speaker_comparison",
+      "ai_probability": 0.11722040621733851,
+      "speaker_similarity": 0.45,
+      "speaker_match": false,
+      "risk_level": "medium",
+      "verification_required": true,
+      "action": "flag_for_spectral_audit",
+      "reason": "Acoustic anomalies or voiceprint biometric deviation detected in stem.",
+      "recommended_actions": [
+        "CROSS-SECTOR ALERT: Originating attacker previously flagged in RETAIL, HOSPITALITY",
+        "Route track for secondary vocoder artifact & spectral phase audit.",
+        "Request uncompressed master stems directly from talent agency."
+      ],
+      "composite_risk_score": 0.269,
+      "cross_sector_threat_detected": true,
+      "threat_intel": {
+        "is_cross_sector_threat": true,
+        "threat_count": 2,
+        "origin_sectors": [
+          "retail",
+          "hospitality"
+        ],
+        "highest_spoof_prob": 0.895,
+        "global_alert": "Active threat flagged in: RETAIL, HOSPITALITY"
+      }
+    }
+  }
+]

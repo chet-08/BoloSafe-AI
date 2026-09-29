@@ -4,7 +4,6 @@ import {
   UserCheck,
   Fingerprint,
   GitBranch,
-  Layers,
   BarChart3,
 } from 'lucide-react'
 
@@ -12,7 +11,6 @@ import ProsodyPage from './analytics/ProsodyPage'
 import SpeakerPage from './analytics/SpeakerPage'
 import VocoderPage from './analytics/VocoderPage'
 import ExplainabilityPage from './analytics/ExplainabilityPage'
-import DualStreamPage from './analytics/DualStreamPage'
 
 export default function Analytics({
   analytics,
@@ -41,11 +39,6 @@ export default function Analytics({
       label: 'Explainability / SHAP',
       icon: GitBranch,
     },
-    {
-      id: 'dual_stream',
-      label: 'Dual-Stream Fusion',
-      icon: Layers,
-    },
   ]
 
   return (
@@ -71,7 +64,7 @@ export default function Analytics({
 
               <p className="mt-2 max-w-3xl text-sm leading-6 text-[var(--text-muted)]">
                 Inspect acoustic behavior, speaker identity, vocoder signatures,
-                model explainability, and trilingual neural fusion.
+                and model explainability.
               </p>
             </div>
 
@@ -81,7 +74,7 @@ export default function Analytics({
 
       {/* Analytics tabs */}
       <section className="rounded-2xl border border-[var(--border-default)] bg-[var(--bg-surface)] p-3">
-        <div className="grid grid-cols-2 gap-2 xl:grid-cols-5">
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 xl:grid-cols-4">
           {tabs.map(({ id, label, icon: Icon }) => {
             const active = subPage === id
 
@@ -140,13 +133,6 @@ export default function Analytics({
 
         {subPage === 'explainability' && (
           <ExplainabilityPage
-            analytics={analytics}
-            selected={selected}
-          />
-        )}
-
-        {subPage === 'dual_stream' && (
-          <DualStreamPage
             analytics={analytics}
             selected={selected}
           />

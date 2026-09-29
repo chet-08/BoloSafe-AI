@@ -34,6 +34,7 @@ export default function HospitalitySecurity({
   streamAudioFromUrl,
   startMicrophoneStream,
   stopMicrophoneStream,
+  stopActiveStream,
   handleFileUpload,
   micStatus = 'Ready',
   micLevel = 0,
@@ -66,11 +67,11 @@ export default function HospitalitySecurity({
       scenario: "vip_booking"
     },
     {
-      label: "Suite Cancellation Scam",
+      label: "Reservation Change Scam",
       isSpoof: true,
-      language: "Hindi",
-      description: "Cloned voice cancels booking & requests refund",
-      url: "/sector_audio/hospitality/spoof/hospitality_spoof_suite_cancel_hi.wav",
+      language: "Tamil",
+      description: "Cloned voice cancels booking & requests modification",
+      url: "/sector_audio/hospitality/spoof/hospitality_spoof_reservation_change_ta.wav",
       scenario: "reservation_change"
     }
   ];
@@ -462,7 +463,8 @@ export default function HospitalitySecurity({
                 )
               }
               onStartMic={startMicrophoneStream}
-              onStopMic={stopMicrophoneStream}
+              onStopMic={stopActiveStream || stopMicrophoneStream}
+              onStopStream={stopActiveStream || stopMicrophoneStream}
               onFileUpload={handleFileUpload}
               isStreaming={isStreaming}
               micStatus={micStatus}

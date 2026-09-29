@@ -26,6 +26,7 @@ export default function SectorAudioPlayer({
   onPlaySample,
   onStartMic,
   onStopMic,
+  onStopStream,
   onFileUpload,
   isStreaming = false,
   micStatus = 'Ready',
@@ -334,7 +335,7 @@ export default function SectorAudioPlayer({
       <div className="flex flex-col gap-2 sm:flex-row">
         <button
           type="button"
-          onClick={isStreaming ? onStopMic : onStartMic}
+          onClick={isStreaming ? (onStopStream || onStopMic) : onStartMic}
           className={[
             'inline-flex min-h-10 flex-1 items-center justify-center gap-2 rounded-lg border px-4 py-2.5 text-xs font-semibold',
             'transition-colors duration-200',

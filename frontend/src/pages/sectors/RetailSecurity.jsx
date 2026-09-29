@@ -35,6 +35,7 @@ export default function RetailSecurity({
   streamAudioFromUrl,
   startMicrophoneStream,
   stopMicrophoneStream,
+  stopActiveStream,
   handleFileUpload,
   micStatus = 'Ready',
   micLevel = 0,
@@ -62,9 +63,9 @@ export default function RetailSecurity({
     {
       label: "Delivery Address Spoof",
       isSpoof: true,
-      language: "Hindi",
+      language: "English",
       description: "Cloned voice reroutes shipment",
-      url: "/sector_audio/retail/spoof/retail_spoof_address_change_hi.wav",
+      url: "/sector_audio/retail/spoof/retail_spoof_address_change_en.wav",
       scenario: "order_modification"
     },
     {
@@ -368,7 +369,8 @@ export default function RetailSecurity({
                 )
               }
               onStartMic={startMicrophoneStream}
-              onStopMic={stopMicrophoneStream}
+              onStopMic={stopActiveStream || stopMicrophoneStream}
+              onStopStream={stopActiveStream || stopMicrophoneStream}
               onFileUpload={handleFileUpload}
               isStreaming={isStreaming}
               micStatus={micStatus}
