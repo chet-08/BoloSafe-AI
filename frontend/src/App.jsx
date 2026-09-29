@@ -78,9 +78,191 @@ const PAGE_LABELS = {
   admin: 'Administration',
 }
 
-function ConsoleTopBar({ activePage, isBackendOnline, isConnected }) {
+const GLOBAL_SEARCH_ITEMS = [
+  {
+    id: 'overview',
+    label: 'Live Dashboard',
+    keywords: 'dashboard live overview command center home',
+  },
+  {
+    id: 'finance',
+    label: 'Financial Services',
+    keywords: 'finance financial banking payments fraud security',
+  },
+  {
+    id: 'retail',
+    label: 'Retail Security',
+    keywords: 'retail shopping ecommerce fraud security',
+  },
+  {
+    id: 'hospitality',
+    label: 'Hospitality',
+    keywords: 'hotel hotels guest hospitality booking security',
+  },
+  {
+    id: 'entertainment',
+    label: 'Entertainment',
+    keywords: 'media entertainment studio rights audio security',
+  },
+  {
+    id: 'adversarial',
+    label: 'Adversarial Testing',
+    keywords: 'adversarial testing attacks robustness red team',
+  },
+  {
+    id: 'analytics',
+    label: 'Deep Analytics',
+    keywords: 'analytics data metrics models analysis',
+  },
+  {
+    id: 'history',
+    label: 'Incident History',
+    keywords: 'history incidents alerts detections events',
+  },
+  {
+    id: 'security',
+    label: 'Security Report',
+    keywords: 'security report governance compliance audit',
+  },
+  {
+    id: 'how',
+    label: 'Architecture',
+    keywords: 'architecture system technical infrastructure how',
+  },
+  {
+    id: 'admin',
+    label: 'Administration',
+    keywords: 'admin administration settings controls',
+  },
+]
+
+function ConsoleTopBar({
+  activePage,
+  isBackendOnline,
+  isConnected,
+  onNavigate,
+}) {
+  const [query, setQuery] = useState('')
+  const [isSearchOpen, setIsSearchOpen] = useState(false)
+  const [highlightedIndex, setHighlightedIndex] = useState(0)
+  const searchInputRef = useRef(null)
+  const searchContainerRef = useRef(null)
+
+  const results = useMemo(() => {
+    const normalized = query.trim().toLowerCase()
+
+    if (!normalized) {
+      return []
+    }
+
+    return GLOBAL_SEARCH_ITEMS.filter((item) =>
+      `${item.label} ${item.keywords}`
+        .toLowerCase()
+        .includes(normalized),
+    )
+  }, [query])
+
+  useEffect(() => {
+    setHighlightedIndex(0)
+  }, [query])
+
+  useEffect(() => {
+    const handleGlobalKeyDown = (event) => {
+      const target = event.target
+      const isTyping =
+        target instanceof HTMLInputElement ||
+        target instanceof HTMLTextAreaElement ||
+        target?.isContentEditable
+
+      if (event.key === '/' && !isTyping) {
+        event.preventDefault()
+        searchInputRef.current?.focus()
+        setIsSearchOpen(true)
+        return
+      }
+
+      if (event.key === 'Escape') {
+        setIsSearchOpen(false)
+        setQuery('')
+        setHighlightedIndex(0)
+        searchInputRef.current?.blur()
+      }
+    }
+
+    window.addEventListener('keydown', handleGlobalKeyDown)
+    return () => window.removeEventListener('keydown', handleGlobalKeyDown)
+  }, [])
+
+  useEffect(() => {
+    const handleOutsideClick = (event) => {
+      if (
+        searchContainerRef.current &&
+        !searchContainerRef.current.contains(event.target)
+      ) {
+        setIsSearchOpen(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handleOutsideClick)
+    return () => document.removeEventListener('mousedown', handleOutsideClick)
+  }, [])
+
+  const navigateToResult = (item) => {
+    if (!item || !onNavigate) return
+
+    onNavigate(item.id)
+    setQuery('')
+    setIsSearchOpen(false)
+    setHighlightedIndex(0)
+    searchInputRef.current?.blur()
+  }
+
+  const handleSearchKeyDown = (event) => {
+    if (event.key === 'ArrowDown') {
+      event.preventDefault()
+
+      if (results.length > 0) {
+        setHighlightedIndex((current) =>
+          current >= results.length - 1 ? 0 : current + 1,
+        )
+      }
+
+      return
+    }
+
+    if (event.key === 'ArrowUp') {
+      event.preventDefault()
+
+      if (results.length > 0) {
+        setHighlightedIndex((current) =>
+          current <= 0 ? results.length - 1 : current - 1,
+        )
+      }
+
+      return
+    }
+
+    if (event.key === 'Enter') {
+      event.preventDefault()
+
+      if (results.length > 0) {
+        navigateToResult(results[highlightedIndex])
+      }
+
+      return
+    }
+
+    if (event.key === 'Escape') {
+      event.preventDefault()
+      setQuery('')
+      setIsSearchOpen(false)
+      setHighlightedIndex(0)
+      searchInputRef.current?.blur()
+    }
+  }
+
   return (
-    <header className="sticky top-0 z-30 -mx-5 mb-6 border-b border-[var(--border-default)] bg-[var(--bg-page)]/95 px-5 py-3 backdrop-blur-md lg:-mx-10 lg:px-10">
+    <header className="sticky top-0 z-30 -mx-5 mb-6 border-b border-[var(--border-default)] bg-[var(--bg-page)] px-5 py-3 backdrop-blur-md lg:-mx-10 lg:px-10">
       <div className="flex items-center gap-4">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
@@ -92,19 +274,115 @@ function ConsoleTopBar({ activePage, isBackendOnline, isConnected }) {
               className="hidden text-[var(--text-subtle)] sm:inline"
             />
             <span className="truncate text-sm font-bold text-[var(--text-primary)]">
-              {PAGE_LABELS[activePage] || 'Security Console'}
+              {PAGE_LABELS[activePage] ||
+                GLOBAL_SEARCH_ITEMS.find((item) => item.id === activePage)?.label ||
+                'Security Console'}
             </span>
           </div>
         </div>
 
-        <div className="hidden min-w-[240px] max-w-md flex-1 md:block">
-          <div className="flex h-9 items-center rounded-lg border border-[var(--border-default)] bg-[var(--bg-surface)] px-3 text-xs text-[var(--text-muted)]">
-            <span className="mr-2 text-[var(--text-subtle)]">⌕</span>
-            Search anything...
-            <span className="ml-auto rounded border border-[var(--border-default)] px-1.5 py-0.5 text-[9px]">
+        <div
+          ref={searchContainerRef}
+          className="relative hidden min-w-[240px] max-w-md flex-1 md:block"
+        >
+          <div
+            className={`flex h-9 items-center rounded-lg border bg-[var(--bg-surface)] px-3 text-xs transition-colors ${
+              isSearchOpen
+                ? 'border-indigo-400/60 ring-1 ring-indigo-400/20'
+                : 'border-[var(--border-default)]'
+            }`}
+          >
+            <span className="mr-2 text-sm text-[var(--text-subtle)]">
+              ⌕
+            </span>
+
+            <input
+              ref={searchInputRef}
+              type="text"
+              value={query}
+              onChange={(event) => {
+                setQuery(event.target.value)
+                setIsSearchOpen(true)
+              }}
+              onFocus={() => {
+                if (query.trim()) {
+                  setIsSearchOpen(true)
+                }
+              }}
+              onKeyDown={handleSearchKeyDown}
+              placeholder="Search anything..."
+              aria-label="Search BoloSafe-AI"
+              aria-expanded={isSearchOpen}
+              aria-controls="global-search-results"
+              role="combobox"
+              autoComplete="off"
+              className="min-w-0 flex-1 bg-transparent text-xs text-[var(--text-primary)] outline-none placeholder:text-[var(--text-muted)]"
+            />
+
+            <span className="ml-2 rounded border border-[var(--border-default)] px-1.5 py-0.5 text-[9px] text-[var(--text-muted)]">
               /
             </span>
           </div>
+
+          {isSearchOpen && query.trim() && (
+            <div
+              id="global-search-results"
+              role="listbox"
+              className="absolute left-0 right-0 top-11 z-50 overflow-hidden rounded-xl border border-[var(--border-default)] bg-[var(--bg-surface)] shadow-2xl shadow-black/30"
+            >
+              {results.length > 0 ? (
+                <div className="p-1.5">
+                  {results.map((item, index) => {
+                    const isHighlighted = index === highlightedIndex
+
+                    return (
+                      <button
+                        key={item.id}
+                        type="button"
+                        role="option"
+                        aria-selected={isHighlighted}
+                        onMouseEnter={() => setHighlightedIndex(index)}
+                        onClick={() => navigateToResult(item)}
+                        className={`flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left transition-colors ${
+                          isHighlighted
+                            ? 'bg-indigo-500/10 text-[var(--text-primary)]'
+                            : 'text-[var(--text-secondary)] hover:bg-[var(--bg-hover)]'
+                        }`}
+                      >
+                        <span className="min-w-0">
+                          <span className="block truncate text-xs font-semibold">
+                            {item.label}
+                          </span>
+                          <span className="mt-0.5 block text-[9px] uppercase tracking-wider text-[var(--text-muted)]">
+                            Security Console
+                          </span>
+                        </span>
+
+                        {isHighlighted && (
+                          <span className="ml-3 shrink-0 text-[9px] text-[var(--text-muted)]">
+                            Enter ↵
+                          </span>
+                        )}
+                      </button>
+                    )
+                  })}
+                </div>
+              ) : (
+                <div className="px-4 py-4 text-center">
+                  <p className="text-xs font-semibold text-[var(--text-secondary)]">
+                    No results found
+                  </p>
+                  <p className="mt-1 text-[10px] text-[var(--text-muted)]">
+                    Try a page or security workflow name.
+                  </p>
+                </div>
+              )}
+
+              <div className="border-t border-[var(--border-default)] px-3 py-2 text-[9px] text-[var(--text-muted)]">
+                ↑ ↓ navigate&nbsp;&nbsp; Enter open&nbsp;&nbsp; Esc close
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="flex items-center gap-2">
@@ -147,7 +425,7 @@ function MainApp() {
   // DASHBOARD STATE
   // =========================================================
   const [activePage, setActivePage] = useState('overview')
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(true)
   const [streams, setStreams] = useState({})
   const [streamHistories, setStreamHistories] = useState(initialHistories)
   const [activeStreamId, setActiveStreamId] = useState(null)
@@ -529,51 +807,22 @@ function MainApp() {
           return
         }
 
-        if (data.alert_triggered === true) {
-          console.warn('HIGH-RISK ALERT: HARD STOPPING FILE STREAM')
-          securityTerminatedRef.current = true
-          setSecurityTerminated(true)
-          fileStreamActiveRef.current = false
-
-          if (fileIntervalRef.current) {
-            clearInterval(fileIntervalRef.current)
-            fileIntervalRef.current = null
-          }
-
-          if (filePlaybackRef.current) {
-            try {
-              filePlaybackRef.current.pause()
-            } catch (e) {}
-          }
-
-          setIsFilePlaying(false)
-          setMicLevel(0)
-          setMicStatus('ALERT: Synthetic Voice Clone Detected')
-
-          // Keep the user on the command dashboard.
-          // Sector navigation happens only from an explicit
-          // user action on the alert.
-          setEscalatedIncident({
-            ...data,
-            sector:
-              data.governance_decision?.sector ||
-              data.sector ||
-              selectedSectorRef.current,
-            streamId: data.stream_id || streamId,
-          })
-
-            // Keep the operator on the active sector page while
-            // live detection results update.
-        }
-
         const currentStreamId = data.stream_id || streamId
         const activeSession = activeSessionRef.current
 
-        // Ignore results that belong to a different security session.
+        // Validate the stream and sector BEFORE any result side effects.
+        // A stale result must never stop playback or create an alert
+        // for the currently active security session.
         if (
           activeSession?.streamId &&
           currentStreamId !== activeSession.streamId
         ) {
+          console.debug(
+            'Ignoring stale stream result:',
+            currentStreamId,
+            'expected:',
+            activeSession.streamId
+          )
           return
         }
 
@@ -607,6 +856,44 @@ function MainApp() {
             activeSector
           )
           return
+        }
+
+        // ONLY a validated current-session result can trigger alert side effects.
+        if (data.alert_triggered === true) {
+          console.warn('HIGH-RISK ALERT: HARD STOPPING FILE STREAM')
+          securityTerminatedRef.current = true
+          setSecurityTerminated(true)
+          fileStreamActiveRef.current = false
+
+          if (fileIntervalRef.current) {
+            clearInterval(fileIntervalRef.current)
+            fileIntervalRef.current = null
+          }
+
+          if (filePlaybackRef.current) {
+            try {
+              filePlaybackRef.current.pause()
+            } catch (e) {}
+          }
+
+          setIsFilePlaying(false)
+          setMicLevel(0)
+          setMicStatus('ALERT: Synthetic Voice Clone Detected')
+
+          // Keep the user on the command dashboard.
+          // Sector navigation happens only from an explicit
+          // user action on the alert.
+          setEscalatedIncident({
+            ...data,
+            sector:
+              data.governance_decision?.sector ||
+              data.sector ||
+              selectedSectorRef.current,
+            streamId: data.stream_id || streamId,
+          })
+
+          // Keep the operator on the active sector page while
+          // live detection results update.
         }
 
         console.log(
@@ -1642,7 +1929,7 @@ function MainApp() {
 
   // 2. Show Dashboard if authenticated
   return (
-    <main className="relative flex min-h-screen flex-col overflow-hidden bg-[var(--bg-page)] font-sans text-[var(--text-primary)] md:flex-row">
+    <main className="console-shell relative flex min-h-screen flex-col overflow-hidden bg-[var(--bg-page)] font-sans text-[var(--text-primary)] md:flex-row">
       <aside
         className={[
           'relative z-20 flex w-full shrink-0 flex-col border-b border-[var(--border-default)]',
@@ -1783,6 +2070,7 @@ function MainApp() {
             activePage={activePage}
             isBackendOnline={isBackendOnline}
             isConnected={isConnected}
+            onNavigate={setActivePage}
           />
 
           <div className="pb-8">
@@ -1956,6 +2244,7 @@ function MainApp() {
 }
 
 // 2. Wrap the entire application components/routes inside the providers
+
 export default function App() {
   return (
     <ThemeProvider>

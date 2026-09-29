@@ -441,7 +441,9 @@ export default function Admin({
     setEscalatedIncident,
   } = useSecurity()
 
-  const incident = propIncident ?? contextIncident
+  const incident = propIncident
+    ? { ...propIncident, ...(contextIncident || {}) }
+    : contextIncident
 
   const sector =
     String(
@@ -535,6 +537,47 @@ export default function Admin({
             ]
 
   const handleAction = (actionType) => {
+    if (sector === 'hospitality') {
+      const hospitalityActions = {
+        HOLD_RESERVATION: {
+          action_state: 'RESERVATION_HELD',
+          protection_state: 'CONTAINMENT_ACTIVE',
+          escalation_state: 'PENDING_VERIFICATION',
+          action_detail: 'Reservation changes held until guest verification completes',
+        },
+        VERIFY_GUEST: {
+          action_state: 'GUEST_VERIFICATION_REQUIRED',
+          protection_state: 'MONITORING',
+          escalation_state: 'VERIFICATION_REQUIRED',
+          action_detail: 'Front Desk ID verification required before sensitive action',
+        },
+        ESCALATE_HOSPITALITY: {
+          action_state: 'DUTY_MANAGER_ALERTED',
+          protection_state: 'MONITORING',
+          escalation_state: 'ALERTED',
+          action_detail: 'Duty Manager notified for hospitality security review',
+        },
+        QUARANTINE_AUDIO: {
+          action_state: 'EVIDENCE_QUARANTINED',
+          protection_state: 'LATCHED',
+          escalation_state: 'FORENSIC_REVIEW',
+          action_detail: 'Voice interaction preserved for controlled forensic analysis',
+        },
+      }
+
+      const action = hospitalityActions[actionType]
+
+      if (action && typeof setEscalatedIncident === 'function') {
+        setEscalatedIncident({
+          ...(incident || {}),
+          sector: 'hospitality',
+          ...action,
+        })
+      }
+
+      return
+    }
+
     if (typeof onResolveIncident === 'function') {
       onResolveIncident(actionType)
     }
@@ -543,6 +586,51 @@ export default function Admin({
       setEscalatedIncident(null)
     }
   }
+
+  const actionState = incident?.action_state || null
+
+  const hospitalityActionDisplay = {
+    RESERVATION_HELD: {
+      value: 'HELD',
+      helper: 'Reservation changes blocked',
+      tone: 'red',
+    },
+    GUEST_VERIFICATION_REQUIRED: {
+      value: 'VERIFY',
+      helper: 'Front Desk ID required',
+      tone: 'amber',
+    },
+    DUTY_MANAGER_ALERTED: {
+      value: 'MONITORING',
+      helper: 'Duty Manager alerted',
+      tone: 'amber',
+    },
+    EVIDENCE_QUARANTINED: {
+      value: 'QUARANTINED',
+      helper: 'Evidence preserved',
+      tone: 'green',
+    },
+    FOLIO_LOCKED: {
+      value: 'LATCHED',
+      helper: 'Folio locked · ID verification',
+      tone: 'red',
+    },
+  }
+
+  const hospitalityAction =
+    sector === 'hospitality' ? hospitalityActionDisplay[actionState] : null
+
+  const protectionValue =
+    hospitalityAction?.value ||
+    (isAiVoiceDetected ? 'LATCHED' : 'ARMED')
+
+  const protectionHelper =
+    hospitalityAction?.helper ||
+    (isAiVoiceDetected ? 'Incident response active' : 'Ready')
+
+  const protectionTone =
+    hospitalityAction?.tone ||
+    (isAiVoiceDetected ? 'red' : 'green')
 
   return (
     <section className="w-full space-y-6 pb-10">
@@ -843,10 +931,10 @@ export default function Admin({
 
         <MetricCard
           label="Protection"
-          value={isAiVoiceDetected ? 'LATCHED' : 'ARMED'}
-          helper={isAiVoiceDetected ? 'Incident response active' : 'Ready'}
+          value={protectionValue}
+          helper={protectionHelper}
           icon={ShieldCheck}
-          tone={isAiVoiceDetected ? 'red' : 'green'}
+          tone={protectionTone}
         />
       </div>
 

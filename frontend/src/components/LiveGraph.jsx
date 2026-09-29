@@ -22,18 +22,18 @@ export default function LiveGraph({ timeSeries = [], inputMode, selected, active
   const thresholdY = height - padding - (70 / maxProb) * (height - padding * 2)
 
   return (
-    <div className="relative w-full overflow-hidden rounded-2xl bg-[var(--color-bolosafe-darkest)] border border-[var(--color-bolosafe-border)] p-4 shadow-xl">
+    <div className="relative w-full overflow-hidden rounded-2xl bg-[var(--chart-bg)] border border-[var(--border-default)] p-4 shadow-[var(--shadow-card)]">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-2">
         <div>
-          <p className="text-sm font-bold text-white">Synthetic Voice Probability</p>
-          <p className="text-[10px] text-slate-500 font-mono mt-1">Backend Risk Engine telemetry</p>
+          <p className="text-sm font-bold text-[var(--text-primary)]">Synthetic Voice Probability</p>
+          <p className="text-[10px] text-[var(--text-muted)] font-mono mt-1">Backend Risk Engine telemetry</p>
         </div>
         <div className="flex items-center gap-3 font-mono text-xs">
-          <span className="flex items-center gap-1.5 bg-[var(--color-bolosafe-cyan)]/10 text-[var(--color-bolosafe-cyan)] border border-[var(--color-bolosafe-cyan)]/30 px-2.5 py-1 rounded-full">
-            <span className="size-2 rounded-full bg-[var(--color-bolosafe-cyan)] animate-pulse" />
+          <span className="flex items-center gap-1.5 bg-[var(--accent-primary-muted)] text-[var(--accent-primary-soft)] border border-[var(--accent-primary)]/30 px-2.5 py-1 rounded-full">
+            <span className="size-2 rounded-full bg-[var(--accent-primary)] animate-pulse" />
             {inputMode === 'mic' ? 'LIVE MIC' : 'AUDIO FILE'}
           </span>
-          <span className="text-slate-300">{selected.name || activeStreamId}</span>
+          <span className="text-[var(--text-secondary)]">{selected.name || activeStreamId}</span>
         </div>
       </div>
 
@@ -42,8 +42,8 @@ export default function LiveGraph({ timeSeries = [], inputMode, selected, active
           <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-full overflow-visible">
             <defs>
               <linearGradient id="probGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="var(--color-bolosafe-pink)" stopOpacity="0.35" />
-                <stop offset="100%" stopColor="var(--color-bolosafe-pink)" stopOpacity="0" />
+                <stop offset="0%" stopColor="var(--status-danger)" stopOpacity="0.30" />
+                <stop offset="100%" stopColor="var(--status-danger)" stopOpacity="0" />
               </linearGradient>
             </defs>
 
@@ -51,20 +51,20 @@ export default function LiveGraph({ timeSeries = [], inputMode, selected, active
               const y = height - padding - (value / maxProb) * (height - padding * 2)
               return (
                 <g key={value}>
-                  <line x1={padding} y1={y} x2={width - padding} y2={y} stroke="var(--color-bolosafe-border)" strokeDasharray="3 3" />
-                  <text x={padding - 8} y={y + 3} fill="#64748b" fontSize="10" textAnchor="end" className="font-mono">
+                  <line x1={padding} y1={y} x2={width - padding} y2={y} stroke="var(--border-default)" strokeDasharray="3 3" />
+                  <text x={padding - 8} y={y + 3} fill="var(--chart-axis)" fontSize="10" textAnchor="end" className="font-mono">
                     {value}%
                   </text>
                 </g>
               )
             })}
 
-            <line x1={padding} y1={thresholdY} x2={width - padding} y2={thresholdY} stroke="var(--color-bolosafe-cyan)" strokeDasharray="4 4" strokeWidth="1.5" />
+            <line x1={padding} y1={thresholdY} x2={width - padding} y2={thresholdY} stroke="var(--accent-primary)" strokeDasharray="4 4" strokeWidth="1.5" />
 
             {coords.length > 1 && (
               <>
                 <path d={areaString} fill="url(#probGradient)" />
-                <path d={pathString} fill="none" stroke="var(--color-bolosafe-pink)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                <path d={pathString} fill="none" stroke="var(--status-danger)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
               </>
             )}
 
@@ -72,45 +72,45 @@ export default function LiveGraph({ timeSeries = [], inputMode, selected, active
               const isLast = index === coords.length - 1
               return (
                 <g key={index}>
-                  <circle cx={point.x} cy={point.y} r={isLast ? 5 : 3} className={isLast ? 'fill-[var(--color-bolosafe-pink)]' : 'fill-[var(--color-bolosafe-pink)]/80'} />
-                  <circle cx={point.x} cy={point.y} r={isLast ? 4 : 2} className="fill-white" />
+                  <circle cx={point.x} cy={point.y} r={isLast ? 5 : 3} fill="var(--status-danger)" opacity={isLast ? 1 : 0.8} />
+                  <circle cx={point.x} cy={point.y} r={isLast ? 3 : 1.5} fill="var(--bg-surface)" />
                 </g>
               )
             })}
           </svg>
-          <div className="flex justify-between px-7 text-[10px] font-mono text-slate-500">
+          <div className="flex justify-between px-7 text-[10px] font-mono text-[var(--text-muted)]">
             <span>Live</span>
             <span>History</span>
             <span>Window stream</span>
           </div>
         </div>
 
-        <div className="rounded-xl border border-[var(--color-bolosafe-border)] bg-[var(--color-bolosafe-dark)] p-4">
+        <div className="rounded-xl border border-[var(--border-default)] bg-[var(--bg-surface)] p-4">
           <div className="space-y-4">
             <div>
-              <p className="text-[10px] text-slate-400 font-mono">AI Probability</p>
-              <p className={`text-3xl font-black font-mono ${selected.ai_probability > 0.7 ? 'text-[var(--color-bolosafe-pink)]' : 'text-[var(--color-bolosafe-cyan)]'}`}>
+              <p className="text-[10px] text-[var(--text-muted)] font-mono">AI Probability</p>
+              <p className={`text-3xl font-black font-mono ${selected.ai_probability > 0.7 ? 'text-[var(--status-danger)]' : 'text-[var(--accent-primary-soft)]'}`}>
                 {formatProbability(selected.ai_probability)}
               </p>
             </div>
             <div>
-              <p className="text-[10px] text-slate-400 font-mono">Rolling Risk Score</p>
-              <p className="text-2xl font-bold font-mono text-[var(--color-bolosafe-cyan)]">
+              <p className="text-[10px] text-[var(--text-muted)] font-mono">Rolling Risk Score</p>
+              <p className="text-2xl font-bold font-mono text-[var(--accent-primary-soft)]">
                 {formatScore(selected.rolling_score, 3)}
               </p>
             </div>
             <div>
-              <p className="text-[10px] text-slate-400 font-mono mb-2">Backend Risk State</p>
+              <p className="text-[10px] text-[var(--text-muted)] font-mono mb-2">Backend Risk State</p>
               <StatusPill status={selected.risk_level} />
             </div>
           </div>
-          <div className="mt-4 pt-3 border-t border-[var(--color-bolosafe-border)]">
-            <p className="text-xs text-slate-300 font-mono">
-              <span className="font-bold text-[var(--color-bolosafe-cyan)]">{selected.consecutive_flags ?? '--'}</span> current consecutive flags
+          <div className="mt-4 pt-3 border-t border-[var(--border-default)]">
+            <p className="text-xs text-[var(--text-secondary)] font-mono">
+              <span className="font-bold text-[var(--accent-primary-soft)]">{selected.consecutive_flags ?? '--'}</span> current consecutive flags
             </p>
             {selected.alert_triggered && selected.alert_consecutive_flags != null && (
-              <p className="mt-2 text-xs text-[var(--color-bolosafe-pink)]/90 font-mono">
-                <span className="font-bold text-[var(--color-bolosafe-pink)]">{selected.alert_consecutive_flags}</span> consecutive flags at alert
+              <p className="mt-2 text-xs text-[var(--status-danger)] font-mono opacity-90">
+                <span className="font-bold text-[var(--status-danger)]">{selected.alert_consecutive_flags}</span> consecutive flags at alert
               </p>
             )}
           </div>

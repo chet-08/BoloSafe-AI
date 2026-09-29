@@ -57,17 +57,17 @@ export default function GuidedUserFlowBar({
   ];
 
   return (
-    <div className="rounded-2xl border border-white/10 bg-slate-900/70 p-4 shadow-xl backdrop-blur-xl">
+    <div className="rounded-2xl border border-[var(--border-default)] bg-[var(--bg-card)] p-4 shadow-[var(--shadow-card)]">
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div className="flex items-center gap-2">
-          <div className="flex size-7 items-center justify-center rounded-lg bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+          <div className="flex size-7 items-center justify-center rounded-lg bg-[var(--status-success)]/15 text-[var(--status-success)] border border-[var(--status-success)]/25">
             <Compass className="size-4 animate-spin-slow" />
           </div>
           <div>
-            <div className="text-xs font-bold uppercase tracking-wider text-slate-200">
+            <div className="text-xs font-bold uppercase tracking-wider text-[var(--text-primary)]">
               Interactive Hackathon User Flow
             </div>
-            <div className="text-[10px] text-slate-400">
+            <div className="text-[10px] text-[var(--text-muted)]">
               Follow the end-to-end evaluation flow across any of the 4 tertiary sectors
             </div>
           </div>
@@ -88,21 +88,21 @@ export default function GuidedUserFlowBar({
                     s.action ? 'cursor-pointer hover:scale-105 active:scale-95' : ''
                   } ${
                     isDone
-                      ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-300'
+                      ? 'border-[var(--status-success)]/35 bg-[var(--status-success)]/10 text-[var(--status-success)]'
                       : isActive
-                      ? 'border-cyan-400/50 bg-cyan-500/20 text-cyan-200 shadow-[0_0_15px_rgba(6,182,212,0.3)]'
-                      : 'border-white/5 bg-white/[0.02] text-slate-400'
+                      ? 'border-[var(--accent-primary)]/45 bg-[var(--accent-primary-muted)] text-[var(--accent-primary-soft)]'
+                      : 'border-[var(--border-default)] bg-[var(--bg-hover)] text-[var(--text-muted)]'
                   }`}
                 >
                   {isDone ? (
-                    <CheckCircle2 className="size-3.5 text-emerald-400" />
+                    <CheckCircle2 className="size-3.5 text-[var(--status-success)]" />
                   ) : (
                     <Icon className="size-3.5" />
                   )}
                   <span className="font-bold">{s.num}. {s.title}</span>
                 </div>
                 {idx < steps.length - 1 && (
-                  <ArrowRight className="size-3 text-slate-600 shrink-0" />
+                  <ArrowRight className="size-3 text-[var(--text-subtle)] shrink-0" />
                 )}
               </React.Fragment>
             );
