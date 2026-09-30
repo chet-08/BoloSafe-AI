@@ -35,6 +35,7 @@ export default function EntertainmentSecurity({
   streamAudioFromUrl,
   startMicrophoneStream,
   stopMicrophoneStream,
+  stopActiveStream,
   handleFileUpload,
   micStatus = 'Ready',
   micLevel = 0,
@@ -59,9 +60,9 @@ export default function EntertainmentSecurity({
     {
       label: "Celebrity Dubbing Clone",
       isSpoof: true,
-      language: "Hindi",
+      language: "English",
       description: "Unauthorized AI dubbing voice leak",
-      url: "/sector_audio/entertainment/spoof/entertainment_spoof_celebrity_dub_hi.wav",
+      url: "/sector_audio/entertainment/spoof/entertainment_spoof_celebrity_dub_en.wav",
       scenario: "voice_authenticity"
     },
     {
@@ -331,7 +332,8 @@ export default function EntertainmentSecurity({
                 )
               }
               onStartMic={startMicrophoneStream}
-              onStopMic={stopMicrophoneStream}
+              onStopMic={stopActiveStream || stopMicrophoneStream}
+              onStopStream={stopActiveStream || stopMicrophoneStream}
               onFileUpload={handleFileUpload}
               isStreaming={isStreaming}
               micStatus={micStatus}

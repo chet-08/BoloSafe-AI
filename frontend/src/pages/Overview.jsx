@@ -611,7 +611,9 @@ function LiveOperations({
   micStatus,
   micLevel,
   transcript,
-  toggleLiveMonitor,
+  startMicrophoneStream,
+  stopMicrophoneStream,
+  inputMode,
   handleFileUpload,
   toggleFilePlayback,
   securityTerminated,
@@ -620,6 +622,7 @@ function LiveOperations({
   const fileInputRef = useRef(null)
 
   const isAlerted = selected?.alert_triggered === true
+  const isMicActive = inputMode === 'mic'
 
   return (
     <section className="rounded-2xl border border-[var(--border-default)] bg-[var(--bg-card)] p-5">
@@ -650,15 +653,22 @@ function LiveOperations({
             <button
               type="button"
               disabled={securityTerminated}
-              onClick={toggleLiveMonitor}
-              className="inline-flex items-center gap-2 rounded-lg bg-[var(--accent-primary)] px-4 py-2.5 text-xs font-bold text-[var(--text-primary)] transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40"
+              onClick={isMicActive ? stopMicrophoneStream : startMicrophoneStream}
+              className={[
+                'inline-flex items-center gap-2 rounded-lg px-4 py-2.5 text-xs font-bold transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40',
+                isMicActive
+                  ? 'border border-[var(--status-danger)]/40 bg-[var(--status-danger)] text-white'
+                  : 'bg-[var(--accent-primary)] text-[var(--text-primary)]',
+              ].join(' ')}
             >
               {isAlerted ? (
                 <Square size={14} />
+              ) : isMicActive ? (
+                <Square size={14} fill="currentColor" />
               ) : (
                 <Mic2 size={14} />
               )}
-              {isAlerted ? 'Session Halted' : 'Start Live Mic'}
+              {isAlerted ? 'Session Halted' : isMicActive ? 'Stop Live Mic' : 'Start Live Mic'}
             </button>
 
             <button
@@ -962,6 +972,8 @@ export default function Overview({
   configureSecurityContext,
   toggleLiveMonitor,
   startMicrophoneStream,
+  stopMicrophoneStream,
+  inputMode = 'idle',
   handleFileUpload,
   isFilePlaying = false,
   toggleFilePlayback,
@@ -1205,9 +1217,9 @@ export default function Overview({
           micStatus={micStatus}
           micLevel={micLevel}
           transcript={transcript}
-          toggleLiveMonitor={
-            toggleLiveMonitor || startMicrophoneStream
-          }
+          startMicrophoneStream={startMicrophoneStream}
+          stopMicrophoneStream={stopMicrophoneStream}
+          inputMode={inputMode}
           handleFileUpload={handleFileUpload}
           toggleFilePlayback={toggleFilePlayback}
           securityTerminated={securityTerminated}

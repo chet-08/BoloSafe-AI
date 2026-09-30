@@ -1168,9 +1168,9 @@ function MainApp() {
       const constraints = {
         audio: {
           channelCount: { ideal: 1 },
-          echoCancellation: { exact: false },
-          noiseSuppression: { exact: false },
-          autoGainControl: { exact: false }
+          echoCancellation: false,
+          noiseSuppression: false,
+          autoGainControl: false,
         }
       }
 
@@ -1249,29 +1249,36 @@ function MainApp() {
     }
   }
 
-  const stopMicrophoneStream = () => {
+  const stopActiveStream = () => {
     if (processorRef.current) {
-      processorRef.current.disconnect()
+      try {
+        processorRef.current.disconnect()
+      } catch (e) {}
       processorRef.current = null
     }
 
     if (sourceRef.current) {
-      sourceRef.current.disconnect()
+      try {
+        sourceRef.current.disconnect()
+      } catch (e) {}
       sourceRef.current = null
     }
 
     if (monitorGainRef.current) {
-      monitorGainRef.current.disconnect()
+      try {
+        monitorGainRef.current.disconnect()
+      } catch (e) {}
       monitorGainRef.current = null
     }
 
     setIsLiveMonitoring(false)
 
     if (mediaStreamRef.current) {
-      mediaStreamRef.current
-        .getTracks()
-        .forEach((track) => track.stop())
-
+      try {
+        mediaStreamRef.current
+          .getTracks()
+          .forEach((track) => track.stop())
+      } catch (e) {}
       mediaStreamRef.current = null
     }
 
@@ -1279,7 +1286,9 @@ function MainApp() {
       audioContextRef.current &&
       audioContextRef.current.state !== 'closed'
     ) {
-      audioContextRef.current.close()
+      try {
+        audioContextRef.current.close()
+      } catch (e) {}
       audioContextRef.current = null
     }
 
@@ -1287,13 +1296,34 @@ function MainApp() {
       clearInterval(fileIntervalRef.current)
       fileIntervalRef.current = null
     }
+    fileStreamActiveRef.current = false
 
+    if (filePlaybackRef.current) {
+      try {
+        filePlaybackRef.current.pause()
+        filePlaybackRef.current.currentTime = 0
+      } catch (e) {}
+      filePlaybackRef.current = null
+    }
+
+    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+      try {
+        wsRef.current.send(JSON.stringify({ type: 'audio_end' }))
+      } catch (e) {}
+    }
+
+    setIsFilePlaying(false)
+    setInputMode('idle')
     setMicLevel(0)
 
     if (isConnected) {
       setMicStatus('Connected / Ready')
+    } else {
+      setMicStatus('Stream Stopped')
     }
   }
+
+  const stopMicrophoneStream = stopActiveStream
 
   const toggleLiveMonitor = () => {
     if (!monitorGainRef.current) return
@@ -1535,6 +1565,8 @@ function MainApp() {
 
           setMicLevel(0)
           setMicStatus(`Completed: ${file.name}`)
+          setIsFilePlaying(false)
+          setInputMode('idle')
           return
         }
 
@@ -1787,6 +1819,7 @@ function MainApp() {
       playbackAudio.onpause = () => setIsFilePlaying(false)
       playbackAudio.onended = () => {
         setIsFilePlaying(false)
+        setInputMode('idle')
         setMicLevel(0)
       }
 
@@ -1832,6 +1865,8 @@ function MainApp() {
 
           setMicLevel(0)
           setMicStatus('Stream Complete')
+          setIsFilePlaying(false)
+          setInputMode('idle')
 
           audioCtx.close().catch((error) => {
             console.warn(
@@ -2144,11 +2179,12 @@ function MainApp() {
               isConnected={isConnected}
               streamAudioFromUrl={streamAudioFromUrl}
               startMicrophoneStream={startMicrophoneStream}
-              stopMicrophoneStream={stopMicrophoneStream}
+              stopMicrophoneStream={stopActiveStream}
+              stopActiveStream={stopActiveStream}
               handleFileUpload={handleFileUpload}
               micStatus={micStatus}
               micLevel={micLevel}
-              isStreaming={fileStreamActiveRef.current || isFilePlaying}
+              isStreaming={inputMode !== 'idle' || isFilePlaying}
             />
           )}
 
@@ -2158,11 +2194,12 @@ function MainApp() {
               isConnected={isConnected}
               streamAudioFromUrl={streamAudioFromUrl}
               startMicrophoneStream={startMicrophoneStream}
-              stopMicrophoneStream={stopMicrophoneStream}
+              stopMicrophoneStream={stopActiveStream}
+              stopActiveStream={stopActiveStream}
               handleFileUpload={handleFileUpload}
               micStatus={micStatus}
               micLevel={micLevel}
-              isStreaming={fileStreamActiveRef.current || isFilePlaying}
+              isStreaming={inputMode !== 'idle' || isFilePlaying}
             />
           )}
 
@@ -2172,11 +2209,12 @@ function MainApp() {
               isConnected={isConnected}
               streamAudioFromUrl={streamAudioFromUrl}
               startMicrophoneStream={startMicrophoneStream}
-              stopMicrophoneStream={stopMicrophoneStream}
+              stopMicrophoneStream={stopActiveStream}
+              stopActiveStream={stopActiveStream}
               handleFileUpload={handleFileUpload}
               micStatus={micStatus}
               micLevel={micLevel}
-              isStreaming={fileStreamActiveRef.current || isFilePlaying}
+              isStreaming={inputMode !== 'idle' || isFilePlaying}
             />
           )}
 
@@ -2186,11 +2224,12 @@ function MainApp() {
               isConnected={isConnected}
               streamAudioFromUrl={streamAudioFromUrl}
               startMicrophoneStream={startMicrophoneStream}
-              stopMicrophoneStream={stopMicrophoneStream}
+              stopMicrophoneStream={stopActiveStream}
+              stopActiveStream={stopActiveStream}
               handleFileUpload={handleFileUpload}
               micStatus={micStatus}
               micLevel={micLevel}
-              isStreaming={fileStreamActiveRef.current || isFilePlaying}
+              isStreaming={inputMode !== 'idle' || isFilePlaying}
             />
           )}
 {activePage === 'adversarial' && (

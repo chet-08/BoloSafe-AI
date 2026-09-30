@@ -35,6 +35,7 @@ export default function FinanceSecurity({
   streamAudioFromUrl,
   startMicrophoneStream,
   stopMicrophoneStream,
+  stopActiveStream,
   handleFileUpload,
   micStatus = 'Ready',
   micLevel = 0,
@@ -348,7 +349,8 @@ export default function FinanceSecurity({
                 setActiveSampleScenario(null)
                 startMicrophoneStream?.()
               }}
-              onStopMic={stopMicrophoneStream}
+              onStopMic={stopActiveStream || stopMicrophoneStream}
+              onStopStream={stopActiveStream || stopMicrophoneStream}
               onFileUpload={(file) => {
                 setActiveSampleScenario(null)
                 handleFileUpload?.(file)
